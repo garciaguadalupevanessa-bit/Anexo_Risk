@@ -1,15 +1,15 @@
 """
-Visualizacion profesional para resultados de PCA de riesgo geologico global.
+Professional visualization for PCA results on global geological risk.
 
-Incluye:
-  - Varianza acumulada (estatica)
-  - Scatter 2D PC1 vs PC2 (estatico, estilo publicacion)
-  - Biplot (flechas de variables originales)
-  - Scatter interactivo (plotly, HTML)
-  - Mapa geografico de riesgo (Folium)
-  - Pairplot de componentes (Seaborn)
+Includes:
+  - Cumulative explained variance (static)
+  - PC1 vs PC2 scatter (static, publication-ready)
+  - Biplot (original variable vectors)
+  - Interactive scatter (plotly, HTML)
+  - Geographical risk map (Folium)
+  - Component pairplot (Seaborn)
   - Loadings heatmap (Seaborn)
-  - PCA 3D interactivo (Plotly)
+  - Interactive PCA 3D (Plotly)
 """
 
 import branca
@@ -49,7 +49,7 @@ COLOR_FILL = "#3498db"
 COLOR_GRADIENT = "plasma"
 
 
-def plot_varianza_acumulada(
+def plot_cumulative_variance(
     pca_model: PCA,
     threshold: float = 0.85,
     figsize: tuple = (10, 6),
@@ -81,7 +81,7 @@ def plot_varianza_acumulada(
         linestyle="--",
         linewidth=1.8,
         alpha=0.8,
-        label=f"Umbral {threshold*100:.0f}%",
+        label=f"Threshold {threshold*100:.0f}%",
     )
     ax.axvline(
         x=n_keep,
@@ -91,7 +91,7 @@ def plot_varianza_acumulada(
         alpha=0.6,
     )
     ax.annotate(
-        f"{n_keep} componentes\n({cum_var[n_keep-1]*100:.1f}% varianza)",
+        f"{n_keep} components\n({cum_var[n_keep-1]*100:.1f}% variance)",
         xy=(n_keep, cum_var[n_keep - 1]),
         xytext=(n_keep + 0.8, cum_var[n_keep - 1] - 0.1),
         fontsize=11,
@@ -101,10 +101,10 @@ def plot_varianza_acumulada(
             arrowstyle="->", color=COLOR_ACCENT, lw=1.5
         ),
     )
-    ax.set_xlabel("Numero de componentes principales", fontsize=13)
-    ax.set_ylabel("Varianza explicada acumulada", fontsize=13)
+    ax.set_xlabel("Number of principal components", fontsize=13)
+    ax.set_ylabel("Cumulative explained variance", fontsize=13)
     ax.set_title(
-        "Varianza Explicada Acumulada vs. Componentes Principales",
+        "Cumulative Explained Variance vs. Principal Components",
         fontsize=14,
         weight="bold",
     )
@@ -135,15 +135,15 @@ def plot_pca_2d(
     y_label = "PC2"
     if pca_model is not None:
         vr = pca_model.explained_variance_ratio_
-        x_label = f"PC1 ({vr[0]*100:.1f}% varianza)"
-        y_label = f"PC2 ({vr[1]*100:.1f}% varianza)"
+        x_label = f"PC1 ({vr[0]*100:.1f}% variance)"
+        y_label = f"PC2 ({vr[1]*100:.1f}% variance)"
 
     if color_col and color_col in df_pca.columns:
         c = df_pca[color_col].values
         label = color_col
     elif color_data is not None:
         c = np.asarray(color_data)
-        label = "Valor"
+        label = "Value"
     else:
         c = None
         label = None
@@ -163,7 +163,7 @@ def plot_pca_2d(
             zorder=3,
         )
         cbar = fig.colorbar(scatter, ax=ax, shrink=0.7)
-        cbar.set_label(label or "Valor", fontsize=12, weight="bold")
+        cbar.set_label(label or "Value", fontsize=12, weight="bold")
     elif c is not None:
         unique = np.unique(c)
         palette = sns.color_palette("mako", len(unique))
@@ -196,7 +196,7 @@ def plot_pca_2d(
     ax.set_xlabel(x_label, fontsize=13)
     ax.set_ylabel(y_label, fontsize=13)
     ax.set_title(
-        "Proyeccion 2D de Componentes Principales",
+        "2D Projection of Principal Components",
         fontsize=14,
         weight="bold",
     )
@@ -271,7 +271,7 @@ def plot_biplot(
     ax.set_xlabel(f"PC1 ({vr[0]*100:.1f}%)", fontsize=13)
     ax.set_ylabel(f"PC2 ({vr[1]*100:.1f}%)", fontsize=13)
     ax.set_title(
-        "Biplot: Proyeccion 2D con vectores de variables originales",
+        "Biplot: 2D Projection with Original Variable Vectors",
         fontsize=14,
         weight="bold",
     )
@@ -285,11 +285,11 @@ def plot_biplot(
     return fig
 
 
-def plot_pca_interactivo(
+def plot_pca_interactive(
     df_pca: pd.DataFrame,
     color_col: str | None = None,
     pca_model: PCA | None = None,
-    save_path: str | None = "pca_interactivo.html",
+    save_path: str | None = "pca_interactive.html",
 ) -> str:
     x_label = "PC1"
     y_label = "PC2"
@@ -305,7 +305,7 @@ def plot_pca_interactivo(
             y="PC2",
             color=color_col,
             color_continuous_scale="plasma",
-            title="PCA Interactivo - Proyeccion 2D",
+            title="Interactive PCA - 2D Projection",
             labels={"PC1": x_label, "PC2": y_label},
             width=1000,
             height=700,
@@ -315,7 +315,7 @@ def plot_pca_interactivo(
             df_pca,
             x="PC1",
             y="PC2",
-            title="PCA Interactivo - Proyeccion 2D",
+            title="Interactive PCA - 2D Projection",
             labels={"PC1": x_label, "PC2": y_label},
             width=1000,
             height=700,
@@ -333,31 +333,31 @@ def plot_pca_interactivo(
     return save_path
 
 
-def plot_mapa_riesgo(
+def plot_risk_map(
     df: pd.DataFrame,
     lat_col: str = "lat",
     lon_col: str = "lon",
     color_col: str | None = None,
     popup_cols: list[str] | None = None,
     radius_scale: float = 3.0,
-    save_path: str | None = "mapa_riesgo.html",
+    save_path: str | None = "risk_map.html",
 ) -> folium.Map:
-    """Mapa interactivo Folium con puntos geograficos coloreados por riesgo.
+    """Interactive Folium map with geographic points colored by risk.
 
     Parameters
     ----------
     df : pd.DataFrame
-        DataFrame con lat, lon y columna de color.
+        DataFrame with lat, lon and a color column.
     lat_col, lon_col : str
-        Nombres de columnas de coordenadas.
+        Coordinate column names.
     color_col : str, optional
-        Columna para colorear (ej. PC1, magnitud). Mapa de gradient.
+        Column to color by (e.g. PC1, magnitude). Gradient map.
     popup_cols : list, optional
-        Columnas a mostrar en el popup al hacer clic.
+        Columns to show in click popup.
     radius_scale : float
-        Factor de escala para el radio de los circulos.
+        Scale factor for circle marker radius.
     save_path : str or None
-        Ruta del HTML de salida.
+        Output HTML path.
 
     Returns
     -------
@@ -374,10 +374,10 @@ def plot_mapa_riesgo(
     )
 
     folium.TileLayer(
-        "OpenStreetMap", name="Calles"
+        "OpenStreetMap", name="Streets"
     ).add_to(m)
     folium.TileLayer(
-        "CartoDB dark_matter", name="Oscuro"
+        "CartoDB dark_matter", name="Dark"
     ).add_to(m)
 
     if color_col and color_col in df.columns:
@@ -441,20 +441,20 @@ def plot_pairplot_pca(
     palette: str = "mako",
     save_path: str | None = None,
 ) -> sns.PairGrid:
-    """Pairplot de los primeros N componentes principales.
+    """Pairplot of the first N principal components.
 
     Parameters
     ----------
     df_pca : pd.DataFrame
-        DataFrame con columnas PC1, PC2, ...
+        DataFrame with PC1, PC2, ... columns.
     n_components : int
-        Numero de componentes a incluir.
+        Number of components to include.
     color_col : str, optional
-        Columna para colorear los puntos.
+        Column to color the points by.
     palette : str
-        Paleta de colores Seaborn.
+        Seaborn color palette.
     save_path : str, optional
-        Ruta para guardar la figura.
+        Path to save the figure.
 
     Returns
     -------
@@ -497,7 +497,7 @@ def plot_pairplot_pca(
         )
 
     g.fig.suptitle(
-        "Pairplot de Componentes Principales",
+        "Principal Components Pairplot",
         fontsize=14,
         weight="bold",
         y=1.02,
@@ -515,20 +515,20 @@ def plot_loadings_heatmap(
     figsize: tuple = (12, 8),
     save_path: str | None = None,
 ) -> Figure:
-    """Mapa de calor de loadings (contribucion features a componentes).
+    """Heatmap of loadings (feature contributions to components).
 
     Parameters
     ----------
     pca_model : PCA
-        Modelo PCA entrenado.
+        Trained PCA model.
     feature_names : list
-        Nombres de las features originales.
+        Original feature names.
     n_components : int
-        Numero de componentes a mostrar.
+        Number of components to display.
     figsize : tuple
-        Tamano de figura.
+        Figure size.
     save_path : str, optional
-        Ruta para guardar.
+        Path to save the figure.
 
     Returns
     -------
@@ -553,12 +553,12 @@ def plot_loadings_heatmap(
         ax=ax,
     )
     ax.set_title(
-        "Loadings: Contribucion de variables originales a componentes",
+        "Loadings: Original Variable Contributions to Components",
         fontsize=14,
         weight="bold",
     )
-    ax.set_xlabel("Variables originales", fontsize=12)
-    ax.set_ylabel("Componentes principales", fontsize=12)
+    ax.set_xlabel("Original variables", fontsize=12)
+    ax.set_ylabel("Principal components", fontsize=12)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", fontsize=9)
     plt.setp(ax.get_yticklabels(), rotation=0, fontsize=10)
     fig.tight_layout()
@@ -574,18 +574,18 @@ def plot_pca_3d(
     pca_model: PCA | None = None,
     save_path: str | None = "pca_3d.html",
 ) -> str:
-    """Scatter 3D interactivo de PC1, PC2, PC3 con Plotly.
+    """Interactive 3D scatter of PC1, PC2, PC3 with Plotly.
 
     Parameters
     ----------
     df_pca : pd.DataFrame
-        DataFrame con columnas PC1, PC2, PC3.
+        DataFrame with PC1, PC2, PC3 columns.
     color_col : str, optional
-        Columna para colorear los puntos.
+        Column to color points by.
     pca_model : PCA, optional
-        Para etiquetar ejes con % varianza.
+        For axis labels with % variance.
     save_path : str, optional
-        Ruta HTML de salida.
+        Output HTML path.
 
     Returns
     -------
@@ -606,7 +606,7 @@ def plot_pca_3d(
             z="PC3",
             color=color_col,
             color_continuous_scale="plasma",
-            title="PCA 3D - Espacio de componentes principales",
+            title="PCA 3D - Principal Component Space",
             labels={
                 "PC1": x_label,
                 "PC2": y_label,
@@ -621,7 +621,7 @@ def plot_pca_3d(
             x="PC1",
             y="PC2",
             z="PC3",
-            title="PCA 3D - Espacio de componentes principales",
+            title="PCA 3D - Principal Component Space",
             labels={
                 "PC1": x_label,
                 "PC2": y_label,

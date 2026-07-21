@@ -1,7 +1,7 @@
 """
-Configuración parametrizable del pipeline de preprocesamiento.
+Parametrizable preprocessing pipeline configuration.
 
-Único punto de cambio cuando Persona 3 entregue el schema definitivo.
+Single point of change when Persona 3 delivers the final schema.
 """
 
 PREPROCESSING_CONFIG = {
@@ -14,17 +14,17 @@ PREPROCESSING_CONFIG = {
         "categoria_tormenta": None,
         "elevacion_volcan": None,
     },
-    "columnas_log1p": [
+    "log1p_columns": [
         "magnitud",
         "profundidad",
         "frecuencia",
         "viento",
     ],
-    "columnas_dummy": [
+    "dummy_columns": [
         "categoria_tormenta",
         "tipo_volcan",
     ],
-    "columnas_excluir": [
+    "exclude_columns": [
         "lat",
         "lon",
         "h3_index",

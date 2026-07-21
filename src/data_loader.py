@@ -1,20 +1,20 @@
 """
-Carga de datos combinados (placeholder sintético).
+Combined data loader (synthetic placeholder).
 
-Reemplazar con la implementación real de Persona 3 cuando
-los datasets (USGS, IBTrACS, Volcanoes) estén integrados.
+Replace with Persona 3's real implementation when
+the datasets (USGS, IBTrACS, Volcanoes) are integrated.
 """
 
 import numpy as np
 import pandas as pd
 
 
-def cargar_datos_combinados() -> pd.DataFrame:
-    """Retorna un DataFrame sintético con features geológicas.
+def load_combined_data() -> pd.DataFrame:
+    """Returns a synthetic DataFrame with geological features.
 
-    Cuando Persona 3 entregue el módulo de integración,
-    reemplazar el cuerpo de esta función por la carga real
-    desde H3 + USGS + IBTrACS + Volcanoes.
+    When Persona 3 delivers the integration module,
+    replace this function's body with the actual loading
+    from H3 + USGS + IBTrACS + Volcanoes.
     """
     np.random.seed(42)
     n = 500

@@ -1,5 +1,5 @@
 """
-Fixtures de pruebas con datos sintéticos realistas para el pipeline.
+Test fixtures with realistic synthetic data for the preprocessing pipeline.
 """
 
 import numpy as np
@@ -9,7 +9,7 @@ import pytest
 
 @pytest.fixture(scope="module")
 def sample_df() -> pd.DataFrame:
-    """DataFrame sintético con 200 muestras de 7 variables geológicas."""
+    """Synthetic DataFrame with 200 samples of 7 geological variables."""
     np.random.seed(42)
     n = 200
 
@@ -38,7 +38,7 @@ def sample_df() -> pd.DataFrame:
 
 @pytest.fixture
 def small_df() -> pd.DataFrame:
-    """DataFrame mínimo de 30 filas para tests rápidos."""
+    """Minimal DataFrame with 30 rows for fast tests."""
     np.random.seed(99)
     n = 30
     return pd.DataFrame(
