@@ -9,3 +9,8 @@ __pycache__/
 .venv/
 *.pyc
 .DS_Store
+.pytest_cache/
+.vscode/
+notebooks/.ipynb_checkpoints/
+*.pdf
+*.png
