@@ -8,3 +8,7 @@ h3
 requests
 scipy
 jupyter
+joblib
+ydata-profiling
+missingno
+pre-commit

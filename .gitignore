@@ -14,3 +14,6 @@ __pycache__/
 notebooks/.ipynb_checkpoints/
 *.pdf
 *.png
+models/
+*.html
+profiling_reports/

@@ -1,41 +1,25 @@
 """
-Pipeline modular de preprocesamiento y reducción de dimensionalidad.
+Pipeline modular de preprocesamiento y reduccion de dimensionalidad.
 
-Funciones:
-    - pipeline_preprocesamiento_pca()
-    - detectar_columnas_skew()
-    - transformar_log1p()
-    - codificar_categoricas()
+Incluye Pipeline sklearn para exportacion con joblib.
 """
 
+import os
 import warnings
 
+import joblib
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.decomposition import PCA
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from .config import PREPROCESSING_CONFIG
 
 
-def detectar_columnas_skew(
-    df: pd.DataFrame, umbral: float = 0.75
-) -> list:
-    """Identifica columnas numéricas con asimetría significativa.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Datos numéricos.
-    umbral : float, optional
-        Valor absoluto de skewness a partir del cual se aplica log1p,
-        por defecto 0.75.
-
-    Returns
-    -------
-    list
-        Nombres de columnas con |skew| > umbral.
-    """
+def detectar_columnas_skew(df: pd.DataFrame, umbral: float = 0.75) -> list:
     numeric_df = df.select_dtypes(include=[np.number])
     if numeric_df.empty:
         return []
@@ -43,123 +27,157 @@ def detectar_columnas_skew(
     return skewness[skewness > umbral].index.tolist()
 
 
-def transformar_log1p(
-    df: pd.DataFrame, columnas: list | None = None
-) -> pd.DataFrame:
-    """Aplica np.log1p a columnas especificadas (o detecta automáticas).
+class SkewLogTransformer(BaseEstimator, TransformerMixin):
+    """Transformador sklearn: log1p en columnas con skew alto.
 
-    Sobre columnas con skewness alto. La transformación log(1+x)
-    preserva ceros reales y reduce el impacto de outliers extremos
-    (terremotos, superciclones) sin eliminarlos.
+    Detecta columnas con skew > umbral durante .fit()
+    y aplica log1p solo a esas mismas columnas en .transform().
     """
-    df = df.copy()
-    cols = columnas or detectar_columnas_skew(df)
-    for col in cols:
-        if col in df.columns and df[col].dtype in [np.float64, np.int64]:
-            df[f"{col}_log"] = np.log1p(df[col].clip(lower=0))
-    return df
 
+    def __init__(self, umbral: float = 0.75):
+        self.umbral = umbral
+        self.skew_cols_: list = []
 
-def codificar_categoricas(df: pd.DataFrame) -> pd.DataFrame:
-    """Aplica One-Hot Encoding a columnas categóricas.
+    def fit(self, X: pd.DataFrame, y=None):
+        self.skew_cols_ = detectar_columnas_skew(X, umbral=self.umbral)
+        return self
 
-    Usa pd.get_dummies(drop_first=True) para evitar multicolinealidad.
-    """
-    df = df.copy()
-    dummy_cols = [
-        col
-        for col in PREPROCESSING_CONFIG["columnas_dummy"]
-        if col in df.columns
-    ]
-    if not dummy_cols:
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        df = X.copy()
+        for col in self.skew_cols_:
+            if col in df.columns:
+                df[f"{col}_log"] = np.log1p(df[col].clip(lower=0))
         return df
-    dummies = pd.get_dummies(df[dummy_cols], drop_first=True)
-    df = pd.concat([df.drop(columns=dummy_cols), dummies], axis=1)
-    return df
+
+
+class OneHotTransformer(BaseEstimator, TransformerMixin):
+    """Transformador sklearn: One-Hot Encoding sobre columnas dummy."""
+
+    def __init__(self, columnas: list | None = None):
+        self.columnas = columnas or PREPROCESSING_CONFIG["columnas_dummy"]
+        self.dummy_cols_: list = []
+
+    def fit(self, X: pd.DataFrame, y=None):
+        self.dummy_cols_ = [c for c in self.columnas if c in X.columns]
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        df = X.copy()
+        if self.dummy_cols_:
+            dummies = pd.get_dummies(df[self.dummy_cols_], drop_first=True)
+            df = pd.concat([df.drop(columns=self.dummy_cols_), dummies], axis=1)
+        return df
 
 
 def pipeline_preprocesamiento_pca(
     df_raw: pd.DataFrame,
     target_variance: float = 0.85,
-    columnas_features: list | None = None,
+    save_path: str | None = "models/pipeline_riesgo.pkl",
 ) -> tuple:
-    """Pipeline completo: transformación logarítmica → One-Hot → Escalado → PCA.
+    """Pipeline completo: log1p -> One-Hot -> StandardScaler -> PCA.
+
+    Construye y entrena un Pipeline sklearn, lo exporta con joblib,
+    y devuelve los DataFrames transformados.
 
     Parameters
     ----------
     df_raw : pd.DataFrame
-        DataFrame de entrada con las columnas físicas de riesgo geológico.
+        DataFrame con features geologicas.
     target_variance : float, optional
-        Fracción de varianza a retener en PCA, por defecto 0.85.
-    columnas_features : list or None, optional
-        Lista explícita de columnas a usar como features.
-        Si es None, se usan todas las numéricas excluyendo 'exclude_cols'.
+        Fraccion de varianza a retener en PCA, por defecto 0.85.
+    save_path : str or None, optional
+        Ruta para guardar el pipeline con joblib.
+        Si None, no se guarda.
 
     Returns
     -------
     tuple
-        (df_pca, pca_model, scaler_model, df_scaled, df_preprocesado)
-
-        - df_pca: DataFrame con las componentes principales
-        - pca_model: objeto PCA entrenado
-        - scaler_model: objeto StandardScaler entrenado
-        - df_scaled: matriz escalada como DataFrame
-        - df_preprocesado: DataFrame transformado pre-PCA
+        (df_pca, pipeline, df_scaled)
     """
-    df = df_raw.copy()
+    config = PREPROCESSING_CONFIG
+    exclude = set(config["columnas_excluir"])
+    numeric_cols = [
+        c
+        for c in df_raw.select_dtypes(include=[np.number]).columns
+        if c not in exclude
+    ]
 
-    # 1. Log-transform
-    skew_cols = detectar_columnas_skew(df)
-    df = transformar_log1p(df, skew_cols)
-
-    # 2. Codificación categórica
-    df = codificar_categoricas(df)
-
-    # 3. Seleccionar columnas para escalado
-    exclude = set(PREPROCESSING_CONFIG["columnas_excluir"])
-    if columnas_features:
-        feature_cols = [
-            c for c in columnas_features if c in df.columns
+    pipeline = Pipeline(
+        [
+            ("log_skew", SkewLogTransformer(umbral=0.75)),
+            ("onehot", OneHotTransformer()),
+            (
+                "scaler",
+                ColumnTransformer(
+                    [
+                        (
+                            "scaler",
+                            StandardScaler(),
+                            make_column_selector(dtype_include=np.number),
+                        )
+                    ],
+                    remainder="passthrough",
+                ),
+            ),
+            ("pca", PCA(random_state=42)),
         ]
-    else:
-        feature_cols = [
-            c
-            for c in df.select_dtypes(include=[np.number]).columns
-            if c not in exclude
-        ]
+    )
 
-    if not feature_cols:
-        raise ValueError(
-            "No se encontraron columnas numéricas para escalar. "
-            f"Verifica que df_raw tenga features numéricas. "
-            f"Columnas disponibles: {list(df_raw.columns)}"
-        )
-
+    X_prep = df_raw[numeric_cols].copy()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", FutureWarning)
-        X = df[feature_cols].fillna(df[feature_cols].median())
+        X_prep = X_prep.fillna(X_prep.median())
 
-    # 4. StandardScaler
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    df_scaled = pd.DataFrame(
-        X_scaled, columns=feature_cols, index=df.index
-    )
+    pipeline.fit(X_prep)
 
-    # 5. PCA
-    n_components = min(X_scaled.shape[0], X_scaled.shape[1])
-    pca = PCA(n_components=n_components, random_state=42)
-    X_pca = pca.fit_transform(X_scaled)
-
-    # Retener componentes hasta alcanzar target_variance
+    pca = pipeline.named_steps["pca"]
     cum_var = np.cumsum(pca.explained_variance_ratio_)
-    n_keep = int(np.searchsorted(cum_var, target_variance) + 1)
-    X_pca_reduced = X_pca[:, :n_keep]
 
+    n_keep = int(np.searchsorted(cum_var, target_variance) + 1)
+
+    pipeline.set_params(pca__n_components=n_keep)
+    pipeline.fit(X_prep)
+
+    X_full = pipeline.transform(X_prep)
     df_pca = pd.DataFrame(
-        X_pca_reduced,
+        X_full,
         columns=[f"PC{i+1}" for i in range(n_keep)],
-        index=df.index,
+        index=df_raw.index,
     )
 
-    return df_pca, pca, scaler, df_scaled, df
+    X_after_log = pipeline.named_steps["log_skew"].transform(X_prep)
+    X_after_dummies = pipeline.named_steps["onehot"].transform(X_after_log)
+    X_scaled = pipeline.named_steps["scaler"].transform(X_after_dummies)
+
+    df_scaled = pd.DataFrame(
+        X_scaled,
+        columns=[f"V{i}" for i in range(X_scaled.shape[1])],
+        index=df_raw.index,
+    )
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+        joblib.dump(pipeline, save_path, compress=3)
+
+    return df_pca, pipeline, df_scaled
+
+
+def cargar_pipeline(path: str) -> Pipeline:
+    return joblib.load(path)
+
+
+def transformar_nuevos_datos(
+    pipeline: Pipeline, df_nuevos: pd.DataFrame
+) -> np.ndarray:
+    config = PREPROCESSING_CONFIG
+    exclude = set(config["columnas_excluir"])
+    numeric_cols = [
+        c
+        for c in df_nuevos.select_dtypes(include=[np.number]).columns
+        if c not in exclude
+    ]
+    X = df_nuevos[numeric_cols].copy()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)
+        X = X.fillna(X.median())
+    return pipeline.transform(X)
