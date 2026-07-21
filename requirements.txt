@@ -9,6 +9,7 @@ requests
 scipy
 jupyter
 joblib
+folium
 ydata-profiling
 missingno
 pre-commit
