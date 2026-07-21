@@ -1,5 +1,5 @@
 """
-Test fixtures with realistic synthetic data for the preprocessing pipeline.
+Test fixtures for preprocessing pipeline and H3 aggregator.
 """
 
 import numpy as np
@@ -34,6 +34,21 @@ def sample_df() -> pd.DataFrame:
         }
     )
     return df
+
+
+@pytest.fixture
+def small_h3_df() -> pd.DataFrame:
+    """Minimal DataFrame with coordinates for H3 aggregation tests."""
+    np.random.seed(7)
+    n = 20
+    return pd.DataFrame(
+        {
+            "viento": np.random.gamma(3, 10, n) + 30,
+            "magnitud": np.random.exponential(1.5, n) + 2.0,
+            "lat": np.random.uniform(-10, 10, n),
+            "lon": np.random.uniform(-10, 10, n),
+        }
+    )
 
 
 @pytest.fixture
