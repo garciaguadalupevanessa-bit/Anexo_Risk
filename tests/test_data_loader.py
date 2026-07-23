@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from src.data_loader import load_combined_data, _generate_synthetic_fallback
 from src.h3_aggregator import lat_lon_to_h3, aggregate_by_h3, merge_h3_datasets

@@ -97,9 +97,7 @@ def preprocessing_pca_pipeline(
     config = PREPROCESSING_CONFIG
     exclude = set(config["exclude_columns"])
     numeric_cols = [
-        c
-        for c in df_raw.select_dtypes(include=[np.number]).columns
-        if c not in exclude
+        c for c in df_raw.select_dtypes(include=[np.number]).columns if c not in exclude
     ]
 
     pipeline = Pipeline(
@@ -141,7 +139,7 @@ def preprocessing_pca_pipeline(
     X_full = pipeline.transform(X_prep)
     df_pca = pd.DataFrame(
         X_full,
-        columns=[f"PC{i+1}" for i in range(n_keep)],
+        columns=[f"PC{i + 1}" for i in range(n_keep)],
         index=df_raw.index,
     )
 
@@ -149,9 +147,14 @@ def preprocessing_pca_pipeline(
     X_after_dummies = pipeline.named_steps["onehot"].transform(X_after_log)
     X_scaled = pipeline.named_steps["scaler"].transform(X_after_dummies)
 
+    try:
+        scaled_names = pipeline.named_steps["scaler"].get_feature_names_out()
+    except Exception:
+        scaled_names = [f"V{i}" for i in range(X_scaled.shape[1])]
+
     df_scaled = pd.DataFrame(
         X_scaled,
-        columns=[f"V{i}" for i in range(X_scaled.shape[1])],
+        columns=scaled_names,
         index=df_raw.index,
     )
 
@@ -166,15 +169,11 @@ def load_pipeline(path: str) -> Pipeline:
     return joblib.load(path)
 
 
-def transform_new_data(
-    pipeline: Pipeline, df_new: pd.DataFrame
-) -> np.ndarray:
+def transform_new_data(pipeline: Pipeline, df_new: pd.DataFrame) -> np.ndarray:
     config = PREPROCESSING_CONFIG
     exclude = set(config["exclude_columns"])
     numeric_cols = [
-        c
-        for c in df_new.select_dtypes(include=[np.number]).columns
-        if c not in exclude
+        c for c in df_new.select_dtypes(include=[np.number]).columns if c not in exclude
     ]
     X = df_new[numeric_cols].copy()
     with warnings.catch_warnings():

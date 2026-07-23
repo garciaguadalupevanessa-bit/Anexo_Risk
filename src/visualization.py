@@ -18,10 +18,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import seaborn as sns
 from matplotlib.figure import Figure
-from plotly.subplots import make_subplots
 from sklearn.decomposition import PCA
 
 sns.set_theme(
@@ -61,9 +59,7 @@ def plot_cumulative_variance(
     n_keep = int(np.searchsorted(cum_var, threshold) + 1)
 
     fig, ax = plt.subplots(figsize=figsize)
-    ax.fill_between(
-        n_components, 0, cum_var, alpha=0.25, color=COLOR_FILL
-    )
+    ax.fill_between(n_components, 0, cum_var, alpha=0.25, color=COLOR_FILL)
     ax.plot(
         n_components,
         cum_var,
@@ -81,7 +77,7 @@ def plot_cumulative_variance(
         linestyle="--",
         linewidth=1.8,
         alpha=0.8,
-        label=f"Threshold {threshold*100:.0f}%",
+        label=f"Threshold {threshold * 100:.0f}%",
     )
     ax.axvline(
         x=n_keep,
@@ -91,15 +87,13 @@ def plot_cumulative_variance(
         alpha=0.6,
     )
     ax.annotate(
-        f"{n_keep} components\n({cum_var[n_keep-1]*100:.1f}% variance)",
+        f"{n_keep} components\n({cum_var[n_keep - 1] * 100:.1f}% variance)",
         xy=(n_keep, cum_var[n_keep - 1]),
         xytext=(n_keep + 0.8, cum_var[n_keep - 1] - 0.1),
         fontsize=11,
         color=COLOR_ACCENT,
         weight="bold",
-        arrowprops=dict(
-            arrowstyle="->", color=COLOR_ACCENT, lw=1.5
-        ),
+        arrowprops=dict(arrowstyle="->", color=COLOR_ACCENT, lw=1.5),
     )
     ax.set_xlabel("Number of principal components", fontsize=13)
     ax.set_ylabel("Cumulative explained variance", fontsize=13)
@@ -135,8 +129,8 @@ def plot_pca_2d(
     y_label = "PC2"
     if pca_model is not None:
         vr = pca_model.explained_variance_ratio_
-        x_label = f"PC1 ({vr[0]*100:.1f}% variance)"
-        y_label = f"PC2 ({vr[1]*100:.1f}% variance)"
+        x_label = f"PC1 ({vr[0] * 100:.1f}% variance)"
+        y_label = f"PC2 ({vr[1] * 100:.1f}% variance)"
 
     if color_col and color_col in df_pca.columns:
         c = df_pca[color_col].values
@@ -268,8 +262,8 @@ def plot_biplot(
             zorder=6,
         )
 
-    ax.set_xlabel(f"PC1 ({vr[0]*100:.1f}%)", fontsize=13)
-    ax.set_ylabel(f"PC2 ({vr[1]*100:.1f}%)", fontsize=13)
+    ax.set_xlabel(f"PC1 ({vr[0] * 100:.1f}%)", fontsize=13)
+    ax.set_ylabel(f"PC2 ({vr[1] * 100:.1f}%)", fontsize=13)
     ax.set_title(
         "Biplot: 2D Projection with Original Variable Vectors",
         fontsize=14,
@@ -295,8 +289,8 @@ def plot_pca_interactive(
     y_label = "PC2"
     if pca_model is not None:
         vr = pca_model.explained_variance_ratio_
-        x_label = f"PC1 ({vr[0]*100:.1f}%)"
-        y_label = f"PC2 ({vr[1]*100:.1f}%)"
+        x_label = f"PC1 ({vr[0] * 100:.1f}%)"
+        y_label = f"PC2 ({vr[1] * 100:.1f}%)"
 
     if color_col and color_col in df_pca.columns:
         fig = px.scatter(
@@ -321,7 +315,9 @@ def plot_pca_interactive(
             height=700,
         )
 
-    fig.update_traces(marker=dict(size=7, opacity=0.75, line=dict(width=0.3, color="white")))
+    fig.update_traces(
+        marker=dict(size=7, opacity=0.75, line=dict(width=0.3, color="white"))
+    )
     fig.update_layout(
         template="plotly_white",
         hovermode="closest",
@@ -373,12 +369,8 @@ def plot_risk_map(
         control_scale=True,
     )
 
-    folium.TileLayer(
-        "OpenStreetMap", name="Streets"
-    ).add_to(m)
-    folium.TileLayer(
-        "CartoDB dark_matter", name="Dark"
-    ).add_to(m)
+    folium.TileLayer("OpenStreetMap", name="Streets").add_to(m)
+    folium.TileLayer("CartoDB dark_matter", name="Dark").add_to(m)
 
     if color_col and color_col in df.columns:
         values = df[color_col].values
@@ -460,7 +452,7 @@ def plot_pairplot_pca(
     -------
     sns.PairGrid
     """
-    comp_cols = [f"PC{i+1}" for i in range(min(n_components, len(df_pca.columns)))]
+    comp_cols = [f"PC{i + 1}" for i in range(min(n_components, len(df_pca.columns)))]
 
     if color_col and color_col in df_pca.columns:
         g = sns.pairplot(
@@ -537,7 +529,7 @@ def plot_loadings_heatmap(
     n_comp = min(n_components, pca_model.components_.shape[0])
     loadings = pca_model.components_[:n_comp, :]
 
-    comp_labels = [f"PC{i+1}" for i in range(n_comp)]
+    comp_labels = [f"PC{i + 1}" for i in range(n_comp)]
 
     fig, ax = plt.subplots(figsize=figsize)
     sns.heatmap(
@@ -594,9 +586,9 @@ def plot_pca_3d(
     x_label, y_label, z_label = "PC1", "PC2", "PC3"
     if pca_model is not None:
         vr = pca_model.explained_variance_ratio_
-        x_label = f"PC1 ({vr[0]*100:.1f}%)"
-        y_label = f"PC2 ({vr[1]*100:.1f}%)"
-        z_label = f"PC3 ({vr[2]*100:.1f}%)"
+        x_label = f"PC1 ({vr[0] * 100:.1f}%)"
+        y_label = f"PC2 ({vr[1] * 100:.1f}%)"
+        z_label = f"PC3 ({vr[2] * 100:.1f}%)"
 
     if color_col and color_col in df_pca.columns:
         fig = px.scatter_3d(

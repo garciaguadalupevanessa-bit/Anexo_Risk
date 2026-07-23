@@ -47,16 +47,12 @@ class TestPipeline:
 
     def test_excluded_columns_not_in_pca(self, sample_df):
         df_with_coords = sample_df.copy()
-        _, _, df_scaled = preprocessing_pca_pipeline(
-            df_with_coords, save_path=None
-        )
+        _, _, df_scaled = preprocessing_pca_pipeline(df_with_coords, save_path=None)
         coord_cols = {"lat", "lon"}
         assert not coord_cols.intersection(set(df_scaled.columns))
 
     def test_output_shapes(self, small_df):
-        df_pca, _, df_scaled = preprocessing_pca_pipeline(
-            small_df, save_path=None
-        )
+        df_pca, _, df_scaled = preprocessing_pca_pipeline(small_df, save_path=None)
         assert df_scaled.shape[1] >= 2
         assert df_pca.shape[0] == small_df.shape[0]
 
@@ -78,9 +74,7 @@ class TestPipeline:
         import joblib
 
         path = tmp_path / "test_pipeline.pkl"
-        _, pipeline, _ = preprocessing_pca_pipeline(
-            sample_df, save_path=str(path)
-        )
+        _, pipeline, _ = preprocessing_pca_pipeline(sample_df, save_path=str(path))
         assert path.exists()
         loaded = joblib.load(str(path))
         assert isinstance(loaded, Pipeline)
