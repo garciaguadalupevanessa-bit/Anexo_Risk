@@ -34,33 +34,46 @@ class TestH3Aggregator:
 
 class TestDataLoader:
     def test_load_combined_data_returns_dataframe(self):
-        df = load_combined_data()
+        df = load_combined_data(force_synthetic=True)
         assert isinstance(df, pd.DataFrame)
         assert df.shape[0] > 0
 
     def test_load_combined_data_has_expected_columns(self):
-        df = load_combined_data()
+        df = load_combined_data(force_synthetic=True)
         expected = {
-            "viento_max_ciclones",
-            "presion_min_ciclones",
-            "magnitud_max_sismo",
-            "profundidad_media_sismo",
-            "elevacion_volcan",
+            "eq_count",
+            "eq_mag_mean",
+            "eq_mag_max",
+            "eq_depth_mean",
+            "eq_energy_log",
+            "eq_days_since_last_major",
+            "cyclone_count",
+            "wind_mean",
+            "wind_max",
+            "pressure_min_mean",
+            "dist_nearest_volcano_km",
+            "volcano_count",
+            "categoria_tormenta",
             "lat",
             "lon",
-            "categoria_tormenta",
-            "frecuencia_eventos_sismicos",
         }
         assert expected.issubset(set(df.columns))
 
     def test_load_combined_data_types_are_numeric(self):
-        df = load_combined_data()
+        df = load_combined_data(force_synthetic=True)
         numeric_cols = [
-            "viento_max_ciclones",
-            "presion_min_ciclones",
-            "magnitud_max_sismo",
-            "profundidad_media_sismo",
-            "elevacion_volcan",
+            "eq_count",
+            "eq_mag_mean",
+            "eq_mag_max",
+            "eq_depth_mean",
+            "eq_energy_log",
+            "eq_days_since_last_major",
+            "cyclone_count",
+            "wind_mean",
+            "wind_max",
+            "pressure_min_mean",
+            "dist_nearest_volcano_km",
+            "volcano_count",
             "lat",
             "lon",
         ]
@@ -68,12 +81,12 @@ class TestDataLoader:
             assert pd.api.types.is_numeric_dtype(df[col]), f"{col} is not numeric"
 
     def test_load_combined_data_no_missing_lat_lon(self):
-        df = load_combined_data()
+        df = load_combined_data(force_synthetic=True)
         assert df["lat"].notna().all()
         assert df["lon"].notna().all()
 
     def test_load_combined_data_storm_category_present(self):
-        df = load_combined_data()
+        df = load_combined_data(force_synthetic=True)
         assert "categoria_tormenta" in df.columns
         valid = {"TD", "TS", "C1", "C2", "C3", "C4", "C5"}
         assert df["categoria_tormenta"].isin(valid).all()
@@ -82,19 +95,25 @@ class TestDataLoader:
 class TestSyntheticFallback:
     def test_fallback_shape(self):
         df = _generate_synthetic_fallback()
-        assert df.shape == (500, 10)
+        assert df.shape == (500, 16)
 
     def test_fallback_has_all_columns(self):
         df = _generate_synthetic_fallback()
         expected = {
-            "magnitud_max_sismo",
-            "profundidad_media_sismo",
-            "frecuencia_eventos_sismicos",
-            "viento_max_ciclones",
-            "presion_min_ciclones",
-            "elevacion_volcan",
+            "cell_id",
+            "eq_count",
+            "eq_mag_mean",
+            "eq_mag_max",
+            "eq_depth_mean",
+            "eq_energy_log",
+            "eq_days_since_last_major",
+            "cyclone_count",
+            "wind_mean",
+            "wind_max",
+            "pressure_min_mean",
+            "dist_nearest_volcano_km",
+            "volcano_count",
             "categoria_tormenta",
-            "tipo_volcan",
             "lat",
             "lon",
         }

@@ -1,7 +1,3 @@
-"""
-Test fixtures for preprocessing pipeline and H3 aggregator.
-"""
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,23 +5,26 @@ import pytest
 
 @pytest.fixture(scope="module")
 def sample_df() -> pd.DataFrame:
-    """Synthetic DataFrame with 200 samples of 7 geological variables."""
+    """Synthetic DataFrame with 200 samples of geological features."""
     np.random.seed(42)
     n = 200
 
     df = pd.DataFrame(
         {
-            "magnitud_max_sismo": np.random.exponential(2.0, n) + 3.0,
-            "profundidad_media_sismo": np.random.lognormal(2.0, 0.8, n),
-            "frecuencia_eventos_sismicos": np.random.poisson(5, n).astype(float),
-            "viento_max_ciclones": np.random.gamma(3, 10, n) + 30,
-            "presion_min_ciclones": np.random.normal(980, 25, n),
-            "elevacion_volcan": np.random.lognormal(5.5, 1.2, n),
+            "eq_count": np.random.poisson(5, n).astype(float),
+            "eq_mag_mean": np.random.exponential(2.0, n) + 3.0,
+            "eq_mag_max": np.random.exponential(2.0, n) + 4.0,
+            "eq_depth_mean": np.random.lognormal(2.0, 0.8, n),
+            "eq_energy_log": np.random.uniform(5, 12, n),
+            "eq_days_since_last_major": np.random.exponential(500, n),
+            "cyclone_count": np.random.poisson(3, n).astype(float),
+            "wind_mean": np.random.gamma(3, 10, n) + 30,
+            "wind_max": np.random.gamma(4, 12, n) + 40,
+            "pressure_min_mean": np.random.normal(980, 25, n),
+            "dist_nearest_volcano_km": np.random.lognormal(4.5, 1.5, n),
+            "volcano_count": np.random.poisson(0.5, n).astype(float),
             "categoria_tormenta": np.random.choice(
                 ["TD", "TS", "C1", "C2", "C3", "C4", "C5"], n
-            ),
-            "tipo_volcan": np.random.choice(
-                ["Stratovolcano", "Shield", "Caldera", "Cinder cone"], n
             ),
             "lat": np.random.uniform(-60, 60, n),
             "lon": np.random.uniform(-180, 180, n),
@@ -56,8 +55,8 @@ def small_df() -> pd.DataFrame:
     n = 30
     return pd.DataFrame(
         {
-            "magnitud_max_sismo": np.random.exponential(1.5, n) + 2.5,
-            "viento_max_ciclones": np.random.gamma(2, 8, n) + 25,
+            "eq_mag_max": np.random.exponential(1.5, n) + 2.5,
+            "wind_max": np.random.gamma(2, 8, n) + 25,
             "categoria_tormenta": np.random.choice(["TS", "C1", "C2"], n),
             "lat": np.random.uniform(-30, 30, n),
             "lon": np.random.uniform(-120, 120, n),
