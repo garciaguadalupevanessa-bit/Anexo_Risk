@@ -45,14 +45,14 @@ def compute_seismic_features(
         days_since_major = (
             (now - major['timestamp'].max()).days if not major.empty else np.nan
         )
-        # Energía sísmica (relación de Gutenberg-Richter): log10(E) = 1.5*M + 4.8
-        energy = 10 ** (1.5 * group['magnitude'] + 4.8)
+        energy_sum = (10 ** (1.5 * group['magnitude'] + 4.8)).sum()
+        eq_energy_log = np.log10(energy_sum) if energy_sum > 0 else np.nan
         return pd.Series({
             'eq_count': len(group),
             'eq_mag_mean': group['magnitude'].mean(),
             'eq_mag_max': group['magnitude'].max(),
             'eq_depth_mean': group['depth_km'].mean(),
-            'eq_energy_log': np.log10(energy.sum()),
+            'eq_energy_log': eq_energy_log,
             'eq_days_since_last_major': days_since_major,
         })
 
