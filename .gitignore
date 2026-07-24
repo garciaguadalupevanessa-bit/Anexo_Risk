@@ -16,4 +16,5 @@ notebooks/.ipynb_checkpoints/
 *.png
 models/
 *.html
+!georisk_globe/frontend/index.html
 profiling_reports/

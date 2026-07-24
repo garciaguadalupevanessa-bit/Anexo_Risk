@@ -23,9 +23,7 @@ def aggregate_by_h3(
     df: pd.DataFrame, res: int, agg: dict | None = None
 ) -> pd.DataFrame:
     df = df.copy()
-    df["h3_index"] = df.apply(
-        lambda r: lat_lon_to_h3(r["lat"], r["lon"], res), axis=1
-    )
+    df["h3_index"] = df.apply(lambda r: lat_lon_to_h3(r["lat"], r["lon"], res), axis=1)
     df = df.dropna(subset=["h3_index"])
 
     numeric_cols = [
