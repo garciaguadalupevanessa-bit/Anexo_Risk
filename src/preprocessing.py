@@ -47,7 +47,7 @@ class SkewLogTransformer(BaseEstimator, TransformerMixin):
         for col in self.skew_cols_:
             if col in df.columns:
                 df[f"{col}_log"] = np.log1p(df[col].clip(lower=0))
-        return df
+        return df.drop(columns=[c for c in self.skew_cols_ if c in df.columns])
 
 
 class OneHotTransformer(BaseEstimator, TransformerMixin):
@@ -56,15 +56,23 @@ class OneHotTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, columns: list | None = None):
         self.columns = columns or PREPROCESSING_CONFIG["dummy_columns"]
         self.dummy_cols_: list = []
+        self.dummy_cols_used_: list = []
 
     def fit(self, X: pd.DataFrame, y=None):
         self.dummy_cols_ = [c for c in self.columns if c in X.columns]
+        if self.dummy_cols_:
+            dummies = pd.get_dummies(X[self.dummy_cols_])
+            drop_col = dummies.columns[0]
+            self.dummy_cols_used_ = [c for c in dummies.columns if c != drop_col]
+        else:
+            self.dummy_cols_used_ = []
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         df = X.copy()
         if self.dummy_cols_:
-            dummies = pd.get_dummies(df[self.dummy_cols_], drop_first=True)
+            dummies = pd.get_dummies(df[self.dummy_cols_])
+            dummies = dummies.reindex(columns=self.dummy_cols_used_, fill_value=0)
             df = pd.concat([df.drop(columns=self.dummy_cols_), dummies], axis=1)
         return df
 
@@ -99,6 +107,8 @@ def preprocessing_pca_pipeline(
     numeric_cols = [
         c for c in df_raw.select_dtypes(include=[np.number]).columns if c not in exclude
     ]
+    dummy_cols = [c for c in config["dummy_columns"] if c in df_raw.columns]
+    feature_cols = numeric_cols + dummy_cols
 
     pipeline = Pipeline(
         [
@@ -121,10 +131,13 @@ def preprocessing_pca_pipeline(
         ]
     )
 
-    X_prep = df_raw[numeric_cols].copy()
+    X_prep = df_raw[feature_cols].copy()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", FutureWarning)
-        X_prep = X_prep.fillna(X_prep.median())
+        numeric_for_median = X_prep.select_dtypes(include=[np.number]).columns
+        X_prep[numeric_for_median] = X_prep[numeric_for_median].fillna(
+            X_prep[numeric_for_median].median()
+        )
 
     pipeline.fit(X_prep)
 
@@ -175,8 +188,13 @@ def transform_new_data(pipeline: Pipeline, df_new: pd.DataFrame) -> np.ndarray:
     numeric_cols = [
         c for c in df_new.select_dtypes(include=[np.number]).columns if c not in exclude
     ]
-    X = df_new[numeric_cols].copy()
+    dummy_cols = [c for c in config["dummy_columns"] if c in df_new.columns]
+    feature_cols = numeric_cols + dummy_cols
+    X = df_new[feature_cols].copy()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", FutureWarning)
-        X = X.fillna(X.median())
+        numeric_for_median = X.select_dtypes(include=[np.number]).columns
+        X[numeric_for_median] = X[numeric_for_median].fillna(
+            X[numeric_for_median].median()
+        )
     return pipeline.transform(X)

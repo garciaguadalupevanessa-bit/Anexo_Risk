@@ -1,3 +1,4 @@
+import h3
 import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
@@ -99,7 +100,7 @@ def compute_cyclone_features(
 
 def compute_volcanic_features(grid_df, volcanoes_df):
     """Para cada celda del grid, calcula distancia al volcán activo más cercano
-    y cuántos volcanes caen dentro de esa celda (aprox., usando distancia < radio celda).
+    y cuántos volcanes caen dentro de cada celda H3.
     """
     volc_coords = np.radians(volcanoes_df[['lat', 'lon']].values)
     grid_coords = np.radians(grid_df[['lat', 'lon']].values)
@@ -107,11 +108,16 @@ def compute_volcanic_features(grid_df, volcanoes_df):
     tree = cKDTree(volc_coords)
     dist_rad, idx = tree.query(grid_coords)
 
-    # Distancia great-circle aproximada a partir de la distancia euclídea en radianes
-    R = 6371.0  # radio de la Tierra en km
+    R = 6371.0
     dist_km = dist_rad * R
+
+    res = h3.get_resolution(grid_df['cell_id'].iloc[0])
+    volc_cells = volcanoes_df.apply(
+        lambda r: h3.latlng_to_cell(r['lat'], r['lon'], res), axis=1
+    )
+    volcano_per_cell = volc_cells.value_counts()
 
     result = grid_df[['cell_id']].copy()
     result['dist_nearest_volcano_km'] = dist_km
-    result['volcano_count'] = 0  # placeholder: afinar con radio real de la celda H3 si se necesita más precisión
+    result['volcano_count'] = result['cell_id'].map(volcano_per_cell).fillna(0).astype(int)
     return result

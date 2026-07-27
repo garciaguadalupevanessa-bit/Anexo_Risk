@@ -36,5 +36,5 @@ PREPROCESSING_CONFIG = {
     ],
     "target_variance": 0.85,
     "random_state": 42,
-    "h3_resolution": 4,
+    "h3_resolution": 3,
 }

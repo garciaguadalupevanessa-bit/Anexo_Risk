@@ -5,25 +5,8 @@ import numpy as np
 import pandas as pd
 
 from src.config import PREPROCESSING_CONFIG
-from src.features.grid import build_global_grid
-from src.features.engineering import (
-    compute_seismic_features,
-    compute_cyclone_features,
-    compute_volcanic_features,
-)
 
-_IGN_LAT_MAX = 90.0
-_IGN_LON_MAX = 180.0
-
-
-def _normalise_ign_coords(df: pd.DataFrame) -> pd.DataFrame:
-    for col in ("lat", "lon"):
-        if col in df.columns:
-            thr = _IGN_LAT_MAX if col == "lat" else _IGN_LON_MAX
-            mask = df[col].abs() > thr
-            if mask.any():
-                df.loc[mask, col] /= 10.0
-    return df
+_GRID_FEATURES_PATH = "data/processed/grid_features.csv"
 
 
 def _safe_read_csv(path: str, **kwargs) -> pd.DataFrame:
@@ -55,7 +38,7 @@ def _generate_synthetic_fallback() -> pd.DataFrame:
     n = 500
     lat = np.random.uniform(-60, 60, n)
     lon = np.random.uniform(-180, 180, n)
-    cell_ids = [h3.latlng_to_cell(la, lo, 4) for la, lo in zip(lat, lon)]
+    cell_ids = [h3.latlng_to_cell(la, lo, 3) for la, lo in zip(lat, lon)]
     return pd.DataFrame(
         {
             "cell_id": cell_ids,
@@ -84,59 +67,47 @@ def load_combined_data(force_synthetic: bool = False) -> pd.DataFrame:
     config = PREPROCESSING_CONFIG
     if force_synthetic:
         return _generate_synthetic_fallback()
-    res = config["h3_resolution"]
+
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(base_dir, _GRID_FEATURES_PATH)
+    df = _safe_read_csv(path)
 
-    ciclones = _safe_read_csv(
-        os.path.join(base_dir, "data/processed/ciclones_clean.csv"),
-        low_memory=False,
-    )
-    volcanes = _safe_read_csv(
-        os.path.join(base_dir, "data/processed/volcanes_clean.csv"),
-    )
-    espana = _safe_read_csv(
-        os.path.join(base_dir, "data/processed/espana_clean.csv"),
-    )
-
-    if any(df.empty for df in [ciclones, volcanes, espana]):
+    if df.empty:
         return _generate_synthetic_fallback()
 
-    _normalise_ign_coords(espana)
+    # Derive storm category from wind_mean
+    if "wind_mean" in df.columns:
+        df["categoria_tormenta"] = df["wind_mean"].apply(_classify_storm_category)
+    else:
+        df["categoria_tormenta"] = "TD"
 
-    seismic = compute_seismic_features(espana, resolution=res)
-    cyclone = compute_cyclone_features(ciclones, resolution=res)
+    # Fill NaN: distinguish no-event cells from event-with-missing-intensity
+    _FILL_DEFAULTS = {
+        "eq_count": 0,
+        "eq_mag_mean": 0,
+        "eq_mag_max": 0,
+        "eq_depth_mean": 0,
+        "eq_energy_log": 0,
+        "eq_days_since_last_major": -1,
+        "cyclone_count": 0,
+        "wind_mean": 0,
+        "wind_max": 0,
+        "pressure_min_mean": 1013,
+        "dist_nearest_volcano_km": 0,
+        "volcano_count": 0,
+    }
 
-    union_cells = pd.concat(
-        [seismic[["cell_id"]], cyclone[["cell_id"]]]
-    ).drop_duplicates().reset_index(drop=True)
-    union_cells[["lat", "lon"]] = union_cells["cell_id"].apply(
-        lambda c: pd.Series(h3.cell_to_latlng(c))
-    )
+    for col, default in _FILL_DEFAULTS.items():
+        if col not in df.columns:
+            df[col] = default
+            continue
 
-    volcanic = compute_volcanic_features(union_cells, volcanes)
+        if col in ("wind_mean", "wind_max", "pressure_min_mean") and "cyclone_count" in df.columns:
+            has_cyclone = df["cyclone_count"] > 0
+            global_mean = df.loc[has_cyclone & df[col].notna(), col].mean()
+            if pd.notna(global_mean):
+                df.loc[has_cyclone & df[col].isna(), col] = global_mean
 
-    result = union_cells.merge(seismic, on="cell_id", how="left")
-    result = result.merge(cyclone, on="cell_id", how="left")
-    result = result.merge(volcanic, on="cell_id", how="left")
+        df[col] = df[col].fillna(default)
 
-    result["categoria_tormenta"] = result["wind_mean"].apply(_classify_storm_category)
-
-    result.fillna(
-        {
-            "eq_count": 0,
-            "eq_mag_mean": 0,
-            "eq_mag_max": 0,
-            "eq_depth_mean": 0,
-            "eq_energy_log": 0,
-            "eq_days_since_last_major": -1,
-            "cyclone_count": 0,
-            "wind_mean": 0,
-            "wind_max": 0,
-            "pressure_min_mean": 1013,
-            "dist_nearest_volcano_km": 0,
-            "volcano_count": 0,
-        },
-        inplace=True,
-    )
-
-    return result
+    return df

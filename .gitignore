@@ -18,3 +18,5 @@ models/
 *.html
 !georisk_globe/frontend/index.html
 profiling_reports/
+streamlit_*.log
+_check_*.py
