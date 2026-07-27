@@ -59,9 +59,7 @@ RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw" / "earthquakes"
 PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 
 RAW_DATA_PATH = RAW_DATA_DIR / "usgs_earthquakes_raw.csv"
-PROCESSED_DATA_PATH = (
-    PROCESSED_DATA_DIR / "usgs_earthquakes_clean.csv"
-)
+PROCESSED_DATA_PATH = PROCESSED_DATA_DIR / "usgs_earthquakes_clean.csv"
 
 # ---------------------------------------------------------------------------
 # Dataset schema
@@ -162,6 +160,7 @@ LOGGER = logging.getLogger(__name__)
 # USGS API helpers
 # ---------------------------------------------------------------------------
 
+
 def build_query_params(
     start_date: str,
     end_date: str,
@@ -222,20 +221,17 @@ def count_usgs_events(
         )
         response.raise_for_status()
     except requests.RequestException as exc:
-        raise RuntimeError(
-            "The USGS event count request failed."
-        ) from exc
+        raise RuntimeError("The USGS event count request failed.") from exc
 
     try:
         event_count = int(response.text.strip())
     except ValueError as exc:
-        raise RuntimeError(
-            "The USGS count response was not a valid integer."
-        ) from exc
+        raise RuntimeError("The USGS count response was not a valid integer.") from exc
 
     LOGGER.info("USGS returned %s matching events", event_count)
 
     return event_count
+
 
 def download_usgs_period(
     start_date: str,
@@ -320,11 +316,9 @@ def download_usgs_period(
         )
 
         if "id" in combined_halves.columns:
-            combined_halves = (
-                combined_halves
-                .drop_duplicates(subset="id", keep="last")
-                .reset_index(drop=True)
-            )
+            combined_halves = combined_halves.drop_duplicates(
+                subset="id", keep="last"
+            ).reset_index(drop=True)
 
         return combined_halves
 
@@ -357,8 +351,7 @@ def download_usgs_period(
         response.raise_for_status()
     except requests.RequestException as exc:
         raise RuntimeError(
-            f"The USGS download request failed for "
-            f"{start_date} to {end_date}."
+            f"The USGS download request failed for {start_date} to {end_date}."
         ) from exc
 
     try:
@@ -382,6 +375,7 @@ def download_usgs_period(
     )
 
     return dataframe
+
 
 def download_usgs_history(
     start_date: str = START_DATE,
@@ -413,9 +407,7 @@ def download_usgs_history(
     end_timestamp = pd.Timestamp(end_date)
 
     if start_timestamp >= end_timestamp:
-        raise ValueError(
-            "start_date must be earlier than end_date."
-        )
+        raise ValueError("start_date must be earlier than end_date.")
 
     period_starts = pd.date_range(
         start=start_timestamp,
@@ -427,9 +419,7 @@ def download_usgs_history(
         period_starts = period_starts.insert(0, start_timestamp)
 
     if period_starts[-1] != end_timestamp:
-        period_starts = period_starts.append(
-            pd.DatetimeIndex([end_timestamp])
-        )
+        period_starts = period_starts.append(pd.DatetimeIndex([end_timestamp]))
 
     downloaded_periods: list[pd.DataFrame] = []
 
@@ -450,9 +440,7 @@ def download_usgs_history(
             downloaded_periods.append(dataframe)
 
     if not downloaded_periods:
-        LOGGER.warning(
-            "No earthquake records were downloaded."
-        )
+        LOGGER.warning("No earthquake records were downloaded.")
         return pd.DataFrame()
 
     combined_dataframe = pd.concat(
@@ -464,15 +452,12 @@ def download_usgs_history(
 
     if "id" in combined_dataframe.columns:
         combined_dataframe = (
-            combined_dataframe
-            .sort_values("updated")
+            combined_dataframe.sort_values("updated")
             .drop_duplicates(subset="id", keep="last")
             .reset_index(drop=True)
         )
 
-    removed_duplicates = (
-        rows_before_deduplication - len(combined_dataframe)
-    )
+    removed_duplicates = rows_before_deduplication - len(combined_dataframe)
 
     LOGGER.info(
         "Combined historical catalogue: %s rows",
@@ -485,9 +470,11 @@ def download_usgs_history(
 
     return combined_dataframe
 
+
 # ---------------------------------------------------------------------------
 # Data cleaning
 # ---------------------------------------------------------------------------
+
 
 def clean_usgs_data(
     dataframe: pd.DataFrame,
@@ -502,9 +489,7 @@ def clean_usgs_data(
     above the reference sea level.
     """
     if dataframe.empty:
-        raise ValueError(
-            "The raw USGS dataframe is empty and cannot be cleaned."
-        )
+        raise ValueError("The raw USGS dataframe is empty and cannot be cleaned.")
 
     cleaned_dataframe = dataframe.copy()
 
@@ -545,14 +530,12 @@ def clean_usgs_data(
             )
 
     if "magnitude_type" in cleaned_dataframe.columns:
-        cleaned_dataframe["magnitude_type"] = (
-            cleaned_dataframe["magnitude_type"].str.lower()
-        )
+        cleaned_dataframe["magnitude_type"] = cleaned_dataframe[
+            "magnitude_type"
+        ].str.lower()
 
     if "event_type" in cleaned_dataframe.columns:
-        cleaned_dataframe["event_type"] = (
-            cleaned_dataframe["event_type"].str.lower()
-        )
+        cleaned_dataframe["event_type"] = cleaned_dataframe["event_type"].str.lower()
 
     cleaned_dataframe["timestamp"] = pd.to_datetime(
         cleaned_dataframe["timestamp"],
@@ -592,8 +575,7 @@ def clean_usgs_data(
         ]
 
     cleaned_dataframe = (
-        cleaned_dataframe
-        .sort_values(
+        cleaned_dataframe.sort_values(
             ["event_id", "updated_at"],
             na_position="first",
         )
@@ -604,10 +586,9 @@ def clean_usgs_data(
         .reset_index(drop=True)
     )
 
-    cleaned_dataframe["timestamp_madrid"] = (
-        cleaned_dataframe["timestamp"]
-        .dt.tz_convert(MADRID_TIMEZONE)
-    )
+    cleaned_dataframe["timestamp_madrid"] = cleaned_dataframe[
+        "timestamp"
+    ].dt.tz_convert(MADRID_TIMEZONE)
 
     cleaned_dataframe["magnitude_scale_name"] = (
         cleaned_dataframe["magnitude_type"]
@@ -625,10 +606,8 @@ def clean_usgs_data(
 
     cleaned_dataframe["source"] = "USGS"
 
-    cleaned_dataframe = (
-        cleaned_dataframe
-        .sort_values("timestamp")
-        .reset_index(drop=True)
+    cleaned_dataframe = cleaned_dataframe.sort_values("timestamp").reset_index(
+        drop=True
     )
 
     removed_rows = rows_before_cleaning - len(cleaned_dataframe)
@@ -641,9 +620,11 @@ def clean_usgs_data(
 
     return cleaned_dataframe
 
+
 # ---------------------------------------------------------------------------
 # Data export helpers
 # ---------------------------------------------------------------------------
+
 
 def ensure_data_directories() -> None:
     """Create the raw and processed data directories when necessary."""
@@ -670,9 +651,7 @@ def save_raw_data(
         Path where the dataset was saved.
     """
     if dataframe.empty:
-        raise ValueError(
-            "The raw USGS dataframe is empty and cannot be exported."
-        )
+        raise ValueError("The raw USGS dataframe is empty and cannot be exported.")
 
     ensure_data_directories()
 
@@ -694,6 +673,7 @@ def save_raw_data(
 
     return output_path
 
+
 def save_processed_data(
     dataframe: pd.DataFrame,
     output_path: Path = PROCESSED_DATA_PATH,
@@ -713,9 +693,7 @@ def save_processed_data(
         Path where the cleaned dataset was saved.
     """
     if dataframe.empty:
-        raise ValueError(
-            "The cleaned USGS dataframe is empty and cannot be exported."
-        )
+        raise ValueError("The cleaned USGS dataframe is empty and cannot be exported.")
 
     ensure_data_directories()
 
@@ -736,6 +714,7 @@ def save_processed_data(
     )
 
     return output_path
+
 
 def run_ingestion(
     start_date: str = START_DATE,
@@ -765,6 +744,7 @@ def run_ingestion(
     LOGGER.info("USGS ingestion completed successfully")
 
     return saved_path
+
 
 def run_pipeline(
     start_date: str = START_DATE,
@@ -810,11 +790,10 @@ def run_pipeline(
         output_path=processed_output_path,
     )
 
-    LOGGER.info(
-        "Complete USGS pipeline finished successfully"
-    )
+    LOGGER.info("Complete USGS pipeline finished successfully")
 
     return raw_path, processed_path
+
 
 if __name__ == "__main__":
     run_pipeline()

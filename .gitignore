@@ -1,5 +1,6 @@
 data/raw/*
 !data/raw/.gitkeep
+data/processed/*.csv
 data/processed/*.parquet
 !data/processed/.gitkeep
 .ipynb_checkpoints/
@@ -8,3 +9,14 @@ __pycache__/
 .venv/
 *.pyc
 .DS_Store
+.pytest_cache/
+.vscode/
+notebooks/.ipynb_checkpoints/
+*.pdf
+*.png
+models/
+*.html
+!georisk_globe/frontend/index.html
+profiling_reports/
+streamlit_*.log
+_check_*.py

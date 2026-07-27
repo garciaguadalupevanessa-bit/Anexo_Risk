@@ -4,7 +4,13 @@ scikit-learn
 matplotlib
 seaborn
 plotly
-h3
+streamlit>=1.56.0
+h3>=4.0.0
 requests
 scipy
 jupyter
+joblib
+folium
+ydata-profiling
+missingno
+pre-commit
