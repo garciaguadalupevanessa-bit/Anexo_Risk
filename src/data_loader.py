@@ -88,7 +88,7 @@ def load_combined_data(force_synthetic: bool = False) -> pd.DataFrame:
         "eq_mag_max": 0,
         "eq_depth_mean": 0,
         "eq_energy_log": 0,
-        "eq_days_since_last_major": -1,
+        "eq_days_since_last_major": 99999,
         "cyclone_count": 0,
         "wind_mean": 0,
         "wind_max": 0,
