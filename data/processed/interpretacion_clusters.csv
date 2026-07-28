@@ -1,0 +1,6 @@
+cluster,n_celdas,pct_celdas,nivel_sismico,nivel_ciclonico,nivel_volcanico,nombre_negocio,recomendacion
+0,20193,49.1,Bajo,Medio,Bajo,Riesgo sismico bajo,
+1,12169,29.6,Medio,Alto,Medio,Riesgo ciclonico alto,
+2,3704,9.0,Alto,Alto,Alto,"Riesgo sismico alto, ciclonico alto, cercania volcanica alta",
+3,5064,12.3,Medio,Bajo,Medio,Riesgo ciclonico bajo,
+4,32,0.1,Alto,Medio,Alto,"Riesgo sismico alto, cercania volcanica alta",
