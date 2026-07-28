@@ -93,8 +93,10 @@ def load_combined_data(force_synthetic: bool = False) -> pd.DataFrame:
         "wind_mean": 0,
         "wind_max": 0,
         "pressure_min_mean": 1013,
-        "dist_nearest_volcano_km": 0,
         "volcano_count": 0,
+        # dist_nearest_volcano_km NO va aquí: se trata aparte más abajo,
+        # porque 0 significaría "encima de un volcán" y produciría el
+        # efecto contrario al buscado en celdas sin volcán cercano.
     }
 
     for col, default in _FILL_DEFAULTS.items():
@@ -109,5 +111,18 @@ def load_combined_data(force_synthetic: bool = False) -> pd.DataFrame:
                 df.loc[has_cyclone & df[col].isna(), col] = global_mean
 
         df[col] = df[col].fillna(default)
+
+    # dist_nearest_volcano_km: NaN aquí significa "sin volcán relevante
+    # cerca", no "distancia desconocida entre datos existentes". Rellenar
+    # con 0 marcaría esas celdas como el máximo riesgo volcánico posible,
+    # justo lo contrario de la realidad. Se usa como centinela la distancia
+    # antipodal máxima en la Tierra (~20.015 km): el mismo criterio de
+    # "número grande = lejos / no aplica" que ya se usa en
+    # eq_days_since_last_major, aplicado aquí a kilómetros en vez de días.
+    _MAX_EARTH_DIST_KM = 20_015
+    if "dist_nearest_volcano_km" not in df.columns:
+        df["dist_nearest_volcano_km"] = _MAX_EARTH_DIST_KM
+    else:
+        df["dist_nearest_volcano_km"] = df["dist_nearest_volcano_km"].fillna(_MAX_EARTH_DIST_KM)
 
     return df
