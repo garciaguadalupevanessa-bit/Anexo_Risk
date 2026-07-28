@@ -640,3 +640,180 @@ def plot_pca_3d(
     if save_path:
         fig.write_html(save_path)
     return save_path
+
+
+def plot_elbow(
+    k_values,
+    inertias,
+    knee_k: int | None = None,
+    figsize: tuple = (10, 6),
+    save_path: str | None = None,
+) -> Figure:
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.plot(
+        k_values,
+        inertias,
+        "o-",
+        color=COLOR_PRIMARY,
+        linewidth=2.5,
+        markersize=7,
+        markerfacecolor=COLOR_FILL,
+        markeredgecolor=COLOR_PRIMARY,
+        zorder=3,
+    )
+    if knee_k is not None:
+        ax.axvline(
+            knee_k,
+            color=COLOR_ACCENT,
+            linestyle="--",
+            linewidth=1.6,
+            alpha=0.8,
+            label=f"Knee at K = {knee_k}",
+        )
+        ax.legend(frameon=True, fancybox=True)
+    ax.set_xlabel("Number of clusters (K)", fontsize=13)
+    ax.set_ylabel("Inertia (WCSS)", fontsize=13)
+    ax.set_title("Elbow Method for K-Means", fontsize=14, weight="bold")
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+
+    if save_path:
+        fig.savefig(save_path, dpi=300)
+    return fig
+
+
+def plot_silhouette_by_k(
+    k_values,
+    scores,
+    figsize: tuple = (10, 6),
+    save_path: str | None = None,
+) -> Figure:
+    scores = np.asarray(scores)
+    best_k = np.asarray(k_values)[int(np.argmax(scores))]
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.plot(
+        k_values,
+        scores,
+        "o-",
+        color=COLOR_ACCENT,
+        linewidth=2.5,
+        markersize=7,
+        markerfacecolor=COLOR_FILL,
+        markeredgecolor=COLOR_ACCENT,
+        zorder=3,
+    )
+    ax.axvline(
+        best_k,
+        color=COLOR_PRIMARY,
+        linestyle="--",
+        linewidth=1.6,
+        alpha=0.8,
+        label=f"Best K = {best_k}",
+    )
+    ax.set_xlabel("Number of clusters (K)", fontsize=13)
+    ax.set_ylabel("Silhouette score", fontsize=13)
+    ax.set_title("Silhouette Score vs. K", fontsize=14, weight="bold")
+    ax.legend(frameon=True, fancybox=True)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+
+    if save_path:
+        fig.savefig(save_path, dpi=300)
+    return fig
+
+
+def plot_kdistance(
+    distances,
+    k: int = 5,
+    eps: float | None = None,
+    figsize: tuple = (10, 6),
+    save_path: str | None = None,
+) -> Figure:
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.plot(
+        np.arange(len(distances)),
+        distances,
+        color=COLOR_PRIMARY,
+        linewidth=1.8,
+        zorder=3,
+    )
+    if eps is not None:
+        ax.axhline(
+            eps,
+            color=COLOR_ACCENT,
+            linestyle="--",
+            linewidth=1.6,
+            alpha=0.8,
+            label=f"eps = {eps:.3f}",
+        )
+        ax.legend(frameon=True, fancybox=True)
+    ax.set_xlabel("Points sorted by distance", fontsize=13)
+    ax.set_ylabel(f"{k}-th nearest neighbor distance", fontsize=13)
+    ax.set_title("K-distance Plot for DBSCAN eps Selection", fontsize=14, weight="bold")
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+
+    if save_path:
+        fig.savefig(save_path, dpi=300)
+    return fig
+
+
+def plot_cluster_map(
+    df: pd.DataFrame,
+    cluster_col: str,
+    lat_col: str = "lat",
+    lon_col: str = "lon",
+    noise_label: int = -1,
+    popup_cols: list[str] | None = None,
+    save_path: str | None = "cluster_map.html",
+) -> folium.Map:
+    """Geographic map with points colored by cluster (categorical).
+
+    Noise points (DBSCAN label == noise_label) are drawn larger and in a
+    fixed gray so they stand out as the "atypical risk" signal they are,
+    instead of blending into the cluster color scale.
+    """
+    center_lat = df[lat_col].mean()
+    center_lon = df[lon_col].mean()
+
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=2,
+        tiles="CartoDB positron",
+        control_scale=True,
+    )
+
+    real_labels = sorted(v for v in df[cluster_col].unique() if v != noise_label)
+    palette = sns.color_palette("husl", max(len(real_labels), 1)).as_hex()
+    color_map = {lbl: palette[i] for i, lbl in enumerate(real_labels)}
+    color_map[noise_label] = "#7f7f7f"
+
+    for _, row in df.iterrows():
+        lbl = row[cluster_col]
+        is_noise = lbl == noise_label
+        popup_text = f"<b>Cluster: {lbl}{' (noise / atypical risk)' if is_noise else ''}</b><br>"
+        if popup_cols:
+            for col in popup_cols:
+                if col in df.columns:
+                    val = row[col]
+                    if isinstance(val, float):
+                        popup_text += f"{col}: {val:.2f}<br>"
+                    else:
+                        popup_text += f"{col}: {val}<br>"
+
+        folium.CircleMarker(
+            location=[row[lat_col], row[lon_col]],
+            radius=6 if is_noise else 4,
+            color=color_map.get(lbl, "#7f7f7f"),
+            fill=True,
+            fillColor=color_map.get(lbl, "#7f7f7f"),
+            fillOpacity=0.85 if is_noise else 0.65,
+            weight=2 if is_noise else 1,
+            popup=folium.Popup(popup_text, max_width=300),
+            tooltip=f"Cluster {lbl}",
+        ).add_to(m)
+
+    if save_path:
+        m.save(save_path)
+    return m
