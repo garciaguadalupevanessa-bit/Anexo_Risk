@@ -1,6 +1,6 @@
 data/raw/*
 !data/raw/.gitkeep
-data/processed/*.csv
+!data/processed/*.csv
 data/processed/*.parquet
 !data/processed/.gitkeep
 .ipynb_checkpoints/

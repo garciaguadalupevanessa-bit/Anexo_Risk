@@ -1,5 +1,5 @@
 pais,n_celdas,cluster_dominante,pct_cluster_dominante,nombre_negocio_dominante
-Japon,503,0,36.8,Riesgo ciclonico alto
-Chile,331,1,66.2,Riesgo sismico bajo
-Venezuela,172,1,76.2,Riesgo sismico bajo
-Espana,85,3,38.8,Riesgo sismico alto
+Japon,503,2,65.8,"Riesgo ciclonico alto, cercania volcanica alta"
+Chile,331,4,62.2,Riesgo sismico alto
+Venezuela,172,1,57.0,"Riesgo sismico bajo, ciclonico bajo"
+Espana,85,4,76.5,Riesgo sismico alto
