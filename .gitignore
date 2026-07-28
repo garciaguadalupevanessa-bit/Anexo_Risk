@@ -20,3 +20,4 @@ models/
 profiling_reports/
 streamlit_*.log
 _check_*.py
+!data/processed/cluster_labels.csv
