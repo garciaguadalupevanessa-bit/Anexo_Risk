@@ -1,7 +1,7 @@
 # GeoRisk Finder 🌍
 > **Plataforma de Inteligencia Geoespacial para la Evaluación de Riesgos Compuestos y Decisiones de Inversión en Resiliencia Climática**
 
-![GeoRisk Finder Banner](streamlit_app/assets/banner_georisk.png)
+![GeoRisk Finder Banner](https://raw.githubusercontent.com/jowel2701/GeoRisk_Finder/main/streamlit_app/assets/banner_georisk.png)
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?style=flat&logo=python)
 ![Scikit-Learn](https://img.shields.io/badge/Machine_Learning-Scikit--Learn-F7931E?style=flat&logo=scikit-learn)
