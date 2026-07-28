@@ -1,14 +1,14 @@
 """
-Dashboard Streamlit — Catástrofes Naturales vs Inversión en Alerta Temprana
+Página: Catástrofes Naturales vs Inversión en Alerta Temprana
 Modelo financiero, escenarios, infografías y análisis de sesgos.
 
-Ejecutar:  streamlit run app.py
+Se ejecuta como página dentro de main.py (st.navigation), no de forma
+independiente. NO lleva st.set_page_config aquí.
 """
 
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import pandas as pd
 import openpyxl
 import base64
@@ -17,14 +17,7 @@ from pathlib import Path
 # ──────────────────────────────────────────────
 # CONFIG
 # ──────────────────────────────────────────────
-st.set_page_config(
-    page_title="Catástrofes vs Alerta Temprana",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-ASSETS = Path(__file__).parent / "assets"
+ASSETS = Path(__file__).parent.parent / "assets"
 XLSX = ASSETS / "Modelo_Catastrofes_Alerta_Temprana.xlsx"
 PDF_RESUMEN = ASSETS / "Resumen_Ejecutivo_Catastrofes_EWS.pdf"
 PDF_SESGOS = ASSETS / "Analisis_Sesgos_Modelo_Catastrofes.pdf"
@@ -32,7 +25,6 @@ IMG_INFOGRAFIA = ASSETS / "infografia_completa.png"
 IMG_SESGOS = ASSETS / "infografia_sesgos.png"
 IMG_CHART = ASSETS / "chart_escenarios.png"
 
-# Colores (paleta Nexus teal)
 COLORS = {
     "bg": "#F7F6F2",
     "surface": "#F9F8F5",
@@ -50,45 +42,27 @@ COLORS = {
 CHART_PALETTE = ["#20808D", "#A84B2F", "#1B474D", "#BCE2E7", "#944454", "#FFC553", "#848456", "#6E522B"]
 
 # ──────────────────────────────────────────────
-# CSS
+# CSS (scoped a esta página vía markdown, se aplica igual)
 # ──────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Fondo general */
     .stApp { background-color: #F7F6F2; }
-
-    /* Headers */
     h1, h2, h3 { color: #01696F !important; font-family: 'DM Sans', 'Inter', sans-serif; }
-
-    /* KPI cards */
     div[data-testid="stMetric"] {
         background: #F9F8F5;
         border: 1px solid #D4D1CA;
         border-radius: 10px;
         padding: 16px 20px;
     }
-    div[data-testid="stMetric"] label {
-        color: #7A7974;
-        font-size: 0.85rem;
-    }
+    div[data-testid="stMetric"] label { color: #7A7974; font-size: 0.85rem; }
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
         color: #01696F;
         font-weight: 800;
     }
-
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background: #0D1B2A;
-    }
-    section[data-testid="stSidebar"] * {
-        color: #E0E1DD;
-    }
+    section[data-testid="stSidebar"] { background: #0D1B2A; }
+    section[data-testid="stSidebar"] * { color: #E0E1DD; }
     section[data-testid="stSidebar"] .stSelectbox label,
-    section[data-testid="stSidebar"] .stRadio label {
-        color: #9AB0B4;
-    }
-
-    /* Botones descarga */
+    section[data-testid="stSidebar"] .stRadio label { color: #9AB0B4; }
     .stDownloadButton > button {
         background: #01696F;
         color: white;
@@ -97,11 +71,7 @@ st.markdown("""
         padding: 8px 24px;
         font-weight: 600;
     }
-    .stDownloadButton > button:hover {
-        background: #0C4E54;
-    }
-
-    /* Callout */
+    .stDownloadButton > button:hover { background: #0C4E54; }
     .callout {
         background: #F9F8F5;
         border-left: 4px solid #01696F;
@@ -116,8 +86,6 @@ st.markdown("""
         padding: 16px 20px;
         margin: 12px 0;
     }
-
-    /* Tabla */
     .dataframe { border-radius: 8px; overflow: hidden; }
     .dataframe th { background: #01696F !important; color: white !important; }
     .dataframe td { background: #F9F8F5 !important; }
@@ -129,16 +97,11 @@ st.markdown("""
 # DATA LOADING
 # ──────────────────────────────────────────────
 @st.cache_data
-def load_workbook(path):
-    return openpyxl.load_workbook(path, data_only=True)
-
-@st.cache_data
 def get_resumen(path):
-    """Lee la hoja Resumen del Excel con valores calculados."""
     wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb["Resumen"]
     rows = []
-    for r in range(8, 17):  # filas 8-16 (regiones + total)
+    for r in range(8, 17):
         region = ws.cell(r, 2).value
         if region is None:
             continue
@@ -156,9 +119,9 @@ def get_resumen(path):
         })
     return pd.DataFrame(rows)
 
+
 @st.cache_data
 def get_escenarios(path):
-    """Lee la hoja Escenarios."""
     wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb["Escenarios"]
     data = {}
@@ -174,9 +137,9 @@ def get_escenarios(path):
         }
     return data
 
+
 @st.cache_data
 def get_historicos(path):
-    """Lee la hoja Datos Históricos."""
     wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb["Datos Históricos"]
     rows = []
@@ -195,9 +158,9 @@ def get_historicos(path):
         })
     return pd.DataFrame(rows)
 
+
 @st.cache_data
 def get_supuestos(path):
-    """Lee la hoja Supuestos."""
     wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb["Supuestos"]
     rows = []
@@ -213,9 +176,9 @@ def get_supuestos(path):
         })
     return pd.DataFrame(rows)
 
+
 @st.cache_data
 def get_proyecciones(path):
-    """Lee la hoja Proyecciones (flujo neto por región y año)."""
     wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb["Proyecciones"]
     years = list(range(2026, 2036))
@@ -223,12 +186,11 @@ def get_proyecciones(path):
                "Europa Meridional", "Europa Oriental", "África", "Oceanía y Resto"]
     all_rows = []
     for i, region in enumerate(regions):
-        base_row = 20 + i * 6  # filas: 20, 26, 32, 38, 44, 50, 56, 62
-        # Flujo neto está 4 filas debajo del header de región
+        base_row = 20 + i * 6
         net_row = base_row + 4
         row_data = {"Región": region}
         for j, year in enumerate(years):
-            col = 3 + j  # columnas C=3 hasta L=12
+            col = 3 + j
             val = ws.cell(net_row, col).value
             row_data[str(year)] = val if val is not None else 0
         all_rows.append(row_data)
@@ -239,15 +201,17 @@ def get_proyecciones(path):
 # HELPERS
 # ──────────────────────────────────────────────
 def file_download(path, label):
-    """Crea un botón de descarga para cualquier archivo."""
     data = Path(path).read_bytes()
     st.download_button(label, data, file_name=Path(path).name, mime="application/octet-stream")
 
+
 def display_pdf(path):
-    """Muestra un PDF embebido en base64."""
     with open(path, "rb") as f:
         pdf_bytes = base64.b64encode(f.read()).decode()
-    st.markdown(f'<iframe src="data:application/pdf;base64,{pdf_bytes}" width="100%" height="900px" type="application/pdf"></iframe>', unsafe_allow_html=True)
+    st.markdown(
+        f'<iframe src="data:application/pdf;base64,{pdf_bytes}" width="100%" height="900px" type="application/pdf"></iframe>',
+        unsafe_allow_html=True,
+    )
 
 
 # ──────────────────────────────────────────────
@@ -258,21 +222,35 @@ df_historicos = get_historicos(XLSX)
 escenarios = get_escenarios(XLSX)
 df_proyecciones = get_proyecciones(XLSX)
 
-# Separar total de regiones
 df_regiones = df_resumen[df_resumen["Región"] != "TOTAL GLOBAL"].copy()
 total_row = df_resumen[df_resumen["Región"] == "TOTAL GLOBAL"].iloc[0]
 
 
 # ──────────────────────────────────────────────
-# SIDEBAR
+# SIDEBAR (solo info/descargas — la navegación de páginas la gestiona
+# st.navigation en main.py, por eso NO hay st.sidebar.radio aquí)
 # ──────────────────────────────────────────────
 st.sidebar.title("🌍 Catástrofes vs EWS")
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Modelo de inversión en Alerta Temprana**")
 st.sidebar.markdown("Datos base: Aon, Swiss Re, Munich Re, EM-DAT, WMO/UNDRR")
 st.sidebar.markdown("---")
+st.sidebar.markdown("**Descargas**")
+file_download(XLSX, "📊 Descargar Excel")
+file_download(PDF_RESUMEN, "📄 PDF Resumen")
+file_download(PDF_SESGOS, "⚠️ PDF Sesgos")
+file_download(IMG_INFOGRAFIA, "🖼️ Infografía")
+file_download(IMG_SESGOS, "⚠️ Infografía Sesgos")
+st.sidebar.markdown("---")
+st.sidebar.caption("© 2026 | Perplexity Computer")
 
-pagina = st.sidebar.radio("Navegación", [
+
+# ──────────────────────────────────────────────
+# TÍTULO Y TABS (reemplaza al antiguo st.sidebar.radio)
+# ──────────────────────────────────────────────
+st.title("🌍 Catástrofes Naturales vs Inversión en Alerta Temprana")
+
+tab_resumen, tab_financiero, tab_historicas, tab_proyecciones, tab_escenarios, tab_docs, tab_sesgos = st.tabs([
     "📊 Resumen Ejecutivo",
     "💰 Modelo Financiero",
     "📉 Pérdidas Históricas",
@@ -282,27 +260,14 @@ pagina = st.sidebar.radio("Navegación", [
     "⚠️ Análisis de Sesgos",
 ])
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Descargas**")
-file_download(XLSX, "📊 Descargar Excel")
-file_download(PDF_RESUMEN, "📄 PDF Resumen")
-file_download(PDF_SESGOS, "⚠️ PDF Sesgos")
-file_download(IMG_INFOGRAFIA, "🖼️ Infografía")
-file_download(IMG_SESGOS, "⚠️ Infografía Sesgos")
-
-st.sidebar.markdown("---")
-st.sidebar.caption("© 2026 | Perplexity Computer")
-
 
 # ──────────────────────────────────────────────
-# PÁGINA: RESUMEN EJECUTIVO
+# TAB: RESUMEN EJECUTIVO
 # ──────────────────────────────────────────────
-if pagina == "📊 Resumen Ejecutivo":
-    st.title("📊 Resumen Ejecutivo")
+with tab_resumen:
     st.markdown("### Catástrofes Naturales vs Inversión en Alerta Temprana (EWS)")
     st.markdown("---")
 
-    # KPIs principales
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Pérdidas anuales globales", f"${total_row['Pérdidas Hist. ($B)']:.0f}B", "Promedio 2021-2025")
@@ -327,7 +292,6 @@ if pagina == "📊 Resumen Ejecutivo":
 
     st.markdown("---")
 
-    # Callout
     st.markdown("""
     <div class="callout">
     <h4>💡 Hallazgo clave</h4>
@@ -337,7 +301,6 @@ if pagina == "📊 Resumen Ejecutivo":
     </div>
     """, unsafe_allow_html=True)
 
-    # BCR por región
     st.subheader("BCR por Región")
     fig = px.bar(
         df_regiones.sort_values("BCR", ascending=True),
@@ -351,24 +314,20 @@ if pagina == "📊 Resumen Ejecutivo":
     fig.update_coloraxes(showscale=False)
     st.plotly_chart(fig, width="stretch")
 
-    # Infografía
     st.markdown("---")
     st.subheader("🖼️ Infografía Resumen")
     st.image(str(IMG_INFOGRAFIA), caption="Infografía — Catástrofes vs Alerta Temprana", width="stretch")
 
 
 # ──────────────────────────────────────────────
-# PÁGINA: MODELO FINANCIERO
+# TAB: MODELO FINANCIERO
 # ──────────────────────────────────────────────
-elif pagina == "💰 Modelo Financiero":
-    st.title("💰 Modelo Financiero por Región")
+with tab_financiero:
     st.markdown("### KPIs detallados — Escenario Base")
     st.markdown("---")
 
-    # Tabla completa
     st.subheader("Tabla de KPIs por Región")
     df_display = df_resumen.copy()
-    # Formatear columnas
     for col in ["Pérdidas Hist. ($B)", "Inversión EWS ($B)", "Pérdidas Evitadas 10a ($B)",
                 "Ahorro FR ($B)", "Beneficio Total ($B)", "Coste Total EWS ($B)"]:
         df_display[col] = df_display[col].apply(lambda x: f"${x:.1f}B")
@@ -379,7 +338,6 @@ elif pagina == "💰 Modelo Financiero":
 
     st.markdown("---")
 
-    # Gráficos interactivos
     col_a, col_b = st.columns(2)
     with col_a:
         st.subheader("Inversión EWS vs Beneficio Total")
@@ -419,10 +377,9 @@ elif pagina == "💰 Modelo Financiero":
 
 
 # ──────────────────────────────────────────────
-# PÁGINA: PÉRDIDAS HISTÓRICAS
+# TAB: PÉRDIDAS HISTÓRICAS
 # ──────────────────────────────────────────────
-elif pagina == "📉 Pérdidas Históricas":
-    st.title("📉 Pérdidas Históricas por Catástrofes Naturales")
+with tab_historicas:
     st.markdown("### 2021-2025 — Datos por región ($B)")
     st.markdown("---")
 
@@ -430,23 +387,20 @@ elif pagina == "📉 Pérdidas Históricas":
 
     st.markdown("---")
 
-    # Gráfico de líneas
     st.subheader("Evolución de Pérdidas por Región (2021-2025)")
-    df_melt = df_historicos.melt(id_vars=["Región"], value_vars=["2021","2022","2023","2024","2025"],
+    df_melt = df_historicos.melt(id_vars=["Región"], value_vars=["2021", "2022", "2023", "2024", "2025"],
                                   var_name="Año", value_name="Pérdidas ($B)")
     fig5 = px.line(df_melt, x="Año", y="Pérdidas ($B)", color="Región",
                    markers=True, color_discrete_sequence=CHART_PALETTE)
     fig5.update_layout(height=450, plot_bgcolor="#F7F6F2", paper_bgcolor="#F7F6F2")
     st.plotly_chart(fig5, width="stretch")
 
-    # Stacked bar
     st.subheader("Composición de Pérdidas por Año")
     fig6 = px.bar(df_melt, x="Año", y="Pérdidas ($B)", color="Región",
                   color_discrete_sequence=CHART_PALETTE)
     fig6.update_layout(height=400, plot_bgcolor="#F7F6F2", paper_bgcolor="#F7F6F2")
     st.plotly_chart(fig6, width="stretch")
 
-    # Promedio
     st.markdown("---")
     st.subheader("Promedio de Pérdidas por Región (2021-2025)")
     fig7 = px.bar(df_historicos.sort_values("Promedio", ascending=True),
@@ -461,14 +415,12 @@ elif pagina == "📉 Pérdidas Históricas":
 
 
 # ──────────────────────────────────────────────
-# PÁGINA: PROYECCIONES
+# TAB: PROYECCIONES
 # ──────────────────────────────────────────────
-elif pagina == "🔮 Proyecciones 10 años":
-    st.title("🔮 Proyecciones a 10 Años por Región")
+with tab_proyecciones:
     st.markdown("### Flujo neto anual (2026-2035) — Escenario Base")
     st.markdown("---")
 
-    # Selector de región
     region_sel = st.selectbox("Selecciona una región:", df_proyecciones["Región"].tolist())
     row_sel = df_proyecciones[df_proyecciones["Región"] == region_sel].iloc[0]
 
@@ -491,7 +443,6 @@ elif pagina == "🔮 Proyecciones 10 años":
                        height=400, plot_bgcolor="#F7F6F2", paper_bgcolor="#F7F6F2")
     st.plotly_chart(fig8, width="stretch")
 
-    # Heatmap de todas las regiones
     st.markdown("---")
     st.subheader("Mapa de Calor — Flujo Neto por Región y Año")
     df_heat = df_proyecciones.set_index("Región")
@@ -501,21 +452,18 @@ elif pagina == "🔮 Proyecciones 10 años":
     fig9.update_layout(height=450, plot_bgcolor="#F7F6F2", paper_bgcolor="#F7F6F2")
     st.plotly_chart(fig9, width="stretch")
 
-    # Tabla
     st.markdown("---")
     st.subheader("Tabla Detallada de Proyecciones")
     st.dataframe(df_proyecciones, width="stretch", hide_index=True)
 
 
 # ──────────────────────────────────────────────
-# PÁGINA: ESCENARIOS
+# TAB: ESCENARIOS
 # ──────────────────────────────────────────────
-elif pagina == "📈 Comparativa de Escenarios":
-    st.title("📈 Comparativa de Escenarios")
+with tab_escenarios:
     st.markdown("### Conservador vs Base vs Optimista")
     st.markdown("---")
 
-    # Tabla de escenarios
     esc_data = []
     for metric, vals in escenarios.items():
         esc_data.append({
@@ -530,7 +478,6 @@ elif pagina == "📈 Comparativa de Escenarios":
 
     st.markdown("---")
 
-    # Gráficos comparativos
     col_a, col_b = st.columns(2)
 
     with col_a:
@@ -544,7 +491,6 @@ elif pagina == "📈 Comparativa de Escenarios":
                                textposition="outside"))
         fig10.update_layout(height=400, yaxis_title="BCR (x)",
                            plot_bgcolor="#F7F6F2", paper_bgcolor="#F7F6F2")
-        # Línea de referencia 3:1
         fig10.add_hline(y=3, line_dash="dash", line_color="#964219",
                        annotation_text="Umbral McKinsey 3:1")
         st.plotly_chart(fig10, width="stretch")
@@ -583,10 +529,9 @@ elif pagina == "📈 Comparativa de Escenarios":
 
 
 # ──────────────────────────────────────────────
-# PÁGINA: DOCUMENTACIÓN
+# TAB: DOCUMENTACIÓN
 # ──────────────────────────────────────────────
-elif pagina == "📄 Documentación":
-    st.title("📄 Documentación")
+with tab_docs:
     st.markdown("---")
 
     st.subheader("PDF Resumen Ejecutivo")
@@ -604,10 +549,9 @@ elif pagina == "📄 Documentación":
 
 
 # ──────────────────────────────────────────────
-# PÁGINA: ANÁLISIS DE SESGOS
+# TAB: ANÁLISIS DE SESGOS
 # ──────────────────────────────────────────────
-elif pagina == "⚠️ Análisis de Sesgos":
-    st.title("⚠️ Análisis de Sesgos Socio-Político-Culturales")
+with tab_sesgos:
     st.markdown("### Los 6 sesgos críticos del modelo que todo inversor debe conocer")
     st.markdown("---")
 
@@ -620,7 +564,6 @@ elif pagina == "⚠️ Análisis de Sesgos":
     </div>
     """, unsafe_allow_html=True)
 
-    # KPIs de sesgos
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Desastres sin datos de daños", "41.5%", "EM-DAT")
@@ -633,13 +576,11 @@ elif pagina == "⚠️ Análisis de Sesgos":
 
     st.markdown("---")
 
-    # Infografía
     st.subheader("Infografía de Sesgos")
     st.image(str(IMG_SESGOS), caption="Análisis visual de los 6 sesgos críticos", width="stretch")
 
     st.markdown("---")
 
-    # PDF completo
     st.subheader("PDF — Análisis Completo de Sesgos")
     st.markdown("7 páginas con análisis detallado de cada sesgo, fuentes académicas y recomendaciones de mitigación.")
     display_pdf(PDF_SESGOS)

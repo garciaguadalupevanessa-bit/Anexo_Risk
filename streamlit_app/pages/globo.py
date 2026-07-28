@@ -1,15 +1,9 @@
 """
-GeoRisk Finder — Demo (globo 3D)
-=================================
+Página: GeoRisk Finder — Mapa global de riesgo geológico
 Streamlit + pydeck (deck.gl GlobeView) vía streamlit-deckgl.
 
-Esqueleto listo para enchufar los CSVs reales en cuanto lleguen:
-- data/processed/clusters_finales.csv (Persona 5)
-- docs/interpretacion_clusters.csv (Persona 6)
-- docs/casos_estudio.csv (Persona 6)
-- data/processed/grid_features.csv (tú)
-
-Ejecutar con: streamlit run demo/app.py
+Se ejecuta como página dentro de main.py (st.navigation), no de forma
+independiente. NO lleva st.set_page_config aquí.
 """
 
 import time
@@ -25,45 +19,50 @@ import streamlit as st
 from streamlit_deckgl import st_deckgl
 from streamlit_folium import st_folium
 
-# ---------------------------------------------------------------------------
-# Configuración
-# ---------------------------------------------------------------------------
-
-DATA_DIR = Path("data/processed")
+# ──────────────────────────────────────────────
+# CONFIG
+# ──────────────────────────────────────────────
+DATA_DIR = Path(__file__).parent.parent.parent / "data" / "processed"
 
 CLUSTERS_PATH = DATA_DIR / "cluster_labels.csv"
 INTERPRETACION_PATH = DATA_DIR / "interpretacion_clusters.csv"
 CASOS_ESTUDIO_PATH = DATA_DIR / "casos_estudio.csv"
 GRID_FEATURES_PATH = DATA_DIR / "grid_features.csv"
 
-# Paleta fallback por nivel de riesgo genérico (si no se puede calcular
-# el riesgo dominante por tipo, ej. faltan columnas nivel_sismico/etc.)
-COLOR_POR_RIESGO = {
-    "verde": [46, 204, 113],
-    "naranja": [230, 126, 34],
-    "rojo": [231, 76, 60],
-    "desconocido": [127, 140, 141],
+# Paleta compartida con financiero.py (tema Nexus teal), reutilizada
+# aquí para que ambas páginas se vean como una sola app coherente.
+COLORS = {
+    "bg": "#F7F6F2",
+    "surface": "#F9F8F5",
+    "text": "#28251D",
+    "muted": "#7A7974",
+    "primary": "#01696F",
+    "primary_dark": "#0C4E54",
+    "accent": "#20808D",
+    "terra": "#A84B2F",
+    "gold": "#D19900",
+    "mauve": "#944454",
+    "success": "#437A22",
+    "warning": "#964219",
 }
 
-# Paleta por TIPO de riesgo dominante + severidad. Así dos celdas "en rojo"
-# no significan lo mismo si una es sísmica y otra volcánica: cada tipo
-# tiene su propia familia de color, y solo la intensidad varía con el nivel.
+# Paleta por TIPO de riesgo dominante + severidad — reutiliza los tonos
+# terra/accent/gold de la paleta Nexus en vez de colores genéricos.
 COLOR_POR_TIPO_RIESGO = {
-    "sismico":     {"Bajo": [46, 204, 113], "Medio": [230, 126, 34], "Alto": [192, 57, 43]},   # verde -> rojo tierra
-    "ciclonico":   {"Bajo": [46, 204, 113], "Medio": [241, 196, 15], "Alto": [41, 128, 185]},   # verde -> azul viento
-    "volcanico":   {"Bajo": [46, 204, 113], "Medio": [230, 126, 34], "Alto": [211, 84, 0]},     # verde -> naranja fuego
-    "desconocido": {"Bajo": [127, 140, 141], "Medio": [127, 140, 141], "Alto": [127, 140, 141]},
+    "sismico":     {"Bajo": [67, 122, 34], "Medio": [209, 153, 0], "Alto": [168, 75, 47]},
+    "ciclonico":   {"Bajo": [67, 122, 34], "Medio": [209, 153, 0], "Alto": [32, 128, 141]},
+    "volcanico":   {"Bajo": [67, 122, 34], "Medio": [209, 153, 0], "Alto": [150, 66, 25]},
+    "desconocido": {"Bajo": [122, 121, 116], "Medio": [122, 121, 116], "Alto": [122, 121, 116]},
 }
 
-COLOR_RUIDO_DBSCAN = [149, 165, 166]  # gris — celdas "de ruido" / riesgo atípico
-COLOR_CASO_ESTUDIO = [241, 196, 15]   # amarillo — marcadores destacados
-COLOR_GDACS = [155, 89, 182]          # morado — incidentes en vivo
+COLOR_RUIDO_DBSCAN = [122, 121, 116]
+COLOR_CASO_ESTUDIO = [209, 153, 0]
+COLOR_GDACS = [148, 68, 84]
 
-# Paleta del propio globo (fondo espacial + océano + tierra)
-COLOR_FONDO_ESPACIO = "#05070d"
-COLOR_OCEANO = [8, 20, 45]
-COLOR_TIERRA = [35, 40, 45]
-COLOR_BORDES_PAISES = [90, 100, 110]
+COLOR_FONDO_ESPACIO = "#0D1B2A"
+COLOR_OCEANO = [13, 27, 42]
+COLOR_TIERRA = [40, 37, 29]
+COLOR_BORDES_PAISES = [122, 121, 116]
 
 GDACS_EVENTS_URL = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/EVENTS4APP"
 
@@ -71,12 +70,63 @@ SATELLITE_TILE_URL = (
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
 )
 
-st.set_page_config(page_title="GeoRisk Finder", layout="wide")
+# ──────────────────────────────────────────────
+# CSS — mismo tema visual que financiero.py
+# ──────────────────────────────────────────────
+st.markdown("""
+<style>
+    .stApp { background-color: #F7F6F2; }
+    h1, h2, h3 { color: #01696F !important; font-family: 'DM Sans', 'Inter', sans-serif; }
+    div[data-testid="stMetric"] {
+        background: #F9F8F5;
+        border: 1px solid #D4D1CA;
+        border-radius: 10px;
+        padding: 16px 20px;
+    }
+    div[data-testid="stMetric"] label { color: #7A7974; font-size: 0.85rem; }
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
+        color: #01696F;
+        font-weight: 800;
+    }
+    section[data-testid="stSidebar"] { background: #0D1B2A; }
+    section[data-testid="stSidebar"] * { color: #E0E1DD; }
+    section[data-testid="stSidebar"] .stSelectbox label,
+    section[data-testid="stSidebar"] .stRadio label,
+    section[data-testid="stSidebar"] .stCheckbox label,
+    section[data-testid="stSidebar"] .stTextInput label { color: #9AB0B4; }
+    .stDownloadButton > button {
+        background: #01696F;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 24px;
+        font-weight: 600;
+    }
+    .stDownloadButton > button:hover { background: #0C4E54; }
+    .callout {
+        background: #F9F8F5;
+        border-left: 4px solid #01696F;
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 12px 0;
+    }
+    .callout-warn {
+        background: #FFF8F0;
+        border-left: 4px solid #964219;
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 12px 0;
+    }
+    .dataframe { border-radius: 8px; overflow: hidden; }
+    .dataframe th { background: #01696F !important; color: white !important; }
+    .dataframe td { background: #F9F8F5 !important; }
+</style>
+""", unsafe_allow_html=True)
 
 
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 # Utilidades de texto (búsqueda insensible a tildes)
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 
 def _sin_tildes(texto: str) -> str:
     if not isinstance(texto, str):
@@ -95,10 +145,9 @@ NOMBRES_DISPLAY = {
 }
 
 
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 # Carga de datos (con caché) — cae a datos sintéticos si el fichero no existe
-# ---------------------------------------------------------------------------
-
+# ──────────────────────────────────────────────
 
 def _datos_sinteticos_clusters(n=300, seed=42):
     rng = np.random.default_rng(seed)
@@ -185,7 +234,7 @@ def _datos_sinteticos_grid_features(n=300, seed=1):
 def cargar_csv_o_sintetico(path: Path, _generador_sintetico):
     if path.exists():
         return pd.read_csv(path)
-    st.sidebar.warning(f"⚠️ No encontrado: {path} — usando datos sintéticos de relleno.")
+    st.sidebar.warning(f"⚠️ No encontrado: {path.name} — usando datos sintéticos de relleno.")
     return _generador_sintetico()
 
 
@@ -212,7 +261,7 @@ def _tooltip_celda(row) -> str:
     aviso_ruido = ""
     if row.get("cluster_dbscan") == -1:
         aviso_ruido = (
-            "<br/><i style='color:#e67e22'>⚠️ Celda atípica (ruido DBSCAN): "
+            "<br/><i style='color:#D19900'>⚠️ Celda atípica (ruido DBSCAN): "
             "los datos reales de esta celda pueden diferir del perfil "
             "típico de su cluster asignado.</i>"
         )
@@ -300,7 +349,6 @@ def normalizar_interpretacion(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# Mismos bounding boxes que usó Persona 6 en el notebook 06
 COUNTRY_BBOXES = {
     "Japon":     (24.0, 46.0, 122.0, 146.0),
     "Chile":     (-56.0, -17.5, -76.0, -66.0),
@@ -340,19 +388,16 @@ def normalizar_casos_estudio(df: pd.DataFrame) -> pd.DataFrame:
         },
     )
     df["texto_caso_estudio"] = (
-        "Cluster dominante: " + df["cluster_dominante"].astype(str)
-        + " (" + df["pct_cluster_dominante"].astype(str) + "% de celdas). "
-        + df["nombre_negocio_dominante"].astype(str)
-        + " — " + df["n_celdas"].astype(str) + " celdas analizadas."
+        "Perfil dominante: " + df["nombre_negocio_dominante"].astype(str)
+        + " (" + df["pct_cluster_dominante"].astype(str) + "% de las "
+        + df["n_celdas"].astype(str) + " celdas). "
+        + "El resto puede pertenecer a otros perfiles de riesgo."
     )
 
     return df
 
 
 def _riesgo_dominante(row):
-    """Determina qué tipo de peligro (sismico/ciclonico/volcanico) es el
-    dominante para el CLUSTER de esta celda, y con qué nivel. Se usa para
-    colorear por tipo, no solo por severidad genérica."""
     niveles = {
         "sismico": NIVEL_RANGO.get(row.get("nivel_sismico", "Bajo"), 0),
         "ciclonico": NIVEL_RANGO.get(row.get("nivel_ciclonico", "Bajo"), 0),
@@ -364,11 +409,6 @@ def _riesgo_dominante(row):
 
 
 def _muestrear_preservando_riesgo(df, max_puntos, col_severidad="severidad", umbral=0.5):
-    """Muestreo estratificado: conserva SIEMPRE las celdas con severidad
-    individual alta (no solo por color heredado de cluster), y solo
-    samplea aleatoriamente el resto de baja severidad. Evita que zonas
-    pequeñas pero críticas (ej. archipiélagos volcánicos) desaparezcan
-    por pura mala suerte del muestreo aleatorio."""
     if col_severidad not in df.columns:
         if len(df) > max_puntos:
             return df.sample(max_puntos, random_state=0)
@@ -388,9 +428,9 @@ def _muestrear_preservando_riesgo(df, max_puntos, col_severidad="severidad", umb
     return pd.concat([prioritarios, resto])
 
 
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 # Carga y merge
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 
 clusters = cargar_csv_o_sintetico(CLUSTERS_PATH, _datos_sinteticos_clusters)
 clusters = clusters.rename(columns={
@@ -433,24 +473,18 @@ mapa = asegurar_columnas(
 
 mapa = limpiar_nan_global(mapa)
 
-# --- Color por TIPO de riesgo dominante (no solo severidad genérica) ---
 dominante = mapa.apply(_riesgo_dominante, axis=1)
 mapa["tipo_riesgo_dominante"] = dominante.map(lambda t: t[0])
 mapa["nivel_riesgo_dominante"] = dominante.map(lambda t: t[1])
 mapa["color_rgb"] = mapa.apply(
     lambda r: COLOR_POR_TIPO_RIESGO.get(
         r["tipo_riesgo_dominante"], COLOR_POR_TIPO_RIESGO["desconocido"]
-    ).get(r["nivel_riesgo_dominante"], [127, 140, 141]),
+    ).get(r["nivel_riesgo_dominante"], [122, 121, 116]),
     axis=1,
 )
 
 mapa["tooltip_html"] = mapa.apply(_tooltip_celda, axis=1)
 
-# ---------------------------------------------------------------------------
-# Severidad y radio visual por celda (basado en datos REALES de la celda,
-# no en la etiqueta heredada del cluster — así el muestreo estratificado
-# prioriza correctamente celdas individualmente peligrosas)
-# ---------------------------------------------------------------------------
 RADIO_MIN_M = 15_000
 RADIO_MAX_M = 60_000
 
@@ -465,11 +499,13 @@ mapa["severidad"] = pd.concat(
 mapa["radio_m"] = RADIO_MIN_M + mapa["severidad"] * (RADIO_MAX_M - RADIO_MIN_M)
 
 
-# ---------------------------------------------------------------------------
-# Sidebar — controles
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
+# Sidebar — controles (info/descargas se gestionan aparte; aquí solo
+# controles propios de esta página, la navegación la maneja main.py)
+# ──────────────────────────────────────────────
 
-st.sidebar.title("🌍 GeoRisk Finder")
+st.sidebar.title("🌐 GeoRisk Finder")
+st.sidebar.markdown("---")
 modo_vista = st.sidebar.radio(
     "Modo de vista",
     ["🌐 Globo estilizado (overview)", "🛰️ Satélite (zoom real)"],
@@ -514,7 +550,7 @@ LEYENDA_TIPOS = [
     ("Sísmico (Alto)", COLOR_POR_TIPO_RIESGO["sismico"]["Alto"]),
     ("Ciclónico (Alto)", COLOR_POR_TIPO_RIESGO["ciclonico"]["Alto"]),
     ("Volcánico (Alto)", COLOR_POR_TIPO_RIESGO["volcanico"]["Alto"]),
-    ("Riesgo bajo (cualquier tipo)", [46, 204, 113]),
+    ("Riesgo bajo (cualquier tipo)", [67, 122, 34]),
 ]
 for etiqueta, color in LEYENDA_TIPOS:
     st.sidebar.markdown(
@@ -533,11 +569,13 @@ st.sidebar.markdown(
     f"<span style='color: rgb({COLOR_GDACS[0]},{COLOR_GDACS[1]},{COLOR_GDACS[2]})'>●</span> Incidente en vivo (GDACS)",
     unsafe_allow_html=True,
 )
+st.sidebar.markdown("---")
+st.sidebar.caption("© 2026 | Perplexity Computer")
 
 
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 # Modo satélite (Folium + teselas Esri reales)
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 
 def _color_hex(rgb):
     return "#%02x%02x%02x" % tuple(int(c) for c in rgb)
@@ -568,7 +606,7 @@ def render_mapa_satelite(
         folium.CircleMarker(
             location=[fila["lat"], fila["lon"]],
             radius=max(3, float(fila.get("severidad", 0)) * 10 + 3),
-            color=_color_hex(fila.get("color_rgb", [127, 140, 141])),
+            color=_color_hex(fila.get("color_rgb", [122, 121, 116])),
             fill=True,
             fill_opacity=0.75,
             weight=1,
@@ -619,9 +657,9 @@ def render_mapa_satelite(
     return m
 
 
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 # Modo globo (pydeck _GlobeView, estilizado)
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
 
 COUNTRIES_GEOJSON = (
     "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_scale_rank.geojson"
@@ -744,16 +782,16 @@ def construir_deck_globo(
         parameters={"cull": True},
         tooltip={
             "html": "{tooltip_html}",
-            "style": {"backgroundColor": "#1e1e1e", "color": "white"},
+            "style": {"backgroundColor": "#0D1B2A", "color": "#E0E1DD"},
         },
     )
     deck.css_background_color = COLOR_FONDO_ESPACIO
     return deck
 
 
-# ---------------------------------------------------------------------------
-# Layout
-# ---------------------------------------------------------------------------
+# ──────────────────────────────────────────────
+# Layout de la página
+# ──────────────────────────────────────────────
 
 st.title("🌍 GeoRisk Finder — Mapa global de riesgo geológico")
 st.caption(
@@ -773,7 +811,6 @@ else:
     )
     evento = st_deckgl(deck, height=850, key="georisk-globe")
 
-    # --- Tarjeta de detalle al hacer click sobre un punto ---
     objeto_click = None
     if isinstance(evento, dict):
         objeto_click = evento.get("object") or evento.get("picked") or evento.get("data")
@@ -794,11 +831,13 @@ else:
             col2.metric("Riesgo ciclónico", objeto_click.get("nivel_ciclonico", "—"))
             col3.metric("Riesgo volcánico", objeto_click.get("nivel_volcanico", "—"))
             if objeto_click.get("cluster_dbscan") == -1:
-                st.warning(
-                    "⚠️ Esta celda es **ruido DBSCAN**: sus datos individuales no encajan "
-                    "bien con el perfil promedio de su cluster. Trata la etiqueta de "
-                    "riesgo con cautela para esta zona en concreto."
-                )
+                st.markdown("""
+                <div class="callout-warn">
+                <p>⚠️ Esta celda es <b>ruido DBSCAN</b>: sus datos individuales no encajan
+                bien con el perfil promedio de su cluster. Trata la etiqueta de riesgo
+                con cautela para esta zona en concreto.</p>
+                </div>
+                """, unsafe_allow_html=True)
 
         st.write(
             objeto_click.get("descripcion_negocio")
@@ -812,18 +851,17 @@ else:
         st.caption("💡 Haz click sobre un punto del globo para ver su tarjeta de detalle aquí.")
 
 with st.expander("¿Qué se está mostrando?"):
-    st.markdown(
-        """
-- **Color** → tipo de riesgo dominante del cluster de esa celda: rojo tierra = sísmico,
-  azul = ciclónico, naranja fuego = volcánico. La intensidad indica el nivel (bajo/medio/alto).
+    st.markdown("""
+- **Color** → tipo de riesgo dominante del cluster de esa celda: terra = sísmico,
+  accent (teal) = ciclónico, warning (naranja oscuro) = volcánico. La intensidad indica
+  el nivel (bajo/medio/alto).
 - **Puntos grises** → celdas marcadas como "ruido" por DBSCAN: la etiqueta de su cluster
   puede no representar bien los datos reales de esa celda individual.
-- **Puntos amarillos** → casos de estudio destacados (Japón, Chile, Venezuela, España).
-- **Puntos morados** → incidentes activos ahora mismo, vía la API pública de GDACS.
+- **Puntos dorados** → casos de estudio destacados (Japón, Chile, Venezuela, España).
+- **Puntos mauve** → incidentes activos ahora mismo, vía la API pública de GDACS.
 
 El muestreo de puntos en pantalla prioriza siempre las celdas de mayor severidad individual,
 para que zonas pequeñas pero críticas (ej. archipiélagos volcánicos) no desaparezcan por azar.
-"""
-    )
+""")
 
 st.caption(f"Última actualización de incidentes GDACS: {time.strftime('%Y-%m-%d %H:%M:%S')}")
