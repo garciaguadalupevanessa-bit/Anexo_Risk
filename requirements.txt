@@ -20,3 +20,6 @@ streamlit-deckgl
 branca
 folium
 streamlit-folium>=0.27
+openpyxl
+geopandas 
+shapely

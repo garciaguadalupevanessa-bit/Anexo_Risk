@@ -12,8 +12,6 @@ __pycache__/
 .pytest_cache/
 .vscode/
 notebooks/.ipynb_checkpoints/
-*.pdf
-*.png
 models/
 *.html
 !georisk_globe/frontend/index.html
