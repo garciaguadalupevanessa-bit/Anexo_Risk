@@ -77,7 +77,7 @@ def normalizar_interpretacion(df: pd.DataFrame) -> pd.DataFrame:
     if "nivel_riesgo" not in df.columns:
         niveles = [c for c in ("nivel_sismico", "nivel_ciclonico", "nivel_volcanico") if c in df.columns]
         if niveles:
-            rango_max = df[niveles].applymap(lambda v: NIVEL_RANGO.get(v, 0)).max(axis=1)
+            rango_max = df[niveles].map(lambda v: NIVEL_RANGO.get(v, 0)).max(axis=1)
             df["nivel_riesgo"] = rango_max.map(RANGO_A_COLOR)
         else:
             df["nivel_riesgo"] = "desconocido"
