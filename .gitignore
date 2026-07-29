@@ -19,3 +19,4 @@ profiling_reports/
 streamlit_*.log
 _check_*.py
 !data/processed/cluster_labels.csv
+dashboard_catastrofes_ews (1).zip
