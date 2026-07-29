@@ -1,16 +1,35 @@
+"""
+GeoRisk Finder — Punto de entrada del dashboard.
+
+Configura la app y define la navegación multipagina. Cada página vive
+en streamlit_app/pages/ y comparte el tema visual definido en theme.py.
+"""
+
+from pathlib import Path
+
 import streamlit as st
 
+ASSETS = Path(__file__).parent / "assets"
+
 st.set_page_config(
-    page_title="GeoRisk Finder + Catástrofes vs EWS",
-    page_icon="🌍",
+    page_title="GeoRisk Finder",
+    page_icon=str(ASSETS / "favicon.png") if (ASSETS / "favicon.png").exists() else "🌐",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-pagina_financiero = st.Page("pages/financiero.py", title="Catástrofes vs Alerta Temprana", icon="💰", default=True)
-pagina_globo = st.Page("pages/globo.py", title="Mapa de Riesgo Global", icon="🌐")
-pagina_aseguradora = st.Page("pages/1_Aseguradora.py", title="Panel Aseguradora", icon="🏢")  # pon el nombre exacto del archivo
-pagina_humanitaria = st.Page("pages/2_Ayuda_Humanitaria.py", title="Ayuda Humanitaria", icon="🆘")   # idem
+pagina_mapa = st.Page(
+    "pages/mapa_global.py", title="Mapa global de riesgo", icon=":material/public:", default=True
+)
+pagina_financiero = st.Page(
+    "pages/modelo_financiero.py", title="Modelo financiero EWS", icon=":material/finance_mode:"
+)
+pagina_aseguradora = st.Page(
+    "pages/panel_aseguradora.py", title="Panel aseguradora", icon=":material/domain:"
+)
+pagina_humanitaria = st.Page(
+    "pages/ayuda_humanitaria.py", title="Ayuda humanitaria", icon=":material/emergency:"
+)
 
-navegacion = st.navigation([pagina_financiero, pagina_globo, pagina_aseguradora, pagina_humanitaria])
-navegacion.run()
+nav = st.navigation([pagina_mapa, pagina_financiero, pagina_aseguradora, pagina_humanitaria])
+nav.run()
