@@ -1,32 +1,38 @@
-# Dashboard Catástrofes vs Alerta Temprana
+# GeoRisk Finder — App Unificada
 
-Dashboard interactivo en Streamlit que presenta el modelo financiero comparativo entre el coste histórico de catástrofes naturales y la inversión en sistemas de alerta temprana (EWS).
+Dashboard multi-página en Streamlit que integra el modelo financiero de catástrofes vs alerta temprana, el mapa de riesgo global 3D, el simulador asegurador y el índice de priorización humanitaria.
 
 ## Estructura
 
 ```
 streamlit_app/
-├── app.py                  # App principal (7 páginas)
-├── requirements.txt        # Dependencias Python
-├── README.md               # Este archivo
-└── assets/                 # Documentos generados
+├── main.py                  # Entry point (st.navigation)
+├── pages/
+│   ├── modelo_financiero.py # Dashboard financiero EWS
+│   ├── mapa_global.py       # Mapa de riesgo global 3D
+│   ├── panel_aseguradora.py # Simulador de prima relativa
+│   └── ayuda_humanitaria.py # Priorización ayuda humanitaria
+├── theme.py                 # Sistema de diseño compartido (paleta Nexus teal)
+├── data_utils.py            # Utilidades de carga de datos con fallback sintético
+├── requirements.txt         # Dependencias Python
+└── assets/
     ├── Modelo_Catastrofes_Alerta_Temprana.xlsx   # Modelo financiero (6 hojas)
-    ├── Resumen_Ejecutivo_Catastrofes_EWS.pdf      # PDF resumen ejecutivo (4 págs)
-    ├── Analisis_Sesgos_Modelo_Catastrofes.pdf      # PDF análisis de sesgos (7 págs)
+    ├── Resumen_Ejecutivo_Catastrofes_EWS.pdf      # PDF resumen ejecutivo
+    ├── Analisis_Sesgos_Modelo_Catastrofes.pdf      # PDF análisis de sesgos
     ├── infografia_completa.png                     # Infografía principal
     ├── infografia_sesgos.png                       # Infografía de sesgos
-    └── chart_escenarios.png                        # Gráfico comparativo de escenarios
+    ├── chart_escenarios.png                        # Gráfico comparativo
+    ├── logo_georisk.png                            # Logo del proyecto
+    └── favicon.png                                 # Favicon
 ```
 
 ## Instalación
 
-### Opción A: Entorno local con VS Code
-
 ```bash
-# 1. Abrir la carpeta en VS Code
-code streamlit_app/
+# 1. Ir a la raíz del proyecto
+cd GeoRisk_Finder/
 
-# 2. Crear entorno virtual (recomendado)
+# 2. Crear entorno virtual
 python -m venv venv
 source venv/bin/activate        # Mac/Linux
 # venv\Scripts\activate         # Windows
@@ -34,30 +40,18 @@ source venv/bin/activate        # Mac/Linux
 # 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Ejecutar la app
-streamlit run app.py
-```
-
-### Opción B: Conda
-
-```bash
-conda create -n catrostrofes python=3.11
-conda activate catrostrofes
-pip install -r requirements.txt
-streamlit run app.py
+# 4. Ejecutar la app unificada
+streamlit run streamlit_app/main.py
 ```
 
 ## Páginas del Dashboard
 
-| Página | Contenido |
-|--------|-----------|
-| **Resumen Ejecutivo** | KPIs globales, BCR por región, infografía |
-| **Modelo Financiero** | Tabla de KPIs por región, gráficos de inversión vs beneficio |
-| **Pérdidas Históricas** | Evolución 2021-2025 por región |
-| **Proyecciones 10 años** | Flujo neto anual por región, mapa de calor |
-| **Comparativa de Escenarios** | Conservador vs Base vs Optimista |
-| **Documentación** | PDF resumen ejecutivo embebido + descargas |
-| **Análisis de Sesgos** | 6 sesgos críticos, infografía y PDF completo |
+| Página | Descripción |
+|--------|-------------|
+| **Mapa global de riesgo** | Visualización 3D de clusters K-Means/DBSCAN sobre grid H3, incidentes GDACS en vivo, modo satélite |
+| **Modelo financiero EWS** | KPIs globales, BCR por región, escenarios (Conservador/Base/Optimista), proyecciones 10 años, análisis de sesgos |
+| **Panel aseguradora** | Simulador de prima relativa por zona geográfica basado en perfiles de riesgo del grid |
+| **Ayuda humanitaria** | Índice compuesto de prioridad por país (severidad + vulnerabilidad + población) |
 
 ## Datos Base
 
@@ -70,6 +64,6 @@ streamlit run app.py
 
 ## Personalización
 
-- Para cambiar escenarios, edita la hoja **Supuestos** del Excel.
-- Los gráficos usan Plotly (interactivos: zoom, hover, descarga PNG).
-- Los colores siguen la paleta Nexus (teal #01696F como acento principal).
+- Los colores siguen la paleta Nexus (teal `#01696F`) definida en `theme.py`.
+- Los datos financieros se cargan desde `Modelo_Catastrofes_Alerta_Temprana.xlsx`; edita las hojas **Supuestos** o **Escenarios** para cambiar las proyecciones.
+- Los datos del grid (clusters, features) se cargan desde `data/processed/` con fallback a datos sintéticos si los CSVs no existen.
