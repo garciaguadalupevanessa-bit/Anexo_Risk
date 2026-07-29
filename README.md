@@ -1,7 +1,7 @@
 # GeoRisk Finder 🌍
 > **Plataforma de Inteligencia Geoespacial para la Evaluación de Riesgos Compuestos y Decisiones de Inversión en Resiliencia Climática**
 
-![GeoRisk Finder Banner](https://raw.githubusercontent.com/jowel2701/GeoRisk_Finder/main/streamlit_app/assets/banner_georisk.png)
+![GeoRisk Finder](streamlit_app/assets/logo_georisk.png)
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?style=flat&logo=python)
 ![Scikit-Learn](https://img.shields.io/badge/Machine_Learning-Scikit--Learn-F7931E?style=flat&logo=scikit-learn)
@@ -33,7 +33,9 @@ Las catástrofes naturales generan pérdidas globales superiores a los **$300.00
 * 🌪️ **Integración Multi-Peligro:** Ingesta y normalización en tiempo real de registros USGS (sismos), IBTrACS/NOAA (ciclones) e IGN (catálogo histórico).
 * 🤖 **Reducción de Dimensionalidad y Clustering:** Pipeline PCA (85% varianza retenida) + K-Means (4 perfiles macro de riesgo) + DBSCAN (detección de celdas atípicas extremas).
 * 📊 **Dashboard de Impacto Financiero (Streamlit):** Módulo interactivo de simulación de escenarios (Conservador, Base, Optimista) con cálculo del Ratio Beneficio-Coste (BCR).
-* 🌐 **Demo 3D Interactiva:** Visualizador en globo terraqueo con capas dinámicas de amenaza y buscador de ciudades.
+* 🌐 **Mapa de Riesgo Global 3D:** Visualizador en globo terráqueo con capas dinámicas de amenaza, buscador de ciudades e incidentes en vivo (GDACS).
+* 🏢 **Panel Aseguradora:** Simulador de prima relativa por zona geográfica basado en perfiles de riesgo (K-Means/DBSCAN).
+* 🆘 **Ayuda Humanitaria:** Índice compuesto de prioridad por país combinando severidad física, vulnerabilidad económica y población.
 
 ---
 
@@ -45,34 +47,34 @@ Las catástrofes naturales generan pérdidas globales superiores a los **$300.00
 │                           GEORISK FINDER - END-TO-END PIPELINE                                   │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-  [ FUENTES EXTERNAS ]          [ INGESTA & LIMPIEZA ]          [ GRID H3 & FEATURES ]         [ ML & CLUSTERING ]         [ PRODUCTO ]
-  ───────────────────          ─────────────────────────        ───────────────────────        ─────────────────────        ──────────
-  ┌──────────────┐             ┌────────────────────┐           ┌────────────────────┐          ┌─────────────────┐         ┌────────────┐
-  │ USGS API     │────────────▶│ src/usgs_          │──────────▶│ src/features/      │─────────▶│ src/prepro-     │────────▶│ streamlit_ │
-  │ (Sismos M≥4.5│             │ earthquakes.py     │  raw CSV  │ grid.py            │  grid_   │ cessing.py      │  model  │ app/       │
-  │  1900-2026)  │             │ 01_eda_sismos.ipynb│           │ engineering.py     │ features │ 04_preprocesa-  │         │ (Dashboard │
-  └──────────────┘             └────────────────────┘           │ 03_grid_y_featu-   │ .csv     │ miento_pca.ipynb│         │ Financiero)│
-        │                                                      │ res.ipynb          │          │ src/clustering. │         └────────────┘
-        │                                                      └────────────────────┘          │ py              │               │
-        │                                                                     │               └─────────────────┘               │
-  ┌──────────────┐             ┌────────────────────┐                │                     │               │
-  │ IBTrACS      │────────────▶│ 02_eda_ciclones_   │────────────────┘                     │               ▼
-  │ (Ciclones    │             │ volcanes.ipynb     │                                  ┌─────────────────┐         ┌────────────┐
-  │  1970-2025)  │             │ src/features/      │                                  │ MLflow Tracking │         │ georisk_   │
-  └──────────────┘             │ ingestion.py       │                                  │ (Experimentos,  │         │ globe/     │
-        │                      └────────────────────┘                                  │  Métricas,      │         │ (Demo 3D   │
-        │                                                                               │  Artefactos,    │         │  Interact.)│
-  ┌──────────────┐             ┌────────────────────┐           ┌────────────────────┐  │  Model Registry)│         └────────────┘
+  [ FUENTES EXTERNAS ]          [ INGESTA & LIMPIEZA ]          [ GRID H3 & FEATURES ]         [ ML & CLUSTERING ]         [ PRODUCTO (Multi-página) ]
+  ───────────────────          ─────────────────────────        ───────────────────────        ─────────────────────        ─────────────────────────
+  ┌──────────────┐             ┌────────────────────┐           ┌────────────────────┐          ┌─────────────────┐         ┌────────────────────────┐
+  │ USGS API     │────────────▶│ src/usgs_          │──────────▶│ src/features/      │─────────▶│ src/             │────────▶│ streamlit_app/main.py  │
+  │ (Sismos M≥4.5│             │ earthquakes.py     │  raw CSV  │ grid.py            │  grid_   │ preprocessing.py │  model  │ ├── modelo_financiero  │
+  │  1900-2026)  │             │ 01_eda_sismos.ipynb│           │ engineering.py     │ features │ 04_preprocesa-  │         │ ├── mapa_global.py     │
+  └──────────────┘             └────────────────────┘           │ 03_grid_y_featu-   │ .csv     │ miento_pca.ipynb│         │ ├── panel_aseguradora  │
+        │                                                      │ res.ipynb          │          │ src/clustering. │         │ └── ayuda_humanitaria  │
+        │                                                      └────────────────────┘          │ py              │         └────────────────────────┘
+        │                                                                     │               └─────────────────┘                       │
+  ┌──────────────┐             ┌────────────────────┐                │                     │                                          ▼
+  │ IBTrACS      │────────────▶│ 02_eda_ciclones_   │────────────────┘                     │                              ┌────────────────────────┐
+  │ (Ciclones    │             │ volcanes.ipynb     │                                  ┌─────────────────┐               │ georisk_globe/         │
+  │  1970-2025)  │             │ src/features/      │                                  │ MLflow Tracking │               │ (Componentes frontend  │
+  └──────────────┘             │ ingestion.py       │                                  │ (Experimentos,  │               │  para mapa 3D)         │
+        │                      └────────────────────┘                                  │  Métricas,      │               └────────────────────────┘
+        │                                                                               │  Artefactos,    │
+  ┌──────────────┐             ┌────────────────────┐           ┌────────────────────┐  │  Model Registry)│
   │ NOAA/NCEI    │────────────▶│ (Volcanes, IGN)    │──────────▶│ src/h3_aggregator. │◀─┘                 │
   │ (Volcanes    │             │                    │           │ py (merge multi-   │                    │
   │  Históricos) │             └────────────────────┘           │ hazard por H3)   │                    │
   └──────────────┘                                              └────────────────────┘                    │
-                                                                                                      ▼
-                                                                                             ┌────────────┐
-                                                                                             │ outputs/   │
-                                                                                             │ figures/   │
-                                                                                             │ (PNG, HTML)│
-                                                                                             └────────────┘
+                                                                                                        ▼
+                                                                                               ┌────────────┐
+                                                                                               │ outputs/   │
+                                                                                               │ figures/   │
+                                                                                               │ (PNG, HTML)│
+                                                                                               └────────────┘
 ```
 
 ### Estructura de Carpetas
@@ -110,15 +112,23 @@ GeoRisk_Finder/
 │   ├── preprocessing.py          # Pipeline sklearn: Log1p → OneHot → Scaler → PCA
 │   ├── clustering.py             # K-Means (elbow/silhouette) + DBSCAN (k-dist)
 │   └── visualization.py          # Gráficos pro: Matplotlib/Plotly/Folium
-├── streamlit_app/                # Dashboard financiero (7 páginas)
-│   ├── app.py
+├── streamlit_app/                # App unificada multi-página (st.navigation)
+│   ├── main.py                   # Entry point del dashboard
+│   ├── pages/
+│   │   ├── modelo_financiero.py  # Dashboard financiero EWS
+│   │   ├── mapa_global.py        # Mapa de riesgo global 3D
+│   │   ├── panel_aseguradora.py  # Simulador de prima relativa
+│   │   └── ayuda_humanitaria.py  # Priorización ayuda humanitaria
+│   ├── theme.py                  # Sistema de diseño compartido
+│   ├── data_utils.py             # Utilidades de carga de datos
 │   ├── requirements.txt
 │   └── assets/
 │       ├── Modelo_Catastrofes_Alerta_Temprana.xlsx  # 6 hojas modelo financiero
 │       ├── Resumen_Ejecutivo_Catastrofes_EWS.pdf
 │       ├── Analisis_Sesgos_Modelo_Catastrofes.pdf
-│       └── banner_georisk.png
-├── georisk_globe/                # Demo 3D interactiva (Duo A - 2ª mitad)
+│       ├── logo_georisk.png
+│       └── favicon.png
+├── georisk_globe/                # Componentes frontend para mapa 3D
 │   ├── message_sender/
 │   └── layer_panel/
 ├── outputs/figures/              # Gráficos exportados para presentación
@@ -152,8 +162,8 @@ GeoRisk_Finder/
 ├── data/                         # Datasets procesados y muestras de trabajo
 ├── notebooks/                    # Pipeline analítico ordenado (01 EDA → 07 Casos Estudio)
 ├── src/                          # Código modular reutilizable (Ingesta, H3, PCA, Clustering)
-├── streamlit_app/                # App de análisis financiero y simulación de escenarios
-├── georisk_globe/                # Visualizador interactivo 3D del globo
+├── streamlit_app/                # App unificada multi-página (modelo_financiero, mapa_global, panel_aseguradora, ayuda_humanitaria)
+├── georisk_globe/                # Componentes frontend para mapa 3D interactivo
 ├── outputs/figures/              # Gráficos y mapas exportados
 ├── tests/                        # Suite de pruebas unitarias (Pytest)
 └── requirements.txt              # Dependencias del proyecto
@@ -174,10 +184,9 @@ source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Ejecutar el Dashboard de Negocio (Streamlit)
+### 2. Ejecutar la App Unificada (Streamlit)
 ```bash
-cd streamlit_app
-streamlit run app.py
+streamlit run streamlit_app/main.py
 ```
 
 ### 3. Ejecutar los Tests
