@@ -30,10 +30,8 @@
       <nav class="nexo-nav">
         <a href="mapa.html" class="active">Mapa</a>
         <a href="alertas.html">Alertas</a>
-        <a href="voluntariado.html">Voluntariado</a>
-        <a href="donaciones.html">Donaciones</a>
-        <a href="personas.html">Personas</a>
-        <a href="estoy-bien.html">Estoy bien</a>
+        <a href="../pages/donaciones.html">Ayudas</a>
+        <span id="intensityBadge" class="nexo-badge" style="margin-left:8px;background:var(--nexo-primary,#10b981)">0 total</span>
       </nav>
     </header>
 
@@ -51,12 +49,14 @@
           <label for="typeFilter"><strong>Filtrar:</strong></label>
           <select id="typeFilter">
             <option value="all">Todos los tipos</option>
-            <option value="agua">Agua</option>
-            <option value="alimento">Alimento</option>
-            <option value="medicina">Medicina</option>
-            <option value="refugio">Refugio</option>
-            <option value="herramientas">Herramientas</option>
-            <option value="transporte">Transporte</option>
+            <option value="agua">💧 Agua</option>
+            <option value="alimentos">🍞 Alimentos</option>
+            <option value="parafarmacia">💊 Parafarmacia</option>
+            <option value="ropa">👕 Ropa</option>
+            <option value="higiene">🧴 Higiene</option>
+            <option value="refugio">🏠 Refugio</option>
+            <option value="transporte">🚗 Transporte</option>
+            <option value="otros">📦 Otros</option>
           </select>
         </div>
 
@@ -78,12 +78,14 @@
             />          
 
             <select id="select-tipo" name="tipo">
-              <option value="agua">Agua</option>
-              <option value="alimento">Alimento</option>
-              <option value="medicina">Medicina</option>
-              <option value="refugio">Refugio</option>
-              <option value="herramientas">Herramientas</option>
-              <option value="transporte">Transporte</option>
+              <option value="agua">💧 Agua</option>
+              <option value="alimentos">🍞 Alimentos</option>
+              <option value="parafarmacia">💊 Parafarmacia</option>
+              <option value="ropa">👕 Ropa</option>
+              <option value="higiene">🧴 Higiene</option>
+              <option value="refugio">🏠 Refugio</option>
+              <option value="transporte">🚗 Transporte</option>
+              <option value="otros">📦 Otros</option>
             </select>
 
           <select id="select-prioridad" name="prioridad">
@@ -149,12 +151,9 @@
 
       const contenedorTarjetas = document.getElementById("contenedor-tarjetas");
 
-      // Llama a la API real para avanzar el estado. Se pasa como
-      // onStatusChange a cada NeedCardComponent; la tarjeta ya calcula
-      // el siguiente estado válido (abierta -> en_proceso -> cubierta),
-      // así que aquí solo hace falta reenviarlo al backend.
+      // 2 estados: abierta -> cubierta (sin en_proceso)
       async function cambiarEstado(id, estadoActual, siguienteEstado) {
-        const necesidadActualizada = await actualizarEstadoNecesidad(id, siguienteEstado);
+        const necesidadActualizada = await actualizarEstadoNecesidad(id, siguienteEstado || "cubierta");
 
         // Refrescar el mapa por si el color del marcador depende del estado.
         await loadNeedsFromAPI();
