@@ -1,6 +1,0 @@
-cluster,n_celdas,pct_celdas,nivel_sismico,nivel_ciclonico,nivel_volcanico,nombre_negocio,recomendacion
-0,3628,8.8,Alto,Alto,Alto,"Riesgo sismico alto, ciclonico alto, cercania volcanica alta","Riesgo ciclonico alto (10.1% de celdas). Exigir normativa de construccion anti-huracan. Ajustar la prima segun temporada ciclonica, no fija todo el ano."
-1,20094,48.8,Medio,Medio,Bajo,Riesgo mixto/moderado,"Riesgo sismico bajo (67.2% de celdas, el grupo mas grande). Prima de seguro estandar/baja. Buen candidato para desarrollo inmobiliario o infraestructura sin refuerzos especiales."
-2,12191,29.6,Bajo,Alto,Medio,"Riesgo sismico bajo, ciclonico alto",Riesgo alto en las tres dimensiones (solo 4.6% de celdas). Prima alta o cobertura especializada (reaseguro). Requiere inspeccion previa antes de asegurar cualquier activo.
-3,5033,12.2,Medio,Bajo,Medio,Riesgo ciclonico bajo,"Riesgo sismico alto (6.3% de celdas). Exigir normativa de construccion antisismica. Prima ajustada al riesgo sismico especificamente, sin sobre-cargar por ciclones (nivel medio)."
-4,216,0.5,Alto,Medio,Alto,"Riesgo sismico alto, cercania volcanica alta",Riesgo ciclonico bajo pero cercania volcanica alta (11.8% de celdas). Monitoreo de actividad volcanica periodico; el riesgo ciclonico no amerita sobreprima.
