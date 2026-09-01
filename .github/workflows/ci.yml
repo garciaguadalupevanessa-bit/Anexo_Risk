@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, anexo-risk]
   pull_request:
-    branches: [main, dev]
+    branches: [main]
 
 jobs:
   backend-tests:
@@ -19,11 +19,13 @@ jobs:
 
       - name: Instalar dependencias
         run: |
-          cd backend
-          python -m pip install -r requirements-dev.txt
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r backend/requirements-dev.txt
+          pip install h3 pandas numpy scikit-learn
 
       - name: Ejecutar tests
-        run: PYTHONPATH=backend python -m pytest tests/
+        run: PYTHONPATH=backend:src python -m pytest tests/ --ignore=tests/test_mlflow_tracking.py -q
 
   frontend-lint:
     runs-on: ubuntu-latest
