@@ -1,8 +1,8 @@
-# Reparto de trabajo del equipo
+# Reparto de trabajo — Anexo Risk (4p: Javi, Juan, Luis, Vanessa) — Producto Integral
 
-Base común montada por Adriana (que debe ser revisada por un jefe de cada equipo) + 4 equipos.
-Cada equipo tiene su propia pantalla y su propio backend, para que nadie se quede solo en
-front o solo en backend y todos tengan algo que enseñar en la demo de forma independiente.
+> **Evolución de NEXO:** `Anexo Risk` mantiene la misma app (mapa como protagonista, ALTO RIESGO desbloquea necesidades/ayudas) pero ahora con 4 personas cubriendo los 4 módulos. Cada persona es dueña **equitativa, sin solapes** de su módulo E2E (ver `docs/equipos/reparto-anexo-risk-4p-equitativo.md` y `reparto-anexo-risk-4p-detallado.md`). **Producto integral:** ningún módulo brilla solo — la demo es `alerta → zona → necesidad → ayuda → mapa`.
+
+Base común montada y ya en `dev` (91a7647) + Vercel (`api/index.py` + `vercel.json`) con 4 equipos verticales y `anexo-risk` como rama única de integración (no `main`).
 
 ## Base común (ya montada)
 - Punto de entrada de la app (`index.html`, menú, logo) y estilos generales (colores, tipografía, tarjetas, botones).
@@ -12,27 +12,22 @@ front o solo en backend y todos tengan algo que enseñar en la demo de forma ind
 
 > Base común mergeada en `dev` vía #53 — `dev` ya arranca (ver `docs/backlog.md`).
 
-## Equipo 1 — Necesidades
-- Frontend: `frontend/pages/mapa.html` (formulario `formularioNecesidad.js`) y `frontend/js/core/mapa-necesidades/` (+ `geocodificacion.js`).
-- Backend: `backend/modules/necesidades/` (guardar, listar, estados 2 pasos, 8 categorías, `direccion` + `services.py` + intensidad) — mergeado en `dev` (PR #56 + #61, 91a7647).
-- **Decidir:** intensidad por conteo en el mapa (resuelto parcialmente con rediseño 8 cats).
-- Nota: la visualización del mapa pasa al Equipo 4 (Mapa + Interfaz principal) en Sprint 2.
+## Equipo 1 — Necesidades — Luis (5 tareas, sin solape)
+- **Rama:** `feat/luis-g1-necesidades` → `anexo-risk`
+- **Archivos:** `backend/modules/necesidades/*`, `frontend/js/core/mapa-necesidades/formulario*`, `necesidadCard.js`, `geocodificacion.js` — ver `docs/equipos/grupo1-tareas.md`
+- **Producto integral:** provee `{id, tipo, latitud, longitud, estado, direccion}` que G4 pinta; depende de G2 `zone` para filtrar ALTO RIESGO
 
-## Equipo 2 — Alertas + activación de crisis
-- Frontend: `frontend/pages/alertas.html` y `frontend/js/core/alertas-oficiales/` (incluye `crisis.js`).
-- Backend: `backend/modules/alertas/` e `backend/integrations/` (GDACS + Protección Civil).
-- **Sprint 2:** activación de crisis (crear/activar/alto-riesgo/desactivar) y contrato mapa `{id, risk_level, status, zone}`.
-- Ver detalle en `docs/equipos/grupo2-tareas.md`.
+## Equipo 2 — Alertas + activación — Javi (5 tareas, sin solape)
+- **Rama:** `feat/javi-g2-alertas` → `anexo-risk`
+- **Archivos:** `backend/modules/alertas/*`, `backend/integrations/gdacs*`, `backend/config.py` (CORS) — ver `docs/equipos/grupo2-tareas.md`
+- **Producto integral:** provee `zone` Polygon + `risk_level` que desbloquea G1+G3 en mapa; es el interruptor de todo
 
-## Equipo 3 — Ayudas (unifica donación + voluntariado)
-- Frontend: `frontend/pages/voluntariado.html`, `frontend/pages/donaciones.html` y `frontend/js/core/voluntariado-donaciones/`.
-- Backend: `backend/modules/voluntariado/` y `backend/modules/donaciones/` (unificados en módulo Ayudas).
-- **Decidir:** 3 tipos de ayuda (recursos, servicios, tiempo/voluntariado con nombre+DNI); marcar ayuda cubierta.
-- Ver detalle en `docs/equipos/grupo3-tareas.md`.
+## Equipo 3 — Ayudas — Vanessa (5 tareas, sin solape)
+- **Rama:** `feat/vanessa-g3-ayudas` → `anexo-risk`
+- **Archivos:** `backend/modules/voluntariado/*`, `backend/modules/donaciones/*`, `frontend/pages/donaciones.html`, `frontend/js/core/voluntariado-donaciones/**`, `frontend/mocks/ayudas.mock.json` — ver `docs/equipos/grupo3-tareas.md`
+- **Producto integral:** provee `{id, type, category, latitud, longitud}` que G4 pinta dentro de `zone`
 
-## Equipo 4 — Mapa + Interfaz principal
-Consume alertas y necesidades vía los contratos JSON y pinta la zona de alerta ALTO RIESGO.
-- Frontend: `frontend/pages/mapa.html` + `frontend/js/core/mapa-necesidades/mapaNecesidades.js` (consumo de alertas y necesidades) e interfaz principal.
-- Backend: comparte los contratos de `alertas` y `necesidades` (no implementa módulos propios salvo lo de mapa).
-- **Decidir:** resaltado de zona ALTO RIESGO; intensidad por conteo (🟢🟠🔴).
-- Ver detalle en `docs/equipos/grupo4-tareas.md`.
+## Equipo 4 — Mapa + Interfaz — Juan (5 tareas, sin solape, integrador)
+- **Rama:** `feat/juan-g4-mapa` (`feat/juan-anexo-risk` actual) → `anexo-risk`
+- **Archivos:** `frontend/pages/mapa.html`, `frontend/js/core/mapa-necesidades/mapaNecesidades.js`, `frontend/js/shared/apiClient.js`, `frontend/mocks/*.json` — ver `docs/equipos/grupo4-tareas.md`
+- **Producto integral:** consume G1+G2+G3 y demuestra `alerta → zona → necesidad → ayuda → cubierta` sin recargar

@@ -1,4 +1,19 @@
-# Equipos de NEXO
+# Equipos — Anexo Risk (4p, producto integral) + Legacy NEXO
+
+> **Actual (Anexo Risk, 4p):** Javi (G2), Juan (G4), Luis (G1), Vanessa (G3) — ver `docs/equipos/reparto-anexo-risk-4p-equitativo.md` y `reparto-anexo-risk-4p-detallado.md`. **Legacy NEXO (16+ p, Sprint 1-2) se mantiene debajo por trazabilidad** (evolución, no basura).
+
+## Actual — Anexo Risk (4p, rama única `anexo-risk` → `main`)
+
+| Equipo | Módulo | Persona | Rama |
+|---|---|---|---|
+| G2 Alertas | Alertas + activación | **Javi** | `feat/javi-g2-alertas` |
+| G4 Mapa | Mapa + Interfaz | **Juan** | `feat/juan-g4-mapa` |
+| G1 Necesidades | Necesidades | **Luis** | `feat/luis-g1-necesidades` |
+| G3 Ayudas | Ayudas | **Vanessa** | `feat/vanessa-g3-ayudas` |
+
+Repo: `garciaguadalupevanessa-bit/Anexo_Risk`, rama integración `anexo-risk` (no `dev`), `main` protegida. Detalle por archivo en `reparto-anexo-risk-4p-detallado.md`.
+
+## Legacy — NEXO (Sprint 1-2, 16+ p) — Trazabilidad
 
 Composición de los 4 equipos verticales + base común, según asignación del PM (Juan),
 con los handles de GitHub confirmados en el registro del equipo (18/8/26).
@@ -6,9 +21,9 @@ con los handles de GitHub confirmados en el registro del equipo (18/8/26).
 Mapeo con los bloques del Kanban de GitHub (label `equipo-N` / `base-comun`).
 Fuente de verdad: `docs/manifiesto.md` v1.0 (§7 y §8).
 
-## Base común (Integradora)
-- Dueña: **Adriana** (`adrianaarang`) — Integradora / repo owner.
-- Revisada por al menos una persona de cada equipo antes del reparto (aún sin PR).
+## Base común (Integradora) — Legacy
+- Dueña: **Adriana** (`adrianaarang`) — Integradora / repo owner NEXO.
+- Revisada por al menos una persona de cada equipo antes del reparto (merge #53).
 
 ## Equipo 1 — Necesidades
 - Bloque Kanban: `equipo-1` · Milestone: Sprint 2

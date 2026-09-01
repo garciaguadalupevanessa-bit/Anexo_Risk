@@ -1,20 +1,26 @@
-# Grupo 3 (Ayudas) — Distribución de tareas (Sprint 2)
+# Grupo 3 (Ayudas) — Vanessa — MVP Jueves
 
-Reparto del equipo 3 recibido de Laura (SM del grupo 3, `LauraSilRu`). En Sprint 2 **donación y
-voluntariado se unifican en un módulo "Ayudas"** (3 tipos: recursos, servicios, tiempo/voluntariado).
+> **Dueña única: Vanessa** — Rama `feat/vanessa-g3-ayudas` → PR → `anexo-risk`.
 
-## A. Reparto por persona
-- [ ] **Laura S.R. — Backend Ayudas (voluntariado)** (`backend/modules/voluntariado/`): modelos, schemas, servicios y lógica de ayudas (recursos / servicios / tiempo).
-- [ ] **María Isabel — Backend Ayudas (donaciones)** (`backend/modules/donaciones/`): persistencia de donaciones integrada como tipo de ayuda.
-- [ ] **Majo — Frontend Donaciones/Ayudas** (`frontend/js/core/voluntariado-donaciones/`): página, formulario, listado, estados y estilos del lado de donaciones.
-- [ ] **María — Frontend Voluntariado/Ayudas** (`frontend/js/core/voluntariado-donaciones/`): página, formulario de disponibilidad, listado, estados y estilos del lado de voluntariado.
-- [ ] **José — Integración + QA**: integración de ramas, resolución de conflictos, coordinación técnica y tests del equipo.
+## Archivos (solo Vanessa los toca)
 
-## B. Coordinación y dependencias
-- El backend unificado expone 3 tipos: `recursos`, `servicios`, `tiempo/voluntariado` (este último con `nombre` + `DNI`).
-- Contrato hacia el mapa (G4): `{id, type, category, latitude, longitude, status}`.
-- Se reusa la lógica de voluntariado/donaciones de Sprint 1.
-- **Nota de estado (28/08):** los PRs #24, #27 y #29 (registro, config y disponibilidad de voluntariado) ya están en `dev`; falta unificar donaciones como tipo de ayuda y conectar `donaciones.js` al backend real.
+| Archivo | Qué hace |
+|---|---|
+| `backend/modules/voluntariado/models.py`, `schemas.py`, `routes.py`, `services.py` | Voluntariado `tiempo` (nombre, dni, contacto, habilidades, disponibilidad) |
+| `backend/modules/donaciones/models.py`, `schemas.py`, `routes.py` | Donaciones `recursos`/`servicios` (tipo, recurso, cantidad, contacto) |
+| `backend/integrations/proteccion_civil_client.py` | Stub PC (soporte, no bloqueante) |
+| `frontend/pages/donaciones.html`, `voluntariado.html` → `ayudas.html` | Unifica UI (selector tipo) |
+| `frontend/js/core/voluntariado-donaciones/donaciones.js`, `donacionesApi.js`, `voluntariado.js`, `voluntariadoApi.js` | Lógica UI + API cliente |
+| `frontend/css/donaciones.css`, `voluntariado.css` | Estilos `nexo-` |
+| `frontend/mocks/ayudas.mock.json` | Mock fallback 1 ayuda demo |
+| `backend/db/seed.py` | Seed demo (opcional 1 ayuda) |
 
-## C. Definition of Done (recordatorio)
-Implementado · pytest/JS tests verdes · no rompe otros módulos · revisado en PR · demostrable en demo.
+## Tareas detalladas (5 tareas)
+
+- [ ] **T1 — Wrapper API:** Crear `POST /api/ayudas` + `GET /api/ayudas` (o en `voluntariado/routes.py`). Reutiliza tablas `donaciones`/`voluntarios` (no nueva tabla). Espejo contrato: `recursos`→`donaciones`, `tiempo`→`voluntarios` con `dni`.
+- [ ] **T2 — Tipos:** `recursos` `{recurso:"alimentos", cantidad}`, `servicios` `{recurso:"transporte"}`, `tiempo` `{nombre, dni, contacto, habilidades}` (dni validado).
+- [ ] **T3 — UI unificada:** `ayudas.html` con selector `tipo` → muestra form correspondiente; para `tiempo` exige `nombre`+`DNI`; submit → `POST /api/ayudas`.
+- [ ] **T4 — Contrato mapa:** `GET /api/ayudas` → `{id, type, category, latitude, longitude, status}` para `mapaNecesidades.js` (Juan consume).
+- [ ] **T5 — Persistencia + fallback:** Reusa tablas existentes; si falta tiempo, `seed.py` hardcodea 1 ayuda `recursos: alimentos` en zona ALTO RIESGO. Tests `pytest` voluntariado ya verdes.
+
+**Depende de:** nadie. **Bloquea a:** Juan G4 (consume contrato).
