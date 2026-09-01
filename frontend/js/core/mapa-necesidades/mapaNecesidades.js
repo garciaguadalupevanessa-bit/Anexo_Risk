@@ -6,9 +6,8 @@ import { obtenerNecesidades, configurarBaseUrl } from "./necesidadesApi.js";
 configurarBaseUrl("http://127.0.0.1:8000/api/necesidades");
 
 const map = L.map("map").setView([40.416775, -3.70379], 13);
-const baseCarto = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors © CARTO" });
-const baseOSM = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" });
-baseCarto.addTo(map);
+const baseOSM = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors — sin API key" });
+baseOSM.addTo(map);
 
 const capas = {
   alertas: L.layerGroup().addTo(map),
@@ -16,7 +15,7 @@ const capas = {
   necesidades: L.layerGroup().addTo(map),
   ayudas: L.layerGroup().addTo(map),
 };
-L.control.layers({ "Carto Positron": baseCarto, "OpenStreetMap": baseOSM }, { "Alertas": capas.alertas, "Zonas ALTO RIESGO": capas.zonas, "Necesidades": capas.necesidades, "Ayudas": capas.ayudas }, { collapsed: false }).addTo(map);
+L.control.layers({ "OpenStreetMap (gratis, sin API key)": baseOSM }, { "Alertas": capas.alertas, "Zonas ALTO RIESGO": capas.zonas, "Necesidades": capas.necesidades, "Ayudas": capas.ayudas }, { collapsed: false }).addTo(map);
 
 let markers = [];
 let loadedNeeds = [];
