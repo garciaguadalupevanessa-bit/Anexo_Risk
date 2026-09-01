@@ -1,4 +1,4 @@
-"""Punto de arranque del backend de Nexo (FastAPI).
+"""Punto de arranque del backend de Anexo Risk (FastAPI) — evolución de Nexo.
 
 Parte de la base común: registra los routers de cada módulo, CORS y
 manejo de errores. Los equipos NO deberían tener que tocar este
@@ -30,9 +30,9 @@ from modules.personas.routes import router as personas_router
 from sync.sync_controller import router as sync_router
 
 app = FastAPI(
-    title="Nexo API",
-    description="Conectados para ayudarnos — respuesta a emergencias y desastres.",
-    version="0.1.0",
+    title="Anexo Risk API",
+    description="Anexo Risk — Evolución de Nexo: respuesta a emergencias con mapa, alertas, necesidades y ayudas. Trazabilidad NEXO en docs/legacy/.",
+    version="0.2.0",
 )
 
 app.add_middleware(

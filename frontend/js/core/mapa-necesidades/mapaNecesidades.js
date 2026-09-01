@@ -47,16 +47,16 @@ function renderMap(needsList) {
     const icon = getIconByPriority(need.prioridad);
     const marker = L.marker([need.latitud, need.longitud], { icon });
     const popupContent = `
-      <div class="nexo-popup">
-        <div style="margin-bottom: 8px;">
-          <span class="nexo-badge nexo-badge--${need.prioridad}" style="background:var(--nexo-bg-alt, #1A1C22);border:1px solid var(--nexo-border, #2A2D34)">${need.prioridad}</span>
-          <span class="nexo-badge" style="background:var(--nexo-bg-alt);border-color:var(--nexo-border)">${need.tipo}</span>
-          ${need.categoria_etiqueta ? `<span class="nexo-badge">${need.categoria_etiqueta}</span>` : ""}
+      <div class="nexo-popup" style="font-family:var(--font-base); min-width:220px;">
+        <div style="background: linear-gradient(135deg, var(--nexo-teal,#17A2A0), var(--nexo-navy,#0F2038)); color: white; margin: -12px -12px 10px -12px; padding:10px 12px; border-radius:8px 8px 0 0; display:flex; gap:6px; align-items:center;">
+          <span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:12px; font-size:0.7rem; font-weight:600;">${need.prioridad}</span>
+          <span style="background:rgba(255,255,255,0.15); padding:2px 8px; border-radius:12px; font-size:0.7rem;">${need.tipo}</span>
         </div>
-        <h3 style="color:var(--nexo-text,#0a192f);margin:0 0 6px 0;font-size:1rem;">${need.titulo || need.categoria_etiqueta || need.tipo}</h3>
-        ${need.direccion ? `<p style="color:var(--nexo-text-muted,#6b7280);margin:0 0 4px 0;font-size:0.8rem;">📍 ${need.direccion}</p>` : ""}
-        <p style="color:#555;margin:0;font-size:0.85rem;">${need.descripcion || ""}</p>
-        <button onclick="window.cambiarEstadoNecesidad(${need.id}, 'cubierta')" style="margin-top:8px;padding:4px 8px;background:var(--nexo-primary,#10b981);color:white;border:none;border-radius:4px;cursor:pointer;">Marcar cubierta</button>
+        <h3 style="color: var(--nexo-dark,#16181D); margin:0 0 6px 0; font-size:1.05rem; font-weight:700;">${need.titulo || need.categoria_etiqueta || need.tipo}</h3>
+        ${need.direccion ? `<p style="color:var(--nexo-text-muted,#9CA0A8);margin:0 0 6px 0;font-size:0.8rem; display:flex; align-items:center; gap:4px;">📍 ${need.direccion}</p>` : ""}
+        <p style="color:#4b5563;margin:0;font-size:0.85rem; line-height:1.4;">${need.descripcion || ""}</p>
+        ${need.categoria_etiqueta ? `<div style="margin-top:8px; font-size:1.1rem;">${need.categoria_etiqueta}</div>` : ""}
+        <button onclick="window.cambiarEstadoNecesidad(${need.id}, 'cubierta')" style="margin-top:10px; width:100%; padding:8px; background: linear-gradient(135deg, var(--nexo-teal,#17A2A0), var(--nexo-orange,#F2542D)); color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600; box-shadow:0 2px 8px rgba(242,84,45,0.3);">✓ Marcar cubierta</button>
       </div>`;
     marker.bindPopup(popupContent);
     marker.addTo(capas.necesidades);
