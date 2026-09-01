@@ -14,8 +14,10 @@ const capas = {
   zonas: L.layerGroup().addTo(map),
   necesidades: L.layerGroup().addTo(map),
   ayudas: L.layerGroup().addTo(map),
+  zonasNecesidades: L.layerGroup().addTo(map),
+  zonasAyudas: L.layerGroup().addTo(map),
 };
-L.control.layers({ "OpenStreetMap (gratis, sin API key)": baseOSM }, { "Alertas": capas.alertas, "Zonas ALTO RIESGO": capas.zonas, "Necesidades": capas.necesidades, "Ayudas": capas.ayudas }, { collapsed: false }).addTo(map);
+L.control.layers({ "OpenStreetMap (gratis, sin API key)": baseOSM }, { "Alertas": capas.alertas, "Zonas ALTO RIESGO": capas.zonas, "Necesidades": capas.necesidades, "Zonas Necesidades (H3)": capas.zonasNecesidades, "Ayudas": capas.ayudas, "Zonas Ayudas (H3)": capas.zonasAyudas }, { collapsed: false }).addTo(map);
 
 let markers = [];
 let loadedNeeds = [];
@@ -61,6 +63,7 @@ function renderMap(needsList) {
     marker.addTo(capas.necesidades);
     markers.push(marker);
   });
+  renderZonasNecesidades(needsList);
 }
 
 function renderAyudas(ayudasList) {
@@ -72,6 +75,44 @@ function renderAyudas(ayudasList) {
     const marker = L.marker([lat, lon], { icon: getAyudaIcon(ayuda.tipo || ayuda.type) });
     marker.bindPopup(`<div class="nexo-popup"><b>${ayuda.tipo || ayuda.type}</b><br>${ayuda.categoria || ayuda.category || ""}<br><small>${ayuda.estado || ayuda.status || ""}</small></div>`);
     marker.addTo(capas.ayudas);
+  });
+  renderZonasAyudas(ayudasList);
+}
+
+function renderZonasNecesidades(needsList) {
+  capas.zonasNecesidades.clearLayers();
+  if (!needsList.length) return;
+  const grid = new Map();
+  const res = 0.02;
+  needsList.forEach((n) => {
+    const key = `${Math.floor(n.latitud / res)}_${Math.floor(n.longitud / res)}`;
+    if (!grid.has(key)) grid.set(key, { count: 0, lat: Math.floor(n.latitud / res) * res + res / 2, lon: Math.floor(n.longitud / res) * res + res / 2 });
+    grid.get(key).count++;
+  });
+  grid.forEach((cell) => {
+    const color = cell.count > 5 ? "var(--nexo-alert-red, #ef4444)" : cell.count > 2 ? "var(--nexo-orange, #F2542D)" : "var(--nexo-teal, #17A2A0)";
+    const bounds = [[cell.lat - res / 2, cell.lon - res / 2], [cell.lat + res / 2, cell.lon + res / 2]];
+    L.rectangle(bounds, { color, weight: 1, fillColor: color, fillOpacity: 0.18 }).addTo(capas.zonasNecesidades).bindPopup(`<b>Zona Necesidades</b><br>${cell.count} necesidades<br><small>H3-like res 0.02°</small>`);
+  });
+}
+
+function renderZonasAyudas(ayudasList) {
+  capas.zonasAyudas.clearLayers();
+  if (!ayudasList.length) return;
+  const grid = new Map();
+  const res = 0.02;
+  ayudasList.forEach((a) => {
+    const lat = a.latitud ?? a.latitude;
+    const lon = a.longitud ?? a.longitude;
+    if (lat == null || lon == null) return;
+    const key = `${Math.floor(lat / res)}_${Math.floor(lon / res)}`;
+    if (!grid.has(key)) grid.set(key, { count: 0, lat: Math.floor(lat / res) * res + res / 2, lon: Math.floor(lon / res) * res + res / 2 });
+    grid.get(key).count++;
+  });
+  grid.forEach((cell) => {
+    const color = "var(--nexo-teal, #17A2A0)";
+    const bounds = [[cell.lat - res / 2, cell.lon - res / 2], [cell.lat + res / 2, cell.lon + res / 2]];
+    L.rectangle(bounds, { color, weight: 1, dashArray: "4,4", fillColor: color, fillOpacity: 0.12 }).addTo(capas.zonasAyudas).bindPopup(`<b>Zona Ayudas</b><br>${cell.count} ayudas`);
   });
 }
 
