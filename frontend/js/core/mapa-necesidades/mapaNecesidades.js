@@ -6,7 +6,7 @@ import { obtenerNecesidades, configurarBaseUrl } from "./necesidadesApi.js";
 configurarBaseUrl("http://127.0.0.1:8000/api/necesidades");
 
 const map = L.map("map").setView([40.416775, -3.70379], 13);
-const baseOSM = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors — sin API key" });
+const baseOSM = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}", { maxZoom: 19, attribution: "© <a href='https://www.carto.com/'>CARTO</a> & © <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors" });
 baseOSM.addTo(map);
 
 const capas = {
