@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, anexo-risk]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r backend/requirements-dev.txt
+          pip install h3 pandas numpy scikit-learn
+
+      - name: Ejecutar tests
+        run: PYTHONPATH=backend:src python -m pytest tests/ --ignore=tests/test_mlflow_tracking.py -q
+
+  frontend-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comprobación básica de HTML/JS
+        run: |
+          echo "Sin build step: frontend estático (HTML/CSS/JS puro)."
+          test -f frontend/index.html

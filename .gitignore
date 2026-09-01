@@ -1,22 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+.env
+
+# Base de datos local - Nexo
+*.db
+*.sqlite3
+backend/logs/
+*.log
+backend/uploads/
+docs/equipos/grupo2-alertas.md
+
+# Node / editores
+node_modules/
+.DS_Store
+.vscode/
+
+# GeoRisk - datos
 data/raw/*
 !data/raw/.gitkeep
 !data/processed/*.csv
 data/processed/*.parquet
 !data/processed/.gitkeep
 .ipynb_checkpoints/
-__pycache__/
-.env
-.venv/
-*.pyc
-.DS_Store
 .pytest_cache/
-.vscode/
 notebooks/.ipynb_checkpoints/
 models/
 *.html
-!georisk_globe/frontend/index.html
-profiling_reports/
-streamlit_*.log
-_check_*.py
-!data/processed/cluster_labels.csv
-dashboard_catastrofes_ews (1).zip
+
+# Anexo Risk — ignorar basura local
+backend_server.err
+frontend_server.err
+docs/auditoria-mvp-jueves.md
