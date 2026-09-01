@@ -1,6 +1,6 @@
 # Grupo 4 (Mapa + Interfaz) — Juan — MVP Jueves — Producto Integral
 
-> **Dueño único: Juan (tú, GeoRisk)** — Rama `feat/juan-g4-mapa` (actual `feat/juan-anexo-risk`) → PR → `anexo-risk`. **Producto integral:** el mapa es el pegamento de todo — sin G4 no hay demo (ALTO RIESGO desbloquea G1+G3). Ver `docs/equipos/reparto-anexo-risk-4p-equitativo.md`.
+> **Dueño único: Juan (tú, GeoRisk)** — Rama `feat/juan-g4-mapa` (actual `feat/juan-main`) → PR → `main`. **Producto integral:** el mapa es el pegamento de todo — sin G4 no hay demo (ALTO RIESGO desbloquea G1+G3). Ver `docs/equipos/reparto-main-4p-equitativo.md`.
 
 ## Archivos (solo Juan los toca)
 

@@ -1,6 +1,6 @@
 # Grupo 2 (Alertas + Activación) — Javi — MVP Jueves
 
-> **Dueño único: Javi** — Rama `feat/javi-g2-alertas` → PR → `anexo-risk`. Ver `docs/equipos/reparto-anexo-risk-4p-equitativo.md`.
+> **Dueño único: Javi** — Rama `feat/javi-g2-alertas` → PR → `main`. Ver `docs/equipos/reparto-main-4p-equitativo.md`.
 
 ## Archivos (solo Javi los toca)
 

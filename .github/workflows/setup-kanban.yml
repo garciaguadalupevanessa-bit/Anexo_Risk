@@ -1,10 +1,12 @@
 name: Setup Kanban
 
-# Crea el Kanban (labels + milestones + issues epics) al mergear a anexo-risk/main.
+# Crea el Kanban al mergear a main (GitHub Flow — main bloqueada, feat/* → main vía PR).
 # Usa GITHUB_TOKEN (permiso de issues implicito en CI): no requiere autorizacion extra.
 on:
   push:
-    branches: [main, anexo-risk]
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

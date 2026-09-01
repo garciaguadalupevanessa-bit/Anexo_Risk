@@ -39,7 +39,7 @@
 
 ### P2 — Juan (tú) — G4 Mapa + Interfaz + GeoRisk H3/Globo
 
-**Rama:** `feat/juan-anexo-risk` (ya creada, desde `dev` a687fda)
+**Rama:** `feat/juan-main` (ya creada, desde `dev` a687fda)
 **Archivos dueños:**
 - `frontend/pages/mapa.html`
 - `frontend/js/core/mapa-necesidades/mapaNecesidades.js`
@@ -128,7 +128,7 @@
 
 ```bash
 git checkout dev && git pull origin dev
-git checkout -b feat/tu-modulo   # ej. feat/juan-anexo-risk ya existe
+git checkout -b feat/tu-modulo   # ej. feat/juan-main ya existe
 # ... trabaja solo tus archivos ...
 git push -u origin feat/tu-modulo
 gh pr create --base dev --title "feat(modulo): ..."  # 1 review de otro del equipo → merge

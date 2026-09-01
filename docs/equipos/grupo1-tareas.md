@@ -1,6 +1,6 @@
 # Grupo 1 (Necesidades) — Luis — MVP Jueves
 
-> **Dueño único (equitativo, sin solapes): Luis** — Rama `feat/luis-g1-necesidades` → PR → `anexo-risk` (no `main`). Ver `docs/equipos/reparto-anexo-risk-4p-equitativo.md`.
+> **Dueño único (equitativo, sin solapes): Luis** — Rama `feat/luis-g1-necesidades` → PR → `main` (no `main`). Ver `docs/equipos/reparto-main-4p-equitativo.md`.
 
 ## Archivos (solo Luis los toca)
 

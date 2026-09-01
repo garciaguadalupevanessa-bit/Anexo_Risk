@@ -1,6 +1,6 @@
 # Grupo 3 (Ayudas) — Vanessa — MVP Jueves
 
-> **Dueña única: Vanessa** — Rama `feat/vanessa-g3-ayudas` → PR → `anexo-risk`.
+> **Dueña única: Vanessa** — Rama `feat/vanessa-g3-ayudas` → PR → `main`.
 
 ## Archivos (solo Vanessa los toca)
 

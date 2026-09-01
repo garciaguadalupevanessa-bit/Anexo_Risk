@@ -1,8 +1,8 @@
 # Equipos — Anexo Risk (4p, producto integral) + Legacy NEXO
 
-> **Actual (Anexo Risk, 4p):** Javi (G2), Juan (G4), Luis (G1), Vanessa (G3) — ver `docs/equipos/reparto-anexo-risk-4p-equitativo.md` y `reparto-anexo-risk-4p-detallado.md`. **Legacy NEXO (16+ p, Sprint 1-2) se mantiene debajo por trazabilidad** (evolución, no basura).
+> **Actual (Anexo Risk, 4p):** Javi (G2), Juan (G4), Luis (G1), Vanessa (G3) — ver `docs/equipos/reparto-main-4p-equitativo.md` y `reparto-main-4p-detallado.md`. **Legacy NEXO (16+ p, Sprint 1-2) se mantiene debajo por trazabilidad** (evolución, no basura).
 
-## Actual — Anexo Risk (4p, rama única `anexo-risk` → `main`)
+## Actual — Anexo Risk (4p, rama única `main` → `main`)
 
 | Equipo | Módulo | Persona | Rama |
 |---|---|---|---|
@@ -11,7 +11,7 @@
 | G1 Necesidades | Necesidades | **Luis** | `feat/luis-g1-necesidades` |
 | G3 Ayudas | Ayudas | **Vanessa** | `feat/vanessa-g3-ayudas` |
 
-Repo: `garciaguadalupevanessa-bit/Anexo_Risk`, **solo `main` + `anexo-risk`** (rama única de integración, sin `dev`), `main` protegida. Detalle por archivo en `reparto-anexo-risk-4p-detallado.md` y legacy en `docs/legacy/README.md`.
+Repo: `garciaguadalupevanessa-bit/Anexo_Risk`, **solo `main` + `main`** (rama única de integración, sin `dev`), `main` protegida. Detalle por archivo en `reparto-main-4p-detallado.md` y legacy en `docs/legacy/README.md`.
 
 ## Legacy — NEXO (Sprint 1-2, 16+ p) — Trazabilidad
 

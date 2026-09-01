@@ -1,6 +1,6 @@
 # Anexo Risk — Reparto Equitativo 4p (sin directrices previas) — MVP Jueves
 
-> 4 personas, 4 módulos, 1 rama única `anexo-risk` (no `main`). Cada persona **dueña exclusiva** de archivos (0 solapes) + **5 tareas / ~8h** equitativas. Enfoque ágil profesional: WIP=1, daily 15:00 15min, PR review <2h, integración continua a `anexo-risk`.
+> 4 personas, 4 módulos, 1 rama única `main` (no `main`). Cada persona **dueña exclusiva** de archivos (0 solapes) + **5 tareas / ~8h** equitativas. Enfoque ágil profesional: WIP=1, daily 15:00 15min, PR review <2h, integración continua a `main`.
 
 ## Matriz de propiedad (0 solapes — CODEOWNERS)
 
@@ -24,7 +24,7 @@
 - [ ] Tests `test_alertas.py` 13 verdes + `test_alto_riesgo_desbloquea_zona`
 
 ### Juan (tú) — G4 Mapa (Integración + GeoRisk)
-**Rama:** `feat/juan-g4-mapa` (ya tienes `feat/juan-anexo-risk`, renombrar)
+**Rama:** `feat/juan-g4-mapa` (ya tienes `feat/juan-main`, renombrar)
 - [ ] Mapa base Leaflet `CartoDB` + `LayerControl` (capas toggles)
 - [ ] Consumir `GET /api/alertas` → `L.geoJSON(zone)` + `GET /api/necesidades` → `L.marker` + `GET /api/ayudas`
 - [ ] Resaltado `ALTO RIESGO`: `zone` rojo + `fitBounds` + filtro `booleanPointInPolygon` (o H3 res7 si quieres)
@@ -48,14 +48,14 @@
 - [ ] QA: `pytest --ignore=test_mlflow` 120 verdes + lint `test -f frontend/index.html`
 
 ## Agilidad profesional (sin burocracia)
-- **WIP 1:** cada uno 1 PR abierto a `anexo-risk`, review del compañero <2h, merge squash, `git pull --rebase` diario.
+- **WIP 1:** cada uno 1 PR abierto a `main`, review del compañero <2h, merge squash, `git pull --rebase` diario.
 - **Daily 15:00 (15 min):** qué hice, qué haré, bloqueo. Bloqueos se resuelven en pair 30 min (Javi+Juan para `zone`, Luis+Vanessa para `form`).
-- **Integración:** todos PR → `anexo-risk` (no `main`). Jueves 12:00 PR `anexo-risk` → `main` para entrega.
-- **Vercel:** `anexo-risk` auto-deploy Preview; `main` es producción.
+- **Integración:** todos PR → `main` (no `main`). Jueves 12:00 PR `main` → `main` para entrega.
+- **Vercel:** `main` auto-deploy Preview; `main` es producción.
 
 ## Por qué es mejor así (sin directrices viejas)
 - **Equitativo:** 5 tareas/8h cada uno (antes Juan 8 vs Luis 4). **Sin solapes:** matriz CODEOWNERS arriba.
 - **Más ágil:** G1 y G3 son formularios iguales → Luis y Vanessa comparten patrón pero sin pisarse (archivos distintos). G2 y G4 acoplados → Javi y Juan hacen pair puntual, no bloquean a otros.
 - **Más profesional:** cada PR es vertical E2E demostrable en demo, CI verde obligatorio, trazabilidad `Closes #` por epic.
 
-> Este reemplaza a `reparto-4p-mvp.md` y `reparto-anexo-risk-4p-detallado.md` para el equipo de 4.
+> Este reemplaza a `reparto-4p-mvp.md` y `reparto-main-4p-detallado.md` para el equipo de 4.
