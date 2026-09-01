@@ -1,6 +1,6 @@
 # Anexo Risk — Reparto Equitativo 4p (sin directrices previas) — MVP Jueves
 
-> 4 personas, 4 módulos, 1 rama única `main` (no `main`). Cada persona **dueña exclusiva** de archivos (0 solapes) + **5 tareas / ~8h** equitativas. Enfoque ágil profesional: WIP=1, daily 15:00 15min, PR review <2h, integración continua a `main`.
+> 4 personas (Javi, Juan, Luis, Vanessa), 4 módulos, **1 rama única `anexo-risk` → `main`**. Cada persona **dueña exclusiva** de archivos (0 solapes) + **5 tareas / ~8h** equitativas. Enfoque ágil profesional: WIP=1, daily 15:00 15min, PR review <2h, integración continua a `main`.
 
 ## Matriz de propiedad (0 solapes — CODEOWNERS)
 
