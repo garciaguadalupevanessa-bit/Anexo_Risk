@@ -1,8 +1,10 @@
-# NexoGeoRisk — Integración NEXO + GeoRisk
+![Anexo Risk](docs/logo_anexo_risk.png)
 
-> Repositorio integrado del módulo de **Alertas NEXO** dentro de **GeoRisk Finder**. Combina la plataforma de inteligencia geoespacial (H3, globo, clustering) con la app comunitaria de respuesta a emergencias (alertas oficiales GDACS, mapa de necesidades, voluntariado/donaciones).
+# Anexo Risk — Evolución de NEXO × GeoRisk
 
-Este repo es la versión particular del equipo 2 (Javi, Juan, Luis, Vanessa) — 4 personas cubriendo los 4 módulos de NEXO (G1 Necesidades, G2 Alertas, G3 Ayudas, G4 Mapa) + módulos GeoRisk (mapa, globo, H3).
+> **Anexo Risk** es la evolución de **NEXO** (app comunitaria de respuesta a emergencias) integrada con **GeoRisk Finder** (inteligencia geoespacial H3/globo). Mantiene trazabilidad completa de Sprint 1-2 de NEXO (ver `docs/backlog.md` y `docs/modelo-entidad-relacion.md`) como registro legacy — no es basura, es la historia que justifica el anexo.
+
+Este repo es la versión particular del equipo **Javi, Juan, Luis, Vanessa** — 4 personas cubriendo los 4 módulos de NEXO (G1 Necesidades, G2 Alertas, G3 Ayudas, G4 Mapa) + módulos GeoRisk (mapa, globo, H3).
 
 ## Estructura integrada
 
