@@ -1,9 +1,14 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class DonationType(str, Enum):
+    RESOURCES = "recursos"
+    SERVICES = "servicios"
+    TIME = "tiempo"
+    # Opciones heredadas por compatibilidad
     OFFERED = "ofrecida"
     REQUESTED = "solicitada"
 
@@ -28,13 +33,12 @@ class DonationResource(str, Enum):
     BABY_ITEMS = "Artículos para bebés"
     TOOLS = "Herramientas"
     TRANSPORT = "Transporte"
+    LOGISTIC_SUPPORT = "Apoyo logistico"
     BEVERAGES = "Bebidas"
     OTHER = "Otros"
 
 
 class DonationBase(BaseModel):
-    # populate_by_name permite construir el modelo tanto con el nombre
-    # Python (en inglés) como con el alias (en español, el contrato JSON).
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     donation_type: DonationType = Field(alias="tipo")
@@ -42,13 +46,21 @@ class DonationBase(BaseModel):
     quantity: str = Field(default="", max_length=100, alias="cantidad")
     description: str = Field(default="", max_length=1000, alias="descripcion")
     contact: str = Field(min_length=3, max_length=200, alias="contacto")
+    dni: Optional[str] = Field(default=None, max_length=20, alias="dni")
 
-    @field_validator("contact", mode="before")
+    @field_validator("contact", "dni", mode="before")
     @classmethod
     def normalize_text(cls, value: object) -> object:
         if isinstance(value, str):
             return value.strip()
         return value
+
+    @model_validator(mode="after")
+    def validate_dni_for_time_type(self) -> "DonationBase":
+        if self.donation_type == DonationType.TIME:
+            if not self.dni or not self.dni.strip():
+                raise ValueError("El DNI es obligatorio cuando el tipo de ayuda es 'tiempo'.")
+        return self
 
 
 class DonationCreate(DonationBase):
