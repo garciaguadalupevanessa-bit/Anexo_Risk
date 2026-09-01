@@ -3,7 +3,6 @@
 > Borrador de consenso del modelo de datos. Toda columna o tabla nueva se
 > acuerda AQUÍ primero y luego se implementa en una sola migración, para
 > evitar conflictos al integrar ramas (el problema detectado en el PR #33).
-> **Legacy Sprint 1 (6 cats) preservado en `docs/legacy/modelo-sprint1.md` — actual es 8 cats + `direccion`.**
 
 ## Entidades y atributos
 

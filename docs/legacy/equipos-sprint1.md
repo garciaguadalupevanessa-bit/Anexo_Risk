@@ -11,7 +11,7 @@
 | G1 Necesidades | Necesidades | **Luis** | `feat/luis-g1-necesidades` |
 | G3 Ayudas | Ayudas | **Vanessa** | `feat/vanessa-g3-ayudas` |
 
-Repo: `garciaguadalupevanessa-bit/Anexo_Risk`, **solo `main` + `anexo-risk`** (rama única de integración, sin `dev`), `main` protegida. Detalle por archivo en `reparto-anexo-risk-4p-detallado.md` y legacy en `docs/legacy/README.md`.
+Repo: `garciaguadalupevanessa-bit/Anexo_Risk`, rama integración `anexo-risk` (no `dev`), `main` protegida. Detalle por archivo en `reparto-anexo-risk-4p-detallado.md`.
 
 ## Legacy — NEXO (Sprint 1-2, 16+ p) — Trazabilidad
 

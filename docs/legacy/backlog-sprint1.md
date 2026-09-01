@@ -1,6 +1,6 @@
 # Backlog de NEXO
 
-> Mantenido por el Product Manager (Juan). Última actualización: 2026-09-01 (Anexo Risk, rama única `anexo-risk` en `garciaguadalupevanessa-bit/Anexo_Risk` — solo `main` + `anexo-risk`, sin `dev`). Legacy Sprint 1 preservado en `docs/legacy/`.
+> Mantenido por el Product Manager (Juan). Última actualización: 2026-08-31 (merge PR #53, #56 y #61 — `dev` en 91a7647; rediseño Necesidades 8 cats/2 estados en `dev`).
 > Referencia de prioridades: `docs/manifiesto.md` y `docs/roadmap.md`.
 
 ## Estado por módulo
@@ -12,7 +12,7 @@
 | Voluntariado y donaciones | Núcleo (MVP) | `dev` | #24, #27, #29 **MERGED** | Grupo 3 | En `dev`: registro + disponibilidad + config/soporte. Falta conectar `donaciones.js` al backend real. |
 | Registro de personas / "estoy bien" | Siguiente | `dev` | #20 **MERGED** | Transversal (S1: Grupo 4) | En `dev`: backend "estoy bien" (45 tests). **Sprint 1**. |
 | Modo offline (PWA) | Siguiente | `dev` | #21 **MERGED** (backend) | Transversal (S1: Grupo 4) | Backend de sincronización en `dev`; falta UI offline en frontend. |
-| Documentación y gobernanza | Transversal | `anexo-risk` | #53 **MERGED** (91a7647→`anexo-risk`) | PM (Juan) | README Anexo Risk + logo + `equipos/reparto-anexo-risk-4p-*`, ER + Kanban — en `anexo-risk`, legacy en `docs/legacy/` |
+| Documentación y gobernanza | Transversal | `dev` | #53 **MERGED** (91a7647) | PM (Juan) | README bilingüe, `equipos.md`, `equipos/grupo*-tareas.md`, ER + Kanban — mergeado vía #53. |
 
 > **Mapeo de grupos actualizado en Sprint 2 (reunión 27/08):** G1=Necesidades, G2=Alertas, G3=Ayudas, G4=Mapa + Interfaz principal. En Sprint 1 eran G1=Mapa de necesidades, G2=Alertas, G3=Voluntariado/Donaciones, G4=Personas/Offline. La sección "Trazabilidad Sprint 1" más abajo mantiene el detalle anterior para trazabilidad.
 
