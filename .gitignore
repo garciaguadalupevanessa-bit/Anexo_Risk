@@ -1,22 +1,32 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
 venv/
+.venv/
 .env
-.venv
-# Base de datos local
+
+# Base de datos local - Nexo
 *.db
 *.sqlite3
+backend/logs/
+*.log
+backend/uploads/
+docs/equipos/grupo2-alertas.md
 
 # Node / editores
 node_modules/
 .DS_Store
 .vscode/
 
-# Logs
-backend/logs
-*.log
-
-docs/equipos/grupo2-alertas.md
-# Documentos subidos por voluntarios
-backend/uploads/
+# GeoRisk - datos
+data/raw/*
+!data/raw/.gitkeep
+!data/processed/*.csv
+data/processed/*.parquet
+!data/processed/.gitkeep
+.ipynb_checkpoints/
+.pytest_cache/
+notebooks/.ipynb_checkpoints/
+models/
+*.html
