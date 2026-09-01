@@ -1,132 +1,201 @@
-// Lógica del mapa de necesidades en tiempo real (módulo más votado).
-// 1. INICIALIZACIÓN DEL MAPA LEAFLET
-// ==========================================
-// Centrado por ejemplo en Madrid [Lat, Lng], Zoom 13
-const map = L.map("map").setView([40.416775, -3.70379], 13);
-
-// Añadir capa de OpenStreetMap
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: "© OpenStreetMap contributors",
-}).addTo(map);
-
-// Array para guardar las referencias a los marcadores activos
-let markers = [];
-
-let loadedNeeds = [];
-
-// Importar las funciones de necesidadesApi.js
+// G4 Mapa — Juan — Anexo Risk — Producto integral
+// Leaflet base + capas Alertas/Zonas/Necesidades/Ayudas + consumo contratos G1/G2/G3 + ALTO RIESGO
+import { apiGet } from "../../shared/apiClient.js";
 import { obtenerNecesidades, configurarBaseUrl } from "./necesidadesApi.js";
 
-// El frontend (servido en un puerto, ej. 5500) y el backend (puerto 8000)
-// son orígenes distintos, así que hace falta apuntar explícitamente a la API.
-// TODO: mover esto a un archivo de configuración cuando haya entornos (dev/prod).
-configurarBaseUrl("http://localhost:8000/api/necesidades");
+configurarBaseUrl("http://127.0.0.1:8000/api/necesidades");
 
-// ==========================================
-// 3. FUNCIONES DE RENDERIZADO Y FILTRADO
-// ==========================================
+const map = L.map("map").setView([40.416775, -3.70379], 13);
+const baseCarto = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors © CARTO" });
+const baseOSM = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" });
+baseCarto.addTo(map);
 
-/**
- * Devuelve un icono de Leaflet con color CSS basado en la prioridad.
- * Los valores de prioridad vienen del backend en español:
- * "baja" | "media" | "alta" | "critica" (ver schemas.py -> NeedPriority).
- */
+const capas = {
+  alertas: L.layerGroup().addTo(map),
+  zonas: L.layerGroup().addTo(map),
+  necesidades: L.layerGroup().addTo(map),
+  ayudas: L.layerGroup().addTo(map),
+};
+L.control.layers({ "Carto Positron": baseCarto, "OpenStreetMap": baseOSM }, { "Alertas": capas.alertas, "Zonas ALTO RIESGO": capas.zonas, "Necesidades": capas.necesidades, "Ayudas": capas.ayudas }, { collapsed: false }).addTo(map);
+
+let markers = [];
+let loadedNeeds = [];
+let loadedAlerts = [];
+let loadedAyudas = [];
+let zonaActiva = null;
+
 function getIconByPriority(prioridad) {
   let priorityClass = "priority-low";
-
   if (prioridad === "alta" || prioridad === "critica") priorityClass = "priority-high";
   else if (prioridad === "media") priorityClass = "priority-medium";
-
-  return L.divIcon({
-    className: "", // Vaciamos para que no herede estilos grises/cuadrados por defecto de Leaflet
-    html: `<div class="marcador-custom ${priorityClass}"></div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-  });
+  return L.divIcon({ className: "", html: `<div class="marcador-custom ${priorityClass}"></div>`, iconSize: [18, 18], iconAnchor: [9, 9] });
 }
 
-/**
- * Pinta la lista de necesidades recibida en el mapa.
- * Los campos vienen del backend en español (ver schemas.py -> NeedResponse):
- * titulo, tipo, descripcion, latitud, longitud, prioridad.
- */
-function renderMap(needsList) {
-  // Limpiar marcadores anteriores
-  clearMarkers();
+function getAyudaIcon(tipo) {
+  const cls = tipo === "tiempo" ? "ayuda-tiempo" : tipo === "servicios" ? "ayuda-servicio" : "ayuda-recurso";
+  return L.divIcon({ className: "", html: `<div class="marcador-ayuda ${cls}"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] });
+}
 
+function clearMarkers() {
+  capas.necesidades.clearLayers();
+  markers = [];
+}
+
+function renderMap(needsList) {
+  clearMarkers();
   needsList.forEach((need) => {
     const icon = getIconByPriority(need.prioridad);
-
-    // Crear marcador con icono personalizado
-    const marker = L.marker([need.latitud, need.longitud], { icon: icon });
-
-    // Configurar el Popup del marcador
-    // Maquetación usando clases de tu sistema de diseño (components.css)
+    const marker = L.marker([need.latitud, need.longitud], { icon });
     const popupContent = `
       <div class="nexo-popup">
         <div style="margin-bottom: 8px;">
-          <span class="nexo-badge nexo-badge--${need.prioridad}">${need.prioridad}</span>
-          <span class="nexo-badge" style="background: var(--nexo-bg-alt); border-color: var(--nexo-border);">${need.tipo}</span>
+          <span class="nexo-badge nexo-badge--${need.prioridad}" style="background:var(--nexo-bg-alt, #1A1C22);border:1px solid var(--nexo-border, #2A2D34)">${need.prioridad}</span>
+          <span class="nexo-badge" style="background:var(--nexo-bg-alt);border-color:var(--nexo-border)">${need.tipo}</span>
+          ${need.categoria_etiqueta ? `<span class="nexo-badge">${need.categoria_etiqueta}</span>` : ""}
         </div>
-        <h3 style="color: #000; margin: 0 0 6px 0; font-size: 1rem;">${need.titulo}</h3>
-        <p style="color: #555; margin: 0; font-size: 0.85rem;">${need.descripcion}</p>
-      </div>
-    `;
-
+        <h3 style="color:var(--nexo-text,#0a192f);margin:0 0 6px 0;font-size:1rem;">${need.titulo || need.categoria_etiqueta || need.tipo}</h3>
+        ${need.direccion ? `<p style="color:var(--nexo-text-muted,#6b7280);margin:0 0 4px 0;font-size:0.8rem;">📍 ${need.direccion}</p>` : ""}
+        <p style="color:#555;margin:0;font-size:0.85rem;">${need.descripcion || ""}</p>
+        <button onclick="window.cambiarEstadoNecesidad(${need.id}, 'cubierta')" style="margin-top:8px;padding:4px 8px;background:var(--nexo-primary,#10b981);color:white;border:none;border-radius:4px;cursor:pointer;">Marcar cubierta</button>
+      </div>`;
     marker.bindPopup(popupContent);
-    marker.addTo(map);
-
-    // Guardar referencia en el array de marcadores
+    marker.addTo(capas.necesidades);
     markers.push(marker);
   });
 }
 
-/**
- * Elimina todos los marcadores actuales del mapa
- */
-function clearMarkers() {
-  markers.forEach((m) => map.removeLayer(m));
-  markers = [];
+function renderAyudas(ayudasList) {
+  capas.ayudas.clearLayers();
+  ayudasList.forEach((ayuda) => {
+    const lat = ayuda.latitud ?? ayuda.latitude;
+    const lon = ayuda.longitud ?? ayuda.longitude;
+    if (lat == null || lon == null) return;
+    const marker = L.marker([lat, lon], { icon: getAyudaIcon(ayuda.tipo || ayuda.type) });
+    marker.bindPopup(`<div class="nexo-popup"><b>${ayuda.tipo || ayuda.type}</b><br>${ayuda.categoria || ayuda.category || ""}<br><small>${ayuda.estado || ayuda.status || ""}</small></div>`);
+    marker.addTo(capas.ayudas);
+  });
 }
 
-/**
- * Filtra las necesidades según la opción seleccionada en el menú desplegable.
- * El <select id="typeFilter"> debe usar los valores reales del backend:
- * agua | alimento | medicina | refugio | herramientas | transporte.
- */
-function applyFilter() {
-  const selectedType = document.getElementById("typeFilter").value;
+function renderAlertas(alerts) {
+  capas.alertas.clearLayers();
+  capas.zonas.clearLayers();
+  zonaActiva = null;
+  alerts.forEach((alerta) => {
+    const lat = alerta.latitud ?? alerta.lat ?? alerta.latitude;
+    const lon = alerta.longitud ?? alerta.lon ?? alerta.longitude;
+    const zone = alerta.zone || alerta.zona;
+    const isHigh = (alerta.risk_level === "high" || alerta.nivel_riesgo === "alto" || alerta.status === "high_risk" || alerta.estado === "alto_riesgo");
+    if (isHigh && zone) {
+      try {
+        const geo = typeof zone === "string" ? JSON.parse(zone) : zone;
+        const layer = L.geoJSON(geo, { style: { color: "var(--nexo-alert-red, #ef4444)", weight: 3, fillOpacity: 0.15 } }).addTo(capas.zonas);
+        zonaActiva = geo;
+        try { map.fitBounds(layer.getBounds(), { padding: [20, 20] }); } catch {}
+      } catch {}
+    }
+    if (lat != null && lon != null) {
+      const m = L.marker([lat, lon]).addTo(capas.alertas);
+      m.bindPopup(`<b>${alerta.titulo || alerta.title || "Alerta"}</b><br>${alerta.descripcion || alerta.description || ""}<br><small>${alerta.risk_level || alerta.nivel_riesgo || ""} — ${alerta.status || alerta.estado || ""}</small>`);
+    }
+  });
+}
 
-  if (selectedType === "all") {
-    renderMap(loadedNeeds);
-  } else {
-    const filtered = loadedNeeds.filter((n) => n.tipo === selectedType);
-    renderMap(filtered);
+function isInsideZona(lat, lon) {
+  if (!zonaActiva) return true;
+  try {
+    const geo = zonaActiva;
+    const poly = geo.type === "Feature" ? geo.geometry : geo.type === "FeatureCollection" ? geo.features[0].geometry : geo;
+    if (poly.type !== "Polygon") return true;
+    const vs = poly.coordinates[0];
+    let inside = false;
+    for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+      const xi = vs[i][0], yi = vs[i][1], xj = vs[j][0], yj = vs[j][1];
+      const intersect = yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  } catch { return true; }
+}
+
+function applyIntensityFilter(list) {
+  if (!zonaActiva) return list;
+  return list.filter((n) => isInsideZona(n.latitud, n.longitud));
+}
+
+function applyFilter() {
+  const selectedType = document.getElementById("typeFilter")?.value;
+  let filtered = loadedNeeds;
+  if (selectedType && selectedType !== "all") filtered = filtered.filter((n) => n.tipo === selectedType);
+  filtered = applyIntensityFilter(filtered);
+  renderMap(filtered);
+  const count = filtered.length;
+  const badge = document.getElementById("intensityBadge");
+  if (badge) {
+    badge.textContent = zonaActiva ? `${count} en zona` : `${count} total`;
+    badge.className = count > 5 ? "nexo-badge nexo-badge--critica" : count > 2 ? "nexo-badge nexo-badge--alta" : "nexo-badge nexo-badge--media";
+    badge.style.background = count > 5 ? "var(--nexo-alert-red, #ef4444)" : count > 2 ? "var(--nexo-orange, #F2542D)" : "var(--nexo-primary, #10b981)";
   }
 }
 
-// ==========================================
-// 4. EVENTOS E INICIALIZACIÓN
-// ==========================================
+document.getElementById("typeFilter")?.addEventListener("change", applyFilter);
 
-document.getElementById("typeFilter").addEventListener("change", applyFilter);
-
-// Carga inicial del mapa con todos los datos desde la API.
-// Se exporta para poder llamarla otra vez desde fuera (p. ej. al crear
-// una necesidad nueva) y así refrescar los marcadores sin recargar la página.
 export async function loadNeedsFromAPI() {
   try {
-    const response = await obtenerNecesidades(); // Usar la función de necesidadesApi.js
-
-    // Las necesidades "cubiertas" ya no aparecen en el mapa (siguen
-    // viéndose en la tarjeta de la lista lateral con su marca de check).
+    const response = await obtenerNecesidades();
     loadedNeeds = response.filter((need) => need.estado !== "cubierta");
-
-    // Pintamos los marcadores en el mapa
-    renderMap(loadedNeeds);
+    applyFilter();
   } catch (error) {
     console.error("Error loading needs:", error);
+    try {
+      const mock = await apiGet("/mocks/necesidades.mock.json");
+      loadedNeeds = Array.isArray(mock) ? mock : [];
+      applyFilter();
+    } catch {}
   }
 }
-loadNeedsFromAPI();
+
+export async function loadAlertasFromAPI() {
+  try {
+    const data = await apiGet("/api/alertas");
+    loadedAlerts = Array.isArray(data) ? data : [];
+    renderAlertas(loadedAlerts);
+    applyFilter();
+  } catch {
+    try {
+      const mock = await apiGet("/mocks/alertas.mock.json");
+      loadedAlerts = Array.isArray(mock) ? mock : [];
+      renderAlertas(loadedAlerts);
+    } catch {}
+  }
+}
+
+export async function loadAyudasFromAPI() {
+  try {
+    let data = [];
+    try { data = await apiGet("/api/ayudas"); } catch { data = await apiGet("/api/ayudas?estado=disponible"); }
+    loadedAyudas = Array.isArray(data) ? data : [];
+    renderAyudas(loadedAyudas);
+  } catch {
+    try {
+      const mock = await apiGet("/mocks/ayudas.mock.json");
+      loadedAyudas = Array.isArray(mock) ? mock : [];
+      renderAyudas(loadedAyudas);
+    } catch {}
+  }
+}
+
+window.cambiarEstadoNecesidad = async (id, estado) => {
+  try {
+    await apiGet(`/api/necesidades/${id}`); // warmup
+    const { apiPost } = await import("../../shared/apiClient.js");
+    // usa PATCH vía apiPost con modulo para offline queue
+    await fetch(`${"http://127.0.0.1:8000"}/api/necesidades/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado }) });
+    await loadNeedsFromAPI();
+  } catch (e) { console.error(e); }
+};
+
+export async function loadAllForMap() {
+  await Promise.all([loadAlertasFromAPI(), loadNeedsFromAPI(), loadAyudasFromAPI()]);
+}
+
+loadAllForMap();
