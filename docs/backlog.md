@@ -1,22 +1,22 @@
-# Backlog de NEXO
+# Backlog de Anexo Risk
 
-> Mantenido por el Product Manager (Juan). Última actualización: 2026-09-01 (Anexo Risk, rama única `main` en `garciaguadalupevanessa-bit/Anexo_Risk` — solo `main` + `main`, sin `dev`). Legacy Sprint 1 preservado en `docs/legacy/`.
+> **Evolución de NEXO → Anexo Risk.** Mantenido por PM Juan. Repo actual: `garciaguadalupevanessa-bit/Anexo_Risk` — **solo `main` (bloqueada) + `anexo-risk` (rama única de integración)**. GitHub Flow `feat/*` → `main`. Última actualización: 2026-09-01 (audit `anexo-risk` 557f8f7). Legacy NEXO Sprint 1-2 preservado en `docs/legacy/`.
 > Referencia de prioridades: `docs/manifiesto.md` y `docs/roadmap.md`.
 
 ## Estado por módulo
 
 | Módulo | Prioridad | Rama(s) | PR | Dueño | Estado |
 |--------|-----------|---------|----|-------|--------|
-| Alertas oficiales | Núcleo (MVP) | `feature/alerts`, `fix/base-comun` | #56 **ABIERTO** (feature/alerts→dev, G2-only) · `fix/base-comun`→dev **ABIERTO** | Grupo 2 (Juan, capitán) | Backend + pantalla + tests en verde (feature/alerts, G2-only tras revertir #30 con #32). Base común separada en `fix/base-comun` (dev no arranca tras revertir #30). |
-| Mapa de necesidades / Necesidades | Núcleo (MVP) | `dev` | #18, #22, #25, #61, #56 **MERGED** | Grupo 1 (Josema + Gema/Helen/Elena/Adriana) | En `dev`: rediseño 8 categorías/2 estados + `direccion` + geocodificación + `services.py`. PRs #61 y #56 mergeados 91a7647. |
-| Voluntariado y donaciones | Núcleo (MVP) | `dev` | #24, #27, #29 **MERGED** | Grupo 3 | En `dev`: registro + disponibilidad + config/soporte. Falta conectar `donaciones.js` al backend real. |
-| Registro de personas / "estoy bien" | Siguiente | `dev` | #20 **MERGED** | Transversal (S1: Grupo 4) | En `dev`: backend "estoy bien" (45 tests). **Sprint 1**. |
-| Modo offline (PWA) | Siguiente | `dev` | #21 **MERGED** (backend) | Transversal (S1: Grupo 4) | Backend de sincronización en `dev`; falta UI offline en frontend. |
-| Documentación y gobernanza | Transversal | `main` | #53 **MERGED** (91a7647→`main`) | PM (Juan) | README Anexo Risk + logo + `equipos/reparto-main-4p-*`, ER + Kanban — en `main`, legacy en `docs/legacy/` |
+| Alertas + activación (G2) | Núcleo (MVP) | `anexo-risk` | `feat/javi-g2-alertas` → `main` | Javi | `backend/modules/alertas/*` + `zone` + `external_id` dedup — en `anexo-risk` (4f9f29f) |
+| Necesidades (G1) | Núcleo (MVP) | `anexo-risk` | `feat/luis-g1-necesidades` → `main` | Luis | 8 cats/2 estados + `direccion` + `services.py` + `geocodificacion.js` — en `anexo-risk` (91a7647+). Ver `docs/equipos/reparto.md` |
+| Ayudas (G3) | Núcleo (MVP) | `anexo-risk` | `feat/vanessa-g3-ayudas` → `main` | Vanessa | `voluntariado`+`donaciones` unificado `POST /api/ayudas` — `anexo-risk` |
+| Mapa + Interfaz (G4) | Núcleo (MVP) | `anexo-risk` | `feat/juan-g4-mapa` → `main` | Juan | `mapa.html` + `mapaNecesidades.js` + `apiClient.js` + `mocks` + H3/globo post-MVP — `anexo-risk` |
+| Personas / Offline | Siguiente | `main` | #20, #21 **MERGED** (legacy) | Vanessa/Juan | Backend en `main` (legacy NEXO); falta UI offline — Siguiente |
+| Documentación y gobernanza | Transversal | `anexo-risk` → `main` | `anexo-risk` (557f8f7→`main`) | Juan (PM) | README Anexo Risk + logo + `equipos/reparto.md` (único, 4p con nombres) + ER — en `anexo-risk`, legacy en `docs/legacy/` |
 
 > **Mapeo de grupos actualizado en Sprint 2 (reunión 27/08):** G1=Necesidades, G2=Alertas, G3=Ayudas, G4=Mapa + Interfaz principal. En Sprint 1 eran G1=Mapa de necesidades, G2=Alertas, G3=Voluntariado/Donaciones, G4=Personas/Offline. La sección "Trazabilidad Sprint 1" más abajo mantiene el detalle anterior para trazabilidad.
 
-## PRs (2026-08-25)
+## PRs — Legacy NEXO (a `dev`, repo `adrianaarang/Nexo`) + Anexo Risk (actual)
 
 | PR | Título | Estado |
 |----|--------|--------|
@@ -40,22 +40,16 @@
 
 ## Tablero / Kanban (Sprint 2)
 
-En Sprint 2 el Kanban se regenera con `scripts/setup-kanban.sh` (idempotente) al mergear
-`feature/docs → dev` (workflow `.github/workflows/setup-kanban.yml`, usa `GITHUB_TOKEN`). Crea
-los epics por equipo (Necesidades, Alertas+activación, Ayudas, Mapa+Interfaz) y **cierra con
-trazabilidad** los issues de Sprint 1 obsoletos (#41, #43, #44) hacia su equivalente de Sprint 2.
-Cada epic se cierra al mergear el PR de integración del grupo si incluye `Closes #<num>`. El
-tablero visual es un Project V2 personal del PM (agrupado por Label = equipo, columnas por Status).
-Composición de equipos en `docs/equipos.md`.
+En Anexo Risk el Kanban se regenera con `scripts/setup-kanban.sh` (idempotente) al mergear a `main` (workflow `.github/workflows/setup-kanban.yml`, `main` bloqueada). Crea los epics por equipo y **cierra con trazabilidad** los issues de Sprint 1 obsoletos (#41, #43, #44) hacia su equivalente de Sprint 2. Cada epic se cierra al mergear `feat/*` → `main` si incluye `Closes #<num>`. Tablero Project V2 personal (agrupado por Label, columnas por Status). Composición en `docs/equipos/reparto.md` (4p, un archivo).
 
-Mapeo Sprint 2 (reparto final 27/08):
+Mapeo Anexo Risk (4p, `anexo-risk` → `main`, GitHub Flow):
 
-| Equipo | Módulo | Rama sugerida | Estado |
-|--------|--------|---------------|--------|
-| Equipo 1 | Necesidades | `feature/necesidades/*` | Por hacer |
-| Equipo 2 | Alertas + activación de crisis | `alerts` (backend hecho) | Backend en `alerts`; falta front (Javi) + GDACS/PC (Vanessa) |
-| Equipo 3 | Ayudas (donación + voluntariado) | `feature/ayudas/*` | Por hacer |
-| Equipo 4 | Mapa + Interfaz principal | `feature/mapa/*` | Por hacer |
+| Persona | Módulo | Rama | Estado |
+|--------|--------|------|--------|
+| Luis (P3) | Necesidades (G1) | `feat/luis-g1-necesidades` → `main` | Por hacer |
+| Javi (P1) | Alertas + activación (G2) | `feat/javi-g2-alertas` → `main` | Por hacer |
+| Vanessa (P4) | Ayudas (G3) | `feat/vanessa-g3-ayudas` → `main` | Por hacer |
+| Juan (P2) | Mapa + Interfaz (G4) | `feat/juan-g4-mapa` → `main` | Por hacer |
 
 > Los issues de Sprint 1 (#41 Equipo 1, #43 Equipo 3, #44 Equipo 4) se cierran al crear los de
 > Sprint 2, con un comentario de trazabilidad hacia el nuevo issue.
