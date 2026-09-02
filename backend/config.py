@@ -1,7 +1,7 @@
-"""Configuración general del backend de Nexo.
+"""General configuration for the Nexo backend.
 
-Lee variables de entorno (ver .env.example) con valores por defecto
-razonables para desarrollo local.
+Reads environment variables (see .env.example) with sensible default
+values for local development.
 """
 import os
 from dotenv import load_dotenv
@@ -13,14 +13,16 @@ DATABASE_PATH = DATABASE_URL.replace("sqlite:///", "")
 
 BACKEND_PORT = int(os.getenv("BACKEND_PORT", "8000"))
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5500,http://127.0.0.1:5500").split(",")
+CORS_ORIGINS = [
+    origin.strip() 
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:5500,http://127.0.0.1:5500").split(",")
+]
 
 GDACS_API_URL = os.getenv("GDACS_API_URL", "https://www.gdacs.org/xml/rss.xml")
 GDACS_CACHE_TTL_SECONDS = int(os.getenv("GDACS_CACHE_TTL_SECONDS", "900"))
 PROTECCION_CIVIL_API_URL = os.getenv("PROTECCION_CIVIL_API_URL", "")
-GDACS_CACHE_TTL_SECONDS = int(os.getenv("GDACS_CACHE_TTL_SECONDS", "900"))
 
-# Voluntariado: correo, admin y subida de archivos
+# Volunteering: email, admin, and file upload settings
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@nexo-dummy.local")
 SMTP_HOST = os.getenv("SMTP_HOST", "localhost")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
