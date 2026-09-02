@@ -17,6 +17,11 @@
   --nexo-text-muted: #9CA0A8;
   --nexo-border: #2A2D34;
 
+  /* Requeridos por el Acuerdo 3 (Contrato de equipo con Juan y Luis) */
+  --nexo-primary: #10b981;
+  --nexo-alert-red: #ef4444;
+  --nexo-bg-dark: #0a192f;
+
   /* alias de compatibilidad (usados por módulos de los equipos) */
   --nexo-green: #4CAF50;
   --nexo-blue: #5B9BD5;
@@ -30,4 +35,19 @@
 
   --font-base: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --letter-wide: 0.18em;
+}
+
+/* Ejemplo de uso en tus componentes de Ayudas */
+.card-ayuda {
+  background-color: var(--nexo-bg-alt);
+  color: var(--nexo-text);
+  border: 1px solid var(--nexo-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+.btn-ayuda-primary {
+  background-color: var(--nexo-orange);
+  color: var(--nexo-white);
+  border-radius: var(--radius-md);
 }

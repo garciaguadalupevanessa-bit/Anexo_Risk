@@ -23,9 +23,6 @@ def seed() -> None:
         # Estos registros respetan el mismo contrato que usará el formulario
         # simplificado. Cubren las 8 categorías cerradas y los dos estados
         # posibles (abierta / cubierta) para poder probar filtros y mapa.
-        # La "direccion" es el texto legible que en producción generaría la
-        # geocodificación (ver geocodificacion.js); aquí se escribe a mano
-        # porque son coordenadas de ejemplo, no una búsqueda real.
         cursor.executemany(
             """INSERT INTO necesidades
                (titulo, tipo, descripcion, direccion, latitud, longitud, prioridad, estado)
@@ -146,16 +143,34 @@ def seed() -> None:
             ],
         )
 
+        # Se incluye la columna dni.
+        # Para tipos de ayuda de voluntariado/tiempo ('tiempo') se incluye un DNI válido,
+        # mientras que para 'recursos' o 'servicios' puede ir como NULL o DNI opcional.
         cursor.executemany(
-            """INSERT INTO donaciones (tipo, recurso, cantidad, contacto)
-               VALUES (?, ?, ?, ?)""",
+            """INSERT INTO donaciones (tipo, recurso, cantidad, contacto, dni)
+               VALUES (?, ?, ?, ?, ?)""",
             [
-                ("ofrecida", "Mantas", "50 unidades", "creuroja@example.com"),
+                ("recursos", "Mantas", "50 unidades", "creuroja@example.com", None),
                 (
-                    "solicitada",
+                    "recursos",
                     "Agua embotellada",
                     "200 litros",
                     "puntoayuda1@example.com",
+                    None,
+                ),
+                (
+                    "tiempo",
+                    "Apoyo en logística de almacén",
+                    "4 horas/día",
+                    "voluntario1@example.com",
+                    "12345678Z",
+                ),
+                (
+                    "servicios",
+                    "Transporte con furgoneta propia",
+                    "1 furgoneta",
+                    "transporte@example.com",
+                    "87654321X",
                 ),
             ],
         )

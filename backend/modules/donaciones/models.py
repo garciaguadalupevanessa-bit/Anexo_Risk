@@ -31,14 +31,15 @@ def get_donation(donation_id: int) -> dict[str, Any] | None:
 def create_donation(donation: DonationCreate) -> dict[str, Any]:
     with get_cursor() as cursor:
         cursor.execute(
-            """INSERT INTO donaciones (tipo, recurso, cantidad, descripcion, contacto, estado)
-               VALUES (?, ?, ?, ?, ?, 'activa')""",
+            """INSERT INTO donaciones (tipo, recurso, cantidad, descripcion, contacto, dni, estado)
+               VALUES (?, ?, ?, ?, ?, ?, 'activa')""",
             (
                 donation.donation_type.value,
                 donation.resource.value,
                 donation.quantity,
                 donation.description,
                 donation.contact,
+                donation.dni,
             ),
         )
         donation_id = cursor.lastrowid

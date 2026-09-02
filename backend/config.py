@@ -1,4 +1,4 @@
-"""Configuración general del backend de Nexo.
+"""Configuración general del backend de Anexo Finder.
 
 Lee variables de entorno (ver .env.example) con valores por defecto
 razonables para desarrollo local.

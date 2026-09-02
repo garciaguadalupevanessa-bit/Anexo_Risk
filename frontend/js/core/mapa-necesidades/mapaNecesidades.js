@@ -1,12 +1,12 @@
-// G4 Mapa — Juan — Anexo Risk — Producto integral
+// G4 Mapa — Juan — Anexo Finder — Producto integral
 // Leaflet base + capas Alertas/Zonas/Necesidades/Ayudas + consumo contratos G1/G2/G3 + ALTO RIESGO
 import { apiGet } from "../../shared/apiClient.js";
 import { obtenerNecesidades, configurarBaseUrl } from "./necesidadesApi.js";
 
 configurarBaseUrl("http://127.0.0.1:8000/api/necesidades");
 
-const map = L.map("map").setView([40.416775, -3.70379], 13);
-const baseOSM = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}", { maxZoom: 19, attribution: "© <a href='https://www.carto.com/'>CARTO</a> & © <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors" });
+const map = L.map("map").setView([39.4699, -0.3763], 13);
+const baseOSM = L.tileLayer("https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2qa8_1_a275e8c9b45d6b70d3b144df", { maxZoom: 19, attribution: "© <a href='https://www.carto.com/'>CARTO</a> & © <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors" });
 baseOSM.addTo(map);
 
 const capas = {
@@ -17,7 +17,21 @@ const capas = {
   zonasNecesidades: L.layerGroup().addTo(map),
   zonasAyudas: L.layerGroup().addTo(map),
 };
-L.control.layers({ "OpenStreetMap (gratis, sin API key)": baseOSM }, { "Alertas": capas.alertas, "Zonas ALTO RIESGO": capas.zonas, "Necesidades": capas.necesidades, "Zonas Necesidades (H3)": capas.zonasNecesidades, "Ayudas": capas.ayudas, "Zonas Ayudas (H3)": capas.zonasAyudas }, { collapsed: false }).addTo(map);
+
+export function toggleLayer(nombre, visible) {
+  const capa = capas[nombre];
+  if (!capa) return;
+  if (visible) {
+    if (!map.hasLayer(capa)) map.addLayer(capa);
+  } else {
+    if (map.hasLayer(capa)) map.removeLayer(capa);
+  }
+}
+
+export function isLayerVisible(nombre) {
+  const capa = capas[nombre];
+  return capa && map.hasLayer(capa);
+}
 
 let markers = [];
 let loadedNeeds = [];
@@ -177,7 +191,37 @@ function applyFilter() {
   }
 }
 
+let tempMarker = null;
+
+map.on("click", (e) => {
+  const { lat, lng } = e.latlng;
+  const inputLat = document.getElementById("input-lat");
+  const inputLng = document.getElementById("input-lng");
+  const mensaje = document.getElementById("ubicacion-mensaje");
+  if (inputLat) inputLat.value = lat.toFixed(6);
+  if (inputLng) inputLng.value = lng.toFixed(6);
+  if (mensaje) {
+    mensaje.textContent = `✓ Ubicación seleccionada: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    mensaje.style.color = "var(--nexo-teal, #17A2A0)";
+  }
+  if (tempMarker) map.removeLayer(tempMarker);
+  tempMarker = L.circleMarker([lat, lng], {
+    radius: 10,
+    color: "#F2542D",
+    fillColor: "#F2542D",
+    fillOpacity: 0.4,
+    weight: 2,
+  }).addTo(map);
+});
+
 document.getElementById("typeFilter")?.addEventListener("change", applyFilter);
+
+document.getElementById("toggle-alertas")?.addEventListener("change", (e) => toggleLayer("alertas", e.target.checked));
+document.getElementById("toggle-zonas")?.addEventListener("change", (e) => toggleLayer("zonas", e.target.checked));
+document.getElementById("toggle-necesidades")?.addEventListener("change", (e) => toggleLayer("necesidades", e.target.checked));
+document.getElementById("toggle-ayudas")?.addEventListener("change", (e) => toggleLayer("ayudas", e.target.checked));
+document.getElementById("toggle-h3-necesidades")?.addEventListener("change", (e) => toggleLayer("zonasNecesidades", e.target.checked));
+document.getElementById("toggle-h3-ayudas")?.addEventListener("change", (e) => toggleLayer("zonasAyudas", e.target.checked));
 
 export async function loadNeedsFromAPI() {
   try {
@@ -187,7 +231,7 @@ export async function loadNeedsFromAPI() {
   } catch (error) {
     console.error("Error loading needs:", error);
     try {
-      const mock = await apiGet("/mocks/necesidades.mock.json");
+      const mock = await fetch("/mocks/necesidades.mock.json").then((r) => r.json());
       loadedNeeds = Array.isArray(mock) ? mock : [];
       applyFilter();
     } catch {}
@@ -202,7 +246,7 @@ export async function loadAlertasFromAPI() {
     applyFilter();
   } catch {
     try {
-      const mock = await apiGet("/mocks/alertas.mock.json");
+      const mock = await fetch("/mocks/alertas.mock.json").then((r) => r.json());
       loadedAlerts = Array.isArray(mock) ? mock : [];
       renderAlertas(loadedAlerts);
     } catch {}
@@ -211,16 +255,22 @@ export async function loadAlertasFromAPI() {
 
 export async function loadAyudasFromAPI() {
   try {
-    let data = [];
-    try { data = await apiGet("/api/ayudas"); } catch { data = await apiGet("/api/ayudas?estado=disponible"); }
+    const data = await apiGet("/api/ayudas");
     loadedAyudas = Array.isArray(data) ? data : [];
     renderAyudas(loadedAyudas);
-  } catch {
+  } catch (e) {
+    console.warn("Fallback a mock ayudas:", e.message);
     try {
-      const mock = await apiGet("/mocks/ayudas.mock.json");
+      const mock = await fetch("/mocks/ayudas.mock.json").then((r) => {
+        if (!r.ok) throw new Error(`Mock HTTP ${r.status}`);
+        return r.json();
+      });
       loadedAyudas = Array.isArray(mock) ? mock : [];
       renderAyudas(loadedAyudas);
-    } catch {}
+      console.log("Ayudas cargadas desde mock:", loadedAyudas.length);
+    } catch (mockErr) {
+      console.error("Mock ayudas también falló:", mockErr.message);
+    }
   }
 }
 
@@ -236,6 +286,41 @@ window.cambiarEstadoNecesidad = async (id, estado) => {
 
 export async function loadAllForMap() {
   await Promise.all([loadAlertasFromAPI(), loadNeedsFromAPI(), loadAyudasFromAPI()]);
+  fitMapToAllMarkers();
+}
+
+function fitMapToAllMarkers() {
+  const bounds = L.latLngBounds();
+  let hasBounds = false;
+
+  loadedNeeds.forEach((n) => {
+    if (n.latitud != null && n.longitud != null) {
+      bounds.extend([n.latitud, n.longitud]);
+      hasBounds = true;
+    }
+  });
+
+  loadedAlerts.forEach((a) => {
+    const lat = a.latitud ?? a.lat ?? a.latitude;
+    const lon = a.longitud ?? a.lon ?? a.longitude;
+    if (lat != null && lon != null) {
+      bounds.extend([lat, lon]);
+      hasBounds = true;
+    }
+  });
+
+  loadedAyudas.forEach((a) => {
+    const lat = a.latitud ?? a.latitude;
+    const lon = a.longitud ?? a.longitude;
+    if (lat != null && lon != null) {
+      bounds.extend([lat, lon]);
+      hasBounds = true;
+    }
+  });
+
+  if (hasBounds) {
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+  }
 }
 
 loadAllForMap();

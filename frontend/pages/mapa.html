@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mapa de necesidades — Nexo</title>
+    <title>Mapa de necesidades — Anexo Finder</title>
 
     <!-- CSS Globales -->
     <link rel="stylesheet" href="../css/variables.css" />
@@ -60,6 +60,35 @@
           </select>
         </div>
 
+        <!-- Toggles de capas del mapa -->
+        <div class="controles" style="margin-bottom: 12px;">
+          <strong style="display:block; margin-bottom: 6px;">Mostrar en mapa:</strong>
+          <label style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <input type="checkbox" id="toggle-alertas" checked />
+            <span>Alertas</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <input type="checkbox" id="toggle-zonas" checked />
+            <span>Zonas ALTO RIESGO</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <input type="checkbox" id="toggle-necesidades" checked />
+            <span>Necesidades</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <input type="checkbox" id="toggle-ayudas" checked />
+            <span>Ayudas</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <input type="checkbox" id="toggle-h3-necesidades" />
+            <span>Zonas H3 (necesidades)</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <input type="checkbox" id="toggle-h3-ayudas" />
+            <span>Zonas H3 (ayudas)</span>
+          </label>
+        </div>
+
         <div id="contenedor-tarjetas">
           <!-- JS inyectará las tarjetas aquí -->
         </div>
@@ -101,25 +130,9 @@
           ></textarea>
 
           <div class="coords-group">
-              <input
-                type="number"
-                step="any"
-                id="input-lat"
-                placeholder="Latitud"
-                required
-                readonly
-              />
-              <input
-                type="number"
-                step="any"
-                id="input-lng"
-                placeholder="Longitud"
-                required
-                readonly
-              />
-              <button type="button" id="btn-usar-gps">
-                📍 Usar mi ubicación
-              </button>
+              <p id="ubicacion-mensaje" style="margin:0 0 8px 0; font-size:0.85rem; color:var(--nexo-text-muted,#9CA0A8);">📍 Toca el mapa para seleccionar ubicación</p>
+              <input type="number" step="any" id="input-lat" placeholder="Latitud" required readonly style="display:none;" />
+              <input type="number" step="any" id="input-lng" placeholder="Longitud" required readonly style="display:none;" />
             </div>
 
             <button type="submit" class="btn-primario">
