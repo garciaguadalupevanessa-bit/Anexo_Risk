@@ -767,6 +767,9 @@ async function loadDashboard() {
       : '<p style="color:var(--text-muted);font-size:var(--text-sm);">Sin datos suficientes</p>';
 
     window._dashboardData = { necesidades, donaciones, alertas };
+
+    // Also store alerts for export
+    window._dashboardData.alertas = alertas;
   } catch (err) {
     console.error("Dashboard error:", err);
   }
@@ -775,15 +778,31 @@ async function loadDashboard() {
 window.dashboardExportCSV = function() {
   const data = window._dashboardData;
   if (!data) return;
-  const rows = [
-    ["Tipo", "Título", "Descripción", "Dirección", "Estado", "Fecha"],
-    ...data.necesidades.map(n => [n.tipo, n.titulo || n.descripcion, n.descripcion, n.direccion, n.estado, n.creado_en]),
-  ];
-  const csv = rows.map(r => r.map(c => `"${(c || "").toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+  let csv = "=== ANEXO FINDER — EXPORT DE DATOS ===\n";
+  csv += `Generado: ${new Date().toLocaleString("es-ES")}\n\n`;
+
+  csv += "=== NECESIDADES ===\n";
+  csv += ["ID", "Tipo", "Título", "Descripción", "Dirección", "Prioridad", "Estado", "Fecha"].map(c => `"${c}"`).join(",") + "\n";
+  data.necesidades.forEach(n => {
+    csv += [n.id, n.tipo, n.titulo || "", n.descripcion || "", n.direccion || "", n.prioridad, n.estado, n.creado_en].map(c => `"${(c || "").toString().replace(/"/g, '""')}"`).join(",") + "\n";
+  });
+
+  csv += "\n=== AYUDAS ===\n";
+  csv += ["ID", "Tipo", "Recurso", "Cantidad", "Descripción", "Contacto", "Estado", "Fecha"].map(c => `"${c}"`).join(",") + "\n";
+  data.donaciones.forEach(d => {
+    csv += [d.id, d.tipo, d.recurso, d.cantidad || "", d.descripcion || "", d.contacto, d.estado, d.creado_en].map(c => `"${(c || "").toString().replace(/"/g, '""')}"`).join(",") + "\n";
+  });
+
+  csv += "\n=== ALERTAS ===\n";
+  csv += ["ID", "Título", "Tipo", "Severidad", "País", "Fecha", "Enlace"].map(c => `"${c}"`).join(",") + "\n";
+  data.alertas.forEach(a => {
+    csv += [a.id, a.titulo || "", a.tipo || "", a.severidad || "", a.pais || "", a.fecha || "", a.enlace || ""].map(c => `"${(c || "").toString().replace(/"/g, '""')}"`).join(",") + "\n";
+  });
+
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "anexo_risk_export.csv";
+  a.download = `anexo_risk_export_${new Date().toISOString().split("T")[0]}.csv`;
   a.click();
 };
 
