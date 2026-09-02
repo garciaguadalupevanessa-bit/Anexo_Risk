@@ -31,7 +31,7 @@ export async function buscarDireccion(texto) {
     }
 
     // Tomamos la primera coincidencia (la más relevante)
-    const { lat, lon, display_name: direccion } = resultados;
+    const { lat, lon, display_name: direccion } = resultados[0];
     return { 
         lat: parseFloat(lat), 
         lng: parseFloat(lon), 
