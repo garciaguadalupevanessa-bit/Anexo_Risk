@@ -62,8 +62,7 @@ function initMap() {
     zonas: L.layerGroup().addTo(map),
     necesidades: L.layerGroup().addTo(map),
     ayudas: L.layerGroup().addTo(map),
-    zonasNecesidades: L.layerGroup().addTo(map),
-    zonasAyudas: L.layerGroup().addTo(map),
+    incendios: L.layerGroup().addTo(map),
   };
 
   function toggleLayer(nombre, visible) {
@@ -252,6 +251,43 @@ function initMap() {
     });
   }
 
+  function renderIncendios(detecciones) {
+    capas.incendios.clearLayers();
+    detecciones.forEach(f => {
+      const lat = f.lat ?? f.latitud;
+      const lon = f.lon ?? f.longitud;
+      if (lat == null || lon == null) return;
+      const brillo = f.brightness ?? f.brillo ?? 0;
+      const confianza = f.confidence ?? f.confianza ?? "nominal";
+      const color = confianza === "high" ? "#ff2200" : confianza === "nominal" ? "#ff8800" : "#ffaa00";
+      const radius = Math.max(4, Math.min(12, (brillo - 280) / 5));
+      const marker = L.circleMarker([lat, lon], {
+        radius,
+        color,
+        fillColor: color,
+        fillOpacity: 0.6,
+        weight: 1,
+      }).addTo(capas.incendios);
+      marker.bindPopup(`
+        <b>🔥 Detección NASA FIRMS</b><br>
+        <b>Satélite:</b> ${f.satellite || "VIIRS SNPP"}<br>
+        <b>Fecha:</b> ${f.acq_date || f.fecha || ""}<br>
+        <b>Brillo:</b> ${brillo.toFixed(1)} K<br>
+        <b>Confianza:</b> ${confianza}<br>
+        <small>${f.country || f.pais || "España"}</small>
+      `);
+    });
+  }
+
+  async function loadIncendiosMap() {
+    try {
+      const data = await apiGet("/api/incendios");
+      renderIncendios(data.detecciones || []);
+    } catch (err) {
+      console.error("Incendios error:", err);
+    }
+  }
+
   async function loadAlertasMap() {
     try {
       const data = await apiGet("/api/alertas");
@@ -299,6 +335,7 @@ function initMap() {
   document.getElementById("toggle-zonas")?.addEventListener("change", e => toggleLayer("zonas", e.target.checked));
   document.getElementById("toggle-necesidades")?.addEventListener("change", e => toggleLayer("necesidades", e.target.checked));
   document.getElementById("toggle-ayudas")?.addEventListener("change", e => toggleLayer("ayudas", e.target.checked));
+  document.getElementById("toggle-incendios")?.addEventListener("change", e => toggleLayer("incendios", e.target.checked));
 
   // Map click -> set coordinates + reverse geocode
   let tempMarker = null;
@@ -811,6 +848,7 @@ window.dashboardExportCSV = function() {
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
+  loadIncendiosMap();
   initAlerts();
   initDonaciones();
   loadDashboard();
