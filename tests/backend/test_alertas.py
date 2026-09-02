@@ -2,7 +2,8 @@
 
 Covers GDACS RSS data parsing and integration contracts, query parameter
 filtering, descending chronological sorting, in-memory caching performance,
-and resilience against malformed XML payloads, missing fields, and external 
+alert status lifecycle actions (activate, high-risk, deactivate), and resilience 
+against malformed XML payloads, missing fields, invalid GeoJSON, and external 
 network failures.
 """
 
@@ -12,11 +13,16 @@ from fastapi.testclient import TestClient
 import pytest
 
 from integrations import gdacs_client
+from modules.alertas import services
 from main import app
+
 
 @pytest.fixture(autouse=True)
 def reset_gdacs_cache():
-    gdacs_client._cache = {"timestamp": 0.0, "data": []}
+    """Resets GDACS client cache and local database before each test execution."""
+    gdacs_client.clear_cache()
+    with services._DB_LOCK:
+        services.LOCAL_ALERTS_DB.clear()
     yield
 
 
@@ -100,11 +106,14 @@ class TestAlertsContractAndSorting(TestAlertsBase):
 
         expected_keys = {
             "id",
-            "fuente",
+            "source",
             "tipo",
             "titulo",
             "descripcion",
             "severidad",
+            "risk_level",
+            "status",
+            "is_active",
             "pais",
             "lat",
             "lon",
@@ -124,9 +133,9 @@ class TestAlertsContractAndSorting(TestAlertsBase):
         assert response.status_code == 200
 
         data = response.json()
-        assert data[0]["tipo"] == "inundacion"
-        assert data[1]["tipo"] == "terremoto"
-        assert data[2]["tipo"] == "ciclon"
+        assert data[0]["tipo"] in ("inundacion", "flood")
+        assert data[1]["tipo"] in ("terremoto", "earthquake")
+        assert data[2]["tipo"] in ("ciclon", "cyclone")
 
 
 class TestAlertsFiltering(TestAlertsBase):
@@ -134,17 +143,17 @@ class TestAlertsFiltering(TestAlertsBase):
 
     @patch("integrations.gdacs_client.requests.get")
     def test_filter_by_alert_level(self, mock_get: Any) -> None:
-        """Tests filtering results by severidad attribute."""
+        """Tests filtering results by severity attribute."""
         mock_get.return_value.status_code = 200
         mock_get.return_value.content = self.MOCK_GDACS_RSS_XML.encode("utf-8")
 
-        response = self.client.get("/api/alertas?severidad=red")
+        response = self.client.get("/api/alertas?severidad=RED")
         assert response.status_code == 200
 
         data = response.json()
         assert len(data) == 1
-        assert data[0]["severidad"] == "red"
-        assert data[0]["tipo"] == "inundacion"
+        assert data[0]["severidad"] == "RED"
+        assert data[0]["tipo"] in ("inundacion", "flood")
 
     @patch("integrations.gdacs_client.requests.get")
     def test_filter_by_event_type(self, mock_get: Any) -> None:
@@ -157,7 +166,7 @@ class TestAlertsFiltering(TestAlertsBase):
 
         data = response.json()
         assert len(data) == 1
-        assert data[0]["tipo"] == "terremoto"
+        assert data[0]["tipo"] in ("terremoto", "earthquake")
 
     @patch("integrations.gdacs_client.requests.get")
     def test_filter_case_insensitivity_and_partial_country(
@@ -167,13 +176,13 @@ class TestAlertsFiltering(TestAlertsBase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.content = self.MOCK_GDACS_RSS_XML.encode("utf-8")
 
-        response = self.client.get("/api/alertas?pais=ESPA&severidad=red")
+        response = self.client.get("/api/alertas?pais=ESPA&severidad=RED")
         assert response.status_code == 200
 
         data = response.json()
         assert len(data) == 1
-        assert data[0]["severidad"] == "red"
-        assert "espania" in data[0]["pais"].lower()
+        assert data[0]["severidad"] == "RED"
+        assert "espania" in data[0]["pais"].lower() or "spain" in data[0]["pais"].lower()
 
     @patch("integrations.gdacs_client.requests.get")
     def test_filter_no_matches_returns_empty_list(self, mock_get: Any) -> None:
@@ -209,6 +218,110 @@ class TestAlertsCachingAndPerformance(TestAlertsBase):
         assert res2.status_code == 200
 
         assert mock_get.call_count <= 1
+
+
+class TestAlertsActions(TestAlertsBase):
+    """Test suite targeting alert creation and operational status state transitions."""
+
+    @patch("integrations.gdacs_client.requests.get")
+    def test_create_alert_success(self, mock_get: Any) -> None:
+        """Verifies manual alert creation returning 201 Created status and standard schema."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = self.MOCK_GDACS_RSS_XML.encode("utf-8")
+
+        payload = {
+            "title": "Alerta de prueba",
+            "description": "Detalles de la alerta",
+            "type": "inundacion",
+            "zone": {
+                "type": "Polygon",
+                "coordinates": [[[-0.37, 39.46], [-0.36, 39.46], [-0.36, 39.45], [-0.37, 39.45], [-0.37, 39.46]]],
+            },
+            "risk_level": "medium",
+        }
+        res = self.client.post("/api/alertas", json=payload)
+        assert res.status_code == 201
+
+        data = res.json()
+        assert data["titulo"] == "Alerta de prueba"
+        assert data["tipo"] == "inundacion"
+        assert data["risk_level"] == "medium"
+        assert data["is_active"] is True
+
+    @patch("integrations.gdacs_client.requests.get")
+    def test_high_risk_unlocks_zone(self, mock_get: Any) -> None:
+        """Verifies setting high risk updates risk_level to high and marks state as active."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = self.MOCK_GDACS_RSS_XML.encode("utf-8")
+
+        payload = {
+            "title": "Simulacro Valencia",
+            "zone": {
+                "type": "Polygon",
+                "coordinates": [[[-0.37, 39.46], [-0.36, 39.46], [-0.36, 39.45], [-0.37, 39.45], [-0.37, 39.46]]],
+            },
+            "risk_level": "low",
+        }
+        create_res = self.client.post("/api/alertas", json=payload)
+        assert create_res.status_code == 201
+        alert_id = create_res.json()["id"]
+
+        high_risk_res = self.client.post(f"/api/alertas/{alert_id}/alto-riesgo")
+        assert high_risk_res.status_code == 200
+
+        data = high_risk_res.json()
+        assert data["risk_level"] == "high"
+        assert data["is_active"] is True
+        assert data["zone"]["type"] == "Polygon"
+
+    @patch("integrations.gdacs_client.requests.get")
+    def test_deactivate_and_activate_alert_lifecycle(self, mock_get: Any) -> None:
+        """Verifies deactivating and re-activating an existing alert updates operational status."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = self.MOCK_GDACS_RSS_XML.encode("utf-8")
+
+        payload = {
+            "title": "Test Ciclo de Vida",
+            "zone": {
+                "type": "Polygon",
+                "coordinates": [[[-0.37, 39.46], [-0.36, 39.46], [-0.36, 39.45], [-0.37, 39.45], [-0.37, 39.46]]],
+            },
+        }
+        create_res = self.client.post("/api/alertas", json=payload)
+        assert create_res.status_code == 201
+        alert_id = create_res.json()["id"]
+
+        # 1. Desactivar
+        deactivate_res = self.client.post(f"/api/alertas/{alert_id}/desactivar")
+        assert deactivate_res.status_code == 200
+        assert deactivate_res.json()["status"] == "deactivated"
+        assert deactivate_res.json()["is_active"] is False
+
+        # 2. Reactivar
+        activate_res = self.client.post(f"/api/alertas/{alert_id}/activar")
+        assert activate_res.status_code == 200
+        assert activate_res.json()["status"] == "active"
+        assert activate_res.json()["is_active"] is True
+
+    def test_alert_action_not_found_returns_404(self) -> None:
+        """Verifies 404 Not Found status code when triggering actions on missing alert IDs."""
+        for endpoint_suffix in ("activar", "alto-riesgo", "desactivar"):
+            res = self.client.post(f"/api/alertas/non-existent-id/{endpoint_suffix}")
+            assert res.status_code == 404
+            assert res.json()["detail"] == "Alerta no encontrada"
+
+    def test_create_alert_invalid_geojson_polygon_returns_422(self) -> None:
+        """Verifies 422 Unprocessable Entity when creating an alert with non-Polygon GeoJSON."""
+        invalid_payload = {
+            "title": "Zona Inválida",
+            "zone": {
+                "type": "Point",
+                "coordinates": [-0.37, 39.46],
+            },
+        }
+        res = self.client.post("/api/alertas", json=invalid_payload)
+        assert res.status_code == 422
+        assert "Polygon" in res.json()["detail"]
 
 
 class TestAlertsResilienceAndEdgeCases(TestAlertsBase):

@@ -22,7 +22,13 @@ _EVENT_TYPES = {
     "DR": "sequia",
 }
 
+_CACHE_KEY = "alerts"
 _cache = {}
+
+
+def clear_cache():
+    global _cache
+    _cache = {}
 
 
 def _map_event_type(event_code):
@@ -108,9 +114,8 @@ def _download_and_parse():
 
 
 def get_alerts():
-    # Campos en español: contrato de datos acordado con services.py/routes.py
     now = time.time()
-    cached_entry = _cache.get("alerts")
+    cached_entry = _cache.get(_CACHE_KEY)
 
     if cached_entry is not None:
         previous_timestamp, previous_alerts = cached_entry
@@ -122,5 +127,5 @@ def get_alerts():
     except (requests.RequestException, ET.ParseError):
         return []
 
-    _cache["alerts"] = (now, alerts)
+    _cache[_CACHE_KEY] = (now, alerts)
     return alerts
