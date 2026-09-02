@@ -6,13 +6,6 @@ import { obtenerNecesidades, configurarBaseUrl } from "./necesidadesApi.js";
 configurarBaseUrl("http://127.0.0.1:8000/api/necesidades");
 
 const map = L.map("map").setView([40.4168, -3.7038], 6);
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    (pos) => map.setView([pos.coords.latitude, pos.coords.longitude], 13),
-    () => {},
-    { enableHighAccuracy: false, timeout: 4000 }
-  );
-}
 const baseOSM = L.tileLayer("https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2qa8_1_a275e8c9b45d6b70d3b144df", { maxZoom: 19, attribution: "© <a href='https://www.carto.com/'>CARTO</a> & © <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors" });
 baseOSM.addTo(map);
 
