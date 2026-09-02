@@ -216,7 +216,11 @@ function initMap() {
   async function loadAlertasMap() {
     try {
       const data = await apiGet("/api/alertas");
+      const region = document.getElementById("region-filter")?.value;
       loadedAlerts = Array.isArray(data) ? data : [];
+      if (region && region !== "world") {
+        loadedAlerts = loadedAlerts.filter(a => matchesRegion(a.pais || a.country, region));
+      }
     } catch { loadedAlerts = []; }
     renderAlertasOnMap(loadedAlerts);
     updateBadge();
@@ -363,23 +367,55 @@ const TYPE_LABELS = {
 };
 const SEVERITY_LABELS = { red: "Crítico", orange: "Atención", green: "Bajo riesgo" };
 
+const REGION_COUNTRIES = {
+  espana: ["Spain", "Espa├▒a", "Espana"],
+  europa: [
+    "Spain", "France", "Germany", "Italy", "Portugal", "United Kingdom",
+    "Poland", "Romania", "Netherlands", "Belgium", "Sweden", "Austria",
+    "Switzerland", "Czech Republic", "Denmark", "Finland", "Greece",
+    "Hungary", "Ireland", "Norway", "Slovakia", "Slovenia", "Croatia",
+    "Luxembourg", "Lithuania", "Latvia", "Estonia", "Cyprus", "Malta",
+    "Bulgaria", "Serbia", "Bosnia", "Ukraine", "Russia",
+    "Austria, Switzerland", "Bosnia and Herzegovina, Croatia",
+    "China, Kyrgyzstan, Kazakhstan, Mongolia, Russia",
+    "Austria, Bosnia & Herzegovina, Belgium, Belarus, Switzerland, Czech Republic, Germany, Denmark, Spain, France, Croatia, Hungary, Ireland, Italy, Liechtenstein, Luxembourg, Netherlands, Poland, Romania, Serbia, Sweden, Slovenia, Slovakia, San Marino, Ukraine",
+  ],
+};
+
+function matchesRegion(pais, region) {
+  if (!region || region === "world") return true;
+  if (!pais) return false;
+  const paisLower = pais.toLowerCase();
+  const keywords = REGION_COUNTRIES[region] || [];
+  return keywords.some(k => paisLower.includes(k.toLowerCase()));
+}
+
 async function fetchAlerts() {
   const container = document.getElementById("alerts-container");
   if (!container) return;
   container.innerHTML = '<div class="state-loading"><p>Cargando alertas...</p></div>';
 
-  const params = new URLSearchParams();
+  const region = document.getElementById("region-filter")?.value;
   const tipo = document.getElementById("type-filter")?.value;
   const sev = document.getElementById("severity-filter")?.value;
   const pais = document.getElementById("country-filter")?.value?.trim();
-  if (tipo) params.set("tipo", tipo);
-  if (sev) params.set("severidad", sev);
-  if (pais) params.set("pais", pais);
 
   try {
-    const data = await apiGet(`/api/alertas?${params.toString()}`);
+    let data = await apiGet("/api/alertas");
     if (!data || !data.length) {
       container.innerHTML = '<div class="state-empty"><h3>No hay alertas activas</h3><p>Consulta más tarde o ajusta los filtros.</p></div>';
+      return;
+    }
+
+    if (region && region !== "world") {
+      data = data.filter(a => matchesRegion(a.pais || a.country, region));
+    }
+    if (tipo) data = data.filter(a => (a.tipo || a.type || "").toLowerCase() === tipo.toLowerCase());
+    if (sev) data = data.filter(a => (a.severidad || a.severity || "").toLowerCase() === sev.toLowerCase());
+    if (pais) data = data.filter(a => (a.pais || a.country || "").toLowerCase().includes(pais.toLowerCase()));
+
+    if (!data.length) {
+      container.innerHTML = '<div class="state-empty"><h3>No hay alertas para estos filtros</h3><p>Prueba con otra zona o tipo.</p></div>';
       return;
     }
     container.innerHTML = data.map(a => {
@@ -409,6 +445,7 @@ async function fetchAlerts() {
 window.fetchAlerts = fetchAlerts;
 
 function initAlerts() {
+  document.getElementById("region-filter")?.addEventListener("change", fetchAlerts);
   document.getElementById("type-filter")?.addEventListener("change", fetchAlerts);
   document.getElementById("severity-filter")?.addEventListener("change", fetchAlerts);
   document.getElementById("country-filter")?.addEventListener("keydown", e => { if (e.key === "Enter") fetchAlerts(); });

@@ -134,10 +134,15 @@
       <div class="section-header">
         <div class="section-header__label">MÓDULO G2 — ALERTAS</div>
         <h1 class="section-header__title">Alertas Oficiales</h1>
-        <p class="section-header__desc">Desastres a nivel mundial en tiempo real. Filtros por tipo, severidad y país.</p>
+        <p class="section-header__desc">Alertas oficiales de GDACS en tiempo real. Filtra por zona geográfica, tipo y severidad.</p>
       </div>
 
       <div class="filters-bar">
+        <select id="region-filter" class="form-select">
+          <option value="espana">España</option>
+          <option value="europa">Europa</option>
+          <option value="world">Mundial</option>
+        </select>
         <select id="type-filter" class="form-select">
           <option value="">Todos los tipos</option>
           <option value="terremoto">Terremoto</option>
