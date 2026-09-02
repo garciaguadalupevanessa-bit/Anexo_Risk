@@ -13,6 +13,9 @@
 </head>
 <body>
 
+  <!-- Notificaciones críticas -->
+  <div id="notification-container" style="position:fixed; top:72px; right:20px; z-index:2000; display:flex; flex-direction:column; gap:8px; max-width:360px;"></div>
+
   <!-- ====== HEADER ====== -->
   <header class="header">
     <a href="#" class="header__brand" onclick="showSection('mapa'); return false;">
@@ -21,6 +24,7 @@
     </a>
     <nav class="nav">
       <button class="nav__link active" data-section="mapa">MAPA</button>
+      <button class="nav__link" data-section="dashboard">DASHBOARD</button>
       <button class="nav__link" data-section="alertas">ALERTAS</button>
       <button class="nav__link" data-section="ayudas">AYUDAS</button>
     </nav>
@@ -228,6 +232,67 @@
             </div>
             <button type="submit" class="btn btn--primary" style="width: 100%;" id="btn-publicar-ayuda">Selecciona una necesidad para ayudar</button>
           </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== SECCIÓN DASHBOARD ========== -->
+    <section id="section-dashboard" class="section">
+      <div class="section-header">
+        <div class="section-header__label">COORDINACIÓN</div>
+        <h1 class="section-header__title">Dashboard de Operaciones</h1>
+        <p class="section-header__desc">Métricas en tiempo real para coordinadores. Vista de seguimiento de actividad.</p>
+      </div>
+
+      <div class="content-grid content-grid--full">
+        <!-- Métricas principales -->
+        <div class="dashboard-grid">
+          <div class="metric-card">
+            <div class="metric-card__label">Necesidades abiertas</div>
+            <div class="metric-card__value" id="metric-necesidades-abiertas">—</div>
+            <div class="metric-card__hint" id="metric-necesidades-hint">de <span id="metric-necesidades-total">0</span> totales</div>
+          </div>
+          <div class="metric-card metric-card--success">
+            <div class="metric-card__label">Necesidades cubiertas</div>
+            <div class="metric-card__value" id="metric-necesidades-cubiertas">—</div>
+            <div class="metric-card__hint">% cobertura <span id="metric-cobertura">0</span>%</div>
+          </div>
+          <div class="metric-card metric-card--alert">
+            <div class="metric-card__label">Alertas activas</div>
+            <div class="metric-card__value" id="metric-alertas-activas">—</div>
+            <div class="metric-card__hint" id="metric-alertas-criticas">0 críticas</div>
+          </div>
+          <div class="metric-card metric-card--info">
+            <div class="metric-card__label">Ayudas publicadas</div>
+            <div class="metric-card__value" id="metric-ayudas">—</div>
+            <div class="metric-card__hint" id="metric-ayudas-activas">0 activas</div>
+          </div>
+        </div>
+
+        <div id="dashboard-motivacion" style="text-align:center; font-size:var(--text-lg); font-weight:700; color:var(--cyan); margin-top:var(--space-lg); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--border-active); border-radius:var(--radius);"></div>
+
+        <!-- Ranking de tipos de necesidad -->
+        <div class="glass-card" style="margin-top: var(--space-lg);">
+          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-md);">📊 Necesidades activas por categoría</h3>
+          <div id="dashboard-categorias"></div>
+          <p style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-sm);">Ayuda a cubrir las necesidades con más demanda.</p>
+        </div>
+
+        <!-- Urgencia -->
+        <div class="glass-card" style="margin-top: var(--space-lg);">
+          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-md);">⚠️ Necesidades críticas que necesitan ayuda</h3>
+          <div id="dashboard-criticas"></div>
+          <button class="btn btn--primary" style="margin-top:var(--space-md);" onclick="window.showSection('ayudas')">Ir a Ayudar →</button>
+        </div>
+
+        <!-- Top zonas -->
+        <div class="glass-card" style="margin-top: var(--space-lg);">
+          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-md);">📍 Zonas con más necesidades activas</h3>
+          <div id="dashboard-zonas"></div>
+        </div>
+
+        <div style="margin-top: var(--space-md); text-align: right;">
+          <button type="button" class="btn btn--ghost" onclick="window.dashboardExportCSV()">⬇ Exportar CSV</button>
         </div>
       </div>
     </section>

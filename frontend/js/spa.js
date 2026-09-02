@@ -28,6 +28,7 @@ function showSection(name) {
   if (sec) sec.classList.add("active");
   if (btn) btn.classList.add("active");
   if (name === "mapa") setTimeout(() => window._map?.invalidateSize(), 100);
+  if (name === "dashboard") loadDashboard();
 }
 window.showSection = showSection;
 
@@ -213,14 +214,53 @@ function initMap() {
     updateBadge();
   }
 
+  const NOTIFIED_KEY = "anexo_notified_alerts";
+  const notifiedIds = new Set(JSON.parse(sessionStorage.getItem(NOTIFIED_KEY) || "[]"));
+
+  function notifyCritical(alerts) {
+    const container = document.getElementById("notification-container");
+    if (!container) return;
+    const criticas = alerts.filter(a => {
+      const sev = a.severidad || a.severity || "";
+      return (sev === "red" || sev === "high" || sev === "orange") && !notifiedIds.has(a.id);
+    });
+    criticas.forEach(a => {
+      notifiedIds.add(a.id);
+      sessionStorage.setItem(NOTIFIED_KEY, JSON.stringify([...notifiedIds]));
+      const sev = a.severidad || a.severity || "";
+      const icon = sev === "red" || sev === "high" ? "🚨" : "⚠️";
+      const color = sev === "red" || sev === "high" ? "var(--red)" : "var(--orange)";
+      const div = document.createElement("div");
+      div.className = "notification";
+      div.innerHTML = `
+        <div class="notification__header">
+          <span class="notification__icon">${icon}</span>
+          <span class="notification__title" style="color:${color}">Alerta ${sev === "red" || sev === "high" ? "Crítica" : "de Atención"}</span>
+        </div>
+        <div class="notification__body">${a.titulo || a.title || "Alerta sin título"}<br><small style="color:var(--text-muted)">${a.pais || a.country || ""}</small></div>
+        <div class="notification__footer">
+          <span class="notification__country">${a.pais || a.country || ""}</span>
+          <button class="notification__close" onclick="this.closest('.notification').classList.add('notification--exit'); setTimeout(()=>this.closest('.notification').remove(), 300)">✕</button>
+        </div>`;
+      container.appendChild(div);
+      setTimeout(() => {
+        if (div.parentNode) {
+          div.classList.add("notification--exit");
+          setTimeout(() => div.remove(), 300);
+        }
+      }, 10000);
+    });
+  }
+
   async function loadAlertasMap() {
     try {
       const data = await apiGet("/api/alertas");
       const region = document.getElementById("region-filter")?.value;
       loadedAlerts = Array.isArray(data) ? data : [];
       if (region && region !== "world") {
-        loadedAlerts = loadedAlerts.filter(a => matchesRegion(a.pais || a.country, region));
+        loadedAlerts = loadedAlertas.filter(a => matchesRegion(a.pais || a.country, region));
       }
+      notifyCritical(loadedAlerts);
     } catch { loadedAlerts = []; }
     renderAlertasOnMap(loadedAlerts);
     updateBadge();
@@ -414,6 +454,7 @@ async function fetchAlerts() {
     if (sev) data = data.filter(a => (a.severidad || a.severity || "").toLowerCase() === sev.toLowerCase());
     if (pais) data = data.filter(a => (a.pais || a.country || "").toLowerCase().includes(pais.toLowerCase()));
 
+    notifyCritical(data);
     if (!data.length) {
       container.innerHTML = '<div class="state-empty"><h3>No hay alertas para estos filtros</h3><p>Prueba con otra zona o tipo.</p></div>';
       return;
@@ -625,10 +666,133 @@ function initDonaciones() {
 }
 
 // ============================================================
+//  DASHBOARD
+// ============================================================
+async function loadDashboard() {
+  const container = document.getElementById("dashboard-categorias");
+  const zonasContainer = document.getElementById("dashboard-zonas");
+  if (!container) return;
+
+  try {
+    const [necesidades, donaciones, alertas] = await Promise.all([
+      apiGet("/api/necesidades"),
+      apiGet("/api/donaciones"),
+      apiGet("/api/alertas"),
+    ]);
+
+    const total = necesidades.length;
+    const abiertas = necesidades.filter(n => n.estado === "abierta").length;
+    const cubiertas = total - abiertas;
+    const cobertura = total > 0 ? Math.round((cubiertas / total) * 100) : 0;
+
+    const totalAyudas = donaciones.length;
+    const activasAyudas = donaciones.filter(d => d.estado === "activa" || d.estado === "abierta").length;
+
+    const totalAlertas = alertas.length;
+    const criticas = alertas.filter(a => a.severidad === "red" || a.severidad === "high").length;
+
+    document.getElementById("metric-necesidades-abiertas").textContent = abiertas;
+    document.getElementById("metric-necesidades-total").textContent = total;
+    document.getElementById("metric-necesidades-cubiertas").textContent = cubiertas;
+    document.getElementById("metric-cobertura").textContent = cobertura;
+    document.getElementById("metric-alertas-activas").textContent = totalAlertas;
+    document.getElementById("metric-alertas-criticas").textContent = criticas + " críticas";
+    document.getElementById("metric-ayudas").textContent = totalAyudas;
+    document.getElementById("metric-ayudas-activas").textContent = activasAyudas + " activas";
+
+    // Ranking por categoría
+    const cats = {};
+    necesidades.forEach(n => {
+      const t = n.tipo || n.categoria || "otros";
+      cats[t] = (cats[t] || 0) + 1;
+    });
+    const maxCat = Math.max(...Object.values(cats), 1);
+    const catLabels = { agua: "💧 Agua", alimentos: "🍞 Alimentos", parafarmacia: "💊 Parafarmacia", ropa: "👕 Ropa", higiene: "🧴 Higiene", refugio: "🏠 Refugio", transporte: "🚗 Transporte", otros: "📦 Otros" };
+    const catSorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+    container.innerHTML = catSorted.map(([tipo, count]) => `
+      <div class="dashboard-bar">
+        <span class="dashboard-bar__label">${catLabels[tipo] || tipo}</span>
+        <div class="dashboard-bar__track">
+          <div class="dashboard-bar__fill" style="width:${(count / maxCat) * 100}%"></div>
+        </div>
+        <span class="dashboard-bar__count">${count}</span>
+      </div>`).join("");
+
+    // Necesidades críticas
+    const criticas = necesidades.filter(n => n.prioridad === "critica" && n.estado === "abierta");
+    const criticasContainer = document.getElementById("dashboard-criticas");
+    if (criticasContainer) {
+      criticasContainer.innerHTML = criticas.length
+        ? criticas.slice(0, 5).map(n => `
+          <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+            <span style="font-size:1.2rem;">${catLabels[n.tipo] || "📦"}</span>
+            <div style="flex:1;">
+              <div style="font-weight:600;">${n.titulo || n.tipo}</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);">${n.direccion || "Sin ubicación"}</div>
+            </div>
+            <button class="btn btn--primary btn--sm" onclick="window.showSection('ayudas'); window.selectNeedForAid(${n.id})">Ayudar</button>
+          </div>`).join("")
+        : '<p style="color:var(--green);font-size:var(--text-sm);">🎉 ¡No hay necesidades críticas! ¡Buen trabajo!</p>';
+    }
+
+    // Motivación
+    const motivacionEl = document.getElementById("dashboard-motivacion");
+    if (motivacionEl) {
+      let motivacion = "";
+      if (abiertas === 0) {
+        motivacion = "🎉 ¡Todas las necesidades han sido cubiertas! La comunidad es increíble.";
+      } else if (cobertura >= 75) {
+        motivacion = `🔥 ¡${cobertura}% de cobertura! Ya casi lo conseguimos. Faltan ${abiertas} necesidades.`;
+      } else if (cobertura >= 50) {
+        motivacion = `💪 ¡Buen avance! ${cobertura}% de necesidades cubiertas. ¡Sigue así!`;
+      } else if (total > 0) {
+        motivacion = `🤝 Hay ${total} necesidades reportadas. Cada ayuda cuenta. ¿Empezamos?`;
+      } else {
+        motivacion = "🚀 Aún no hay necesidades activas. Sé el primero en ayudar cuando llegue una.";
+      }
+      motivacionEl.textContent = motivacion;
+    }
+
+    // Top zonas (extraer de dirección)
+    const zonas = {};
+    necesidades.forEach(n => {
+      if (!n.direccion || n.estado === "cubierta") return;
+      const parts = n.direccion.split(",");
+      const zona = parts.length > 1 ? parts[parts.length - 1].trim() : n.direccion.substring(0, 30);
+      zonas[zona] = (zonas[zona] || 0) + 1;
+    });
+    const zonasSorted = Object.entries(zonas).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    zonasContainer.innerHTML = zonasSorted.length
+      ? zonasSorted.map(([zona, count]) => `<div class="dashboard-zone-item">${zona} — <strong>${count}</strong> necesidad${count > 1 ? "es" : ""}</div>`).join("")
+      : '<p style="color:var(--text-muted);font-size:var(--text-sm);">Sin datos suficientes</p>';
+
+    window._dashboardData = { necesidades, donaciones, alertas };
+  } catch (err) {
+    console.error("Dashboard error:", err);
+  }
+}
+
+window.dashboardExportCSV = function() {
+  const data = window._dashboardData;
+  if (!data) return;
+  const rows = [
+    ["Tipo", "Título", "Descripción", "Dirección", "Estado", "Fecha"],
+    ...data.necesidades.map(n => [n.tipo, n.titulo || n.descripcion, n.descripcion, n.direccion, n.estado, n.creado_en]),
+  ];
+  const csv = rows.map(r => r.map(c => `"${(c || "").toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "anexo_risk_export.csv";
+  a.click();
+};
+
+// ============================================================
 //  BOOT
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
   initAlerts();
   initDonaciones();
+  loadDashboard();
 });
