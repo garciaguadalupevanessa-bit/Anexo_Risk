@@ -16,7 +16,6 @@ router = APIRouter(prefix="/api/sync", tags=["Offline Sync"])
 
 
 def get_db():
-def get_db():
     conn = sqlite3.connect(DATABASE_PATH)
     try:
         yield conn
