@@ -29,7 +29,14 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "anexo@risk-dummy.local")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "dummy-password")
 EMAIL_DUMMY_MODE = os.getenv("EMAIL_DUMMY_MODE", "true").lower() == "true"
-ANEXO_ADMIN_KEY = os.getenv("ANEXO_ADMIN_KEY", "anexo-risk-dev-admin-key")
+ANEXO_ADMIN_KEY = os.getenv("ANEXO_ADMIN_KEY") or os.getenv("NEXO_ADMIN_KEY", "anexo-risk-dev-admin-key")
+NEXO_ADMIN_KEY = ANEXO_ADMIN_KEY
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads/voluntarios")
 MAX_UPLOAD_SIZE_MB = int(os.getenv("MAX_UPLOAD_SIZE_MB", "5"))
+
+# JWT Authentication
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-to-a-random-secret-in-production")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "7"))

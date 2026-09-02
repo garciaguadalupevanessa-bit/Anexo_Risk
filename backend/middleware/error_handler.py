@@ -13,6 +13,10 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from middleware.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 def registrar_manejadores_de_error(app: FastAPI) -> None:
     """Registra en FastAPI los manejadores de errores comunes de Anexo Risk."""
@@ -80,12 +84,17 @@ def registrar_manejadores_de_error(app: FastAPI) -> None:
         request: Request,
         exc: Exception,
     ) -> JSONResponse:
-        """Devuelve los errores internos con el formato común de Anexo Risk."""
+        """Devuelve los errores internos con el formato común de Anexo Risk.
 
+        No expone ``str(exc)`` al cliente para evitar fuga de rutas internas
+        de módulos, nombres de tablas o fragmentos de stack. El detalle
+        completo se registra en logs del servidor.
+        """
+        logger.exception("Unhandled error on %s %s", request.method, request.url.path)
         return JSONResponse(
             status_code=500,
             content={
                 "error": "Error interno de Anexo Risk",
-                "detalle": str(exc),
+                "detalle": "Se ha producido un error inesperado. Consulte los logs del servidor.",
             },
         )

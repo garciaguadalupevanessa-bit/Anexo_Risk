@@ -24,3 +24,8 @@ def setup_logging() -> None:
         logger: logging.Logger = logging.getLogger(logger_name)
         logger.handlers = []
         logger.propagate = True
+
+
+def get_logger(name: str) -> logging.Logger:
+    """Devuelve un logger con el nombre dado. Wrapper alrededor de logging.getLogger."""
+    return logging.getLogger(name)
