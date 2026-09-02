@@ -3,7 +3,7 @@
 // base común — este archivo solo marca qué enlace del menú está activo.
 export function marcarPaginaActiva() {
   const actual = window.location.pathname.split("/").pop();
-  document.querySelectorAll(".nexo-nav a").forEach((link) => {
+  document.querySelectorAll(".anr-nav a").forEach((link) => {
     if (link.getAttribute("href") === actual) {
       link.setAttribute("aria-current", "page");
     }

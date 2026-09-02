@@ -24,16 +24,16 @@ function updateDniVisibility(tipoValue) {
 }
 
 function initDropdowns() {
-  document.querySelectorAll(".nexo-select").forEach(sel => {
-    const trigger = sel.querySelector(".nexo-select__trigger");
-    const menu    = sel.querySelector(".nexo-select__menu");
-    const label   = sel.querySelector(".nexo-select__label");
+  document.querySelectorAll(".anr-select").forEach(sel => {
+    const trigger = sel.querySelector(".anr-select__trigger");
+    const menu    = sel.querySelector(".anr-select__menu");
+    const label   = sel.querySelector(".anr-select__label");
 
     trigger.addEventListener("click", (e) => {
       e.stopPropagation();
-      const isOpen = sel.classList.contains("nexo-select--abierto");
-      document.querySelectorAll(".nexo-select.nexo-select--abierto").forEach(s => s.classList.remove("nexo-select--abierto"));
-      if (!isOpen) sel.classList.add("nexo-select--abierto");
+      const isOpen = sel.classList.contains("anr-select--abierto");
+      document.querySelectorAll(".anr-select.anr-select--abierto").forEach(s => s.classList.remove("anr-select--abierto"));
+      if (!isOpen) sel.classList.add("anr-select--abierto");
     });
 
     const isFormDropdown = form.contains(sel);
@@ -42,10 +42,10 @@ function initDropdowns() {
       li.addEventListener("click", () => {
         sel.dataset.value = li.dataset.value;
         label.textContent = li.textContent;
-        label.classList.remove("nexo-select__label--placeholder");
-        menu.querySelectorAll("li").forEach(l => l.classList.remove("nexo-select__opcion--activa"));
-        li.classList.add("nexo-select__opcion--activa");
-        sel.classList.remove("nexo-select--abierto");
+        label.classList.remove("anr-select__label--placeholder");
+        menu.querySelectorAll("li").forEach(l => l.classList.remove("anr-select__opcion--activa"));
+        li.classList.add("anr-select__opcion--activa");
+        sel.classList.remove("anr-select--abierto");
 
         // Si cambia el tipo en el formulario, actualizamos la visibilidad del DNI
         if (sel.id === "tipo") {
@@ -58,7 +58,7 @@ function initDropdowns() {
   });
 
   document.addEventListener("click", () => {
-    document.querySelectorAll(".nexo-select.nexo-select--abierto").forEach(s => s.classList.remove("nexo-select--abierto"));
+    document.querySelectorAll(".anr-select.anr-select--abierto").forEach(s => s.classList.remove("anr-select--abierto"));
   });
 }
 
@@ -157,17 +157,17 @@ async function loadDonations() {
 function resetFormDropdowns() {
   const typeEl = document.getElementById("tipo");
   typeEl.dataset.value = "recursos";
-  typeEl.querySelector(".nexo-select__label").textContent = "Recursos";
-  typeEl.querySelectorAll("li").forEach((li, i) => li.classList.toggle("nexo-select__opcion--activa", i === 0));
+  typeEl.querySelector(".anr-select__label").textContent = "Recursos";
+  typeEl.querySelectorAll("li").forEach((li, i) => li.classList.toggle("anr-select__opcion--activa", i === 0));
 
   updateDniVisibility("recursos");
 
   const resourceEl = document.getElementById("recurso");
   resourceEl.dataset.value = "";
-  const resourceLabel = resourceEl.querySelector(".nexo-select__label");
+  const resourceLabel = resourceEl.querySelector(".anr-select__label");
   resourceLabel.textContent = "Selecciona una categoría";
-  resourceLabel.classList.add("nexo-select__label--placeholder");
-  resourceEl.querySelectorAll("li").forEach(li => li.classList.remove("nexo-select__opcion--activa"));
+  resourceLabel.classList.add("anr-select__label--placeholder");
+  resourceEl.querySelectorAll("li").forEach(li => li.classList.remove("anr-select__opcion--activa"));
 }
 
 form.addEventListener("submit", async (e) => {
@@ -175,9 +175,9 @@ form.addEventListener("submit", async (e) => {
 
   const resourceEl = document.getElementById("recurso");
   if (!resourceEl.dataset.value) {
-    const trigger = resourceEl.querySelector(".nexo-select__trigger");
-    trigger.classList.add("nexo-select__trigger--error");
-    setTimeout(() => trigger.classList.remove("nexo-select__trigger--error"), 1500);
+    const trigger = resourceEl.querySelector(".anr-select__trigger");
+    trigger.classList.add("anr-select__trigger--error");
+    setTimeout(() => trigger.classList.remove("anr-select__trigger--error"), 1500);
     return;
   }
 

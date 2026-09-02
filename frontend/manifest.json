@@ -1,13 +1,13 @@
 {
-  "name": "Nexo — Conectados para ayudarnos",
-  "short_name": "Nexo",
-  "description": "App comunitaria de respuesta a emergencias y desastres naturales.",
+  "name": "Anexo Finder — Respuesta a emergencias en tiempo real",
+  "short_name": "Anexo",
+  "description": "Plataforma de respuesta a emergencias con mapa de necesidades, alertas y ayudas en tiempo real.",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#FFFFFF",
+  "background_color": "#0F2038",
   "theme_color": "#0F2038",
   "icons": [
-    { "src": "assets/logo/nexo-icon.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "assets/logo/nexo-icon.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "assets/logo/anexo-icon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/logo/anexo-icon.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

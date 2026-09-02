@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/sync", tags=["sync"])
 # TODO: @router.post("")
 
 def get_db():
-    conn = sqlite3.connect("nexo.db")
+    conn = sqlite3.connect("anexo_risk.db")
     try:
         yield conn
     finally:

@@ -6,7 +6,7 @@
     "tipo": "recursos",
     "recurso": "food",
     "descripcion": "Entrega de paquetes de comida no perecedera.",
-    "contacto": "donaciones@nexo.org",
+    "contacto": "donaciones@anexo-risk.org",
     "lat": 40.411,
     "lon": -3.699,
     "status": "abierta"
@@ -18,7 +18,7 @@
     "tipo": "recursos",
     "recurso": "clothing",
     "descripcion": "Ropa de abrigo e impermeable para damnificados.",
-    "contacto": "donaciones@nexo.org",
+    "contacto": "donaciones@anexo-risk.org",
     "lat": 40.413,
     "lon": -3.697,
     "status": "abierta"
@@ -30,7 +30,7 @@
     "tipo": "recursos",
     "recurso": "medication",
     "descripcion": "Kits de primeros auxilios y botiquín de emergencia.",
-    "contacto": "salud@nexo.org",
+    "contacto": "salud@anexo-risk.org",
     "lat": 40.407,
     "lon": -3.704,
     "status": "abierta"
@@ -42,7 +42,7 @@
     "tipo": "servicios",
     "recurso": "transport",
     "descripcion": "Vehículo 4x4 disponible para traslado de suministros.",
-    "contacto": "logistica@nexo.org",
+    "contacto": "logistica@anexo-risk.org",
     "lat": 40.444,
     "lon": -3.744,
     "status": "abierta"
@@ -54,7 +54,7 @@
     "tipo": "servicios",
     "recurso": "housing",
     "descripcion": "Alojamiento temporal de emergencia para familias.",
-    "contacto": "acogida@nexo.org",
+    "contacto": "acogida@anexo-risk.org",
     "lat": 40.442,
     "lon": -3.747,
     "status": "abierta"
@@ -66,7 +66,7 @@
     "tipo": "tiempo",
     "recurso": "presencial",
     "descripcion": "Voluntariado presencial para tareas de limpieza y desescombro.",
-    "contacto": "voluntarios@nexo.org",
+    "contacto": "voluntarios@anexo-risk.org",
     "dni": "12345678Z",
     "lat": 40.410,
     "lon": -3.702,

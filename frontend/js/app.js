@@ -14,7 +14,7 @@ if ("serviceWorker" in navigator) {
 }
 
 function actualizarBannerOffline() {
-  const banner = document.getElementById("nexo-offline-banner");
+  const banner = document.getElementById("anr-offline-banner");
   if (!banner) return;
   banner.classList.toggle("visible", !navigator.onLine);
 }
