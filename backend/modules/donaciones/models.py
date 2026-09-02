@@ -1,6 +1,8 @@
 from typing import Any
-from db.database import get_cursor
+from db.database import get_cursor, get_connection
 from modules.donaciones.schemas import DonationCreate, DonationStatus, DonationType
+from modules.necesidades.models import update_need_status
+from modules.necesidades.schemas import NeedStatus
 
 _LEGACY_TIPO_MAP = {
     "recursos": DonationType.OFFERED.value,
@@ -73,3 +75,46 @@ def update_status(donation_id: int, status: DonationStatus) -> dict[str, Any] | 
             return None
         cursor.execute("SELECT * FROM donaciones WHERE id = ?", (donation_id,))
         return _normalize_donation(dict(cursor.fetchone()))
+
+
+def create_donation_for_need(donation: DonationCreate, need_id: int) -> dict[str, Any] | None:
+    """Crea una donación y marca la necesidad asociada como cubierta."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """INSERT INTO donaciones (tipo, recurso, cantidad, descripcion, contacto, dni, estado, latitud, longitud)
+               VALUES (?, ?, ?, ?, ?, ?, 'activa', ?, ?)""",
+            (
+                donation.donation_type.value,
+                donation.resource.value,
+                donation.quantity,
+                donation.description,
+                donation.contact,
+                donation.dni,
+                donation.latitud,
+                donation.longitud,
+            ),
+        )
+        donation_id = cur.lastrowid
+
+        cur.execute("SELECT id, estado FROM necesidades WHERE id = ?", (need_id,))
+        row = cur.fetchone()
+        if row is None:
+            conn.rollback()
+            return None
+        if row["estado"] != NeedStatus.OPEN.value:
+            conn.rollback()
+            return None
+
+        cur.execute("UPDATE necesidades SET estado = ? WHERE id = ?", (NeedStatus.COVERED.value, need_id))
+
+        conn.commit()
+
+        cur.execute("SELECT * FROM donaciones WHERE id = ?", (donation_id,))
+        return _normalize_donation(dict(cur.fetchone()))
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()

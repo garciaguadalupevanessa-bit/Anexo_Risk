@@ -90,11 +90,11 @@ def test_create_need_stores_the_geocoded_address():
 
 
 def test_create_need_without_address_is_allowed():
-    """La dirección es opcional: puede llegar vacía si solo hay coordenadas."""
+    """Sin dirección se rellena con las coordenadas."""
 
     created = services.create_need(build_valid_need(direccion=""))
 
-    assert created["direccion"] == ""
+    assert created["direccion"] == "39.469900, -0.376300"
 
 
 def test_create_need_truncates_very_long_nominatim_addresses():
