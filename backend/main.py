@@ -28,6 +28,7 @@ from modules.voluntariado.routes import router as voluntariado_router
 from modules.donaciones.routes import router as donaciones_router
 from modules.personas.routes import router as personas_router
 from modules.incendios.routes import router as incendios_router
+from modules.clima.routes import router as clima_router
 from sync.sync_controller import router as sync_router
 
 app = FastAPI(
@@ -51,6 +52,7 @@ app.include_router(voluntariado_router)    # Equipo 3 — núcleo
 app.include_router(donaciones_router)      # Equipo 3 — núcleo
 app.include_router(personas_router)        # Equipo 4 — siguiente prioridad
 app.include_router(incendios_router)       # NASA FIRMS — incendios satélite
+app.include_router(clima_router)           # AEMET + Open-Meteo — meteorología
 app.include_router(sync_router)            # Equipo 4 — siguiente prioridad (modo offline)
 
 # Inicializar la base de datos (ejecuta esquemas y migraciones automáticamente)

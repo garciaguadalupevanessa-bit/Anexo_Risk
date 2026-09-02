@@ -63,6 +63,7 @@ function initMap() {
     necesidades: L.layerGroup().addTo(map),
     ayudas: L.layerGroup().addTo(map),
     incendios: L.layerGroup().addTo(map),
+    clima: L.layerGroup().addTo(map),
   };
 
   function toggleLayer(nombre, visible) {
@@ -288,6 +289,32 @@ function initMap() {
     }
   }
 
+  function renderClima(alertas) {
+    capas.clima.clearLayers();
+    alertas.forEach(a => {
+      const nivel = a.nivel || a.level || "amarillo";
+      const color = nivel === "rojo" ? "#ff0000" : nivel === "naranja" ? "#ff8800" : nivel === "amarillo" ? "#ffcc00" : "#44aa44";
+      const lat = SPAIN_LAT + (Math.random() - 0.5) * 2;
+      const lon = SPAIN_LON + (Math.random() - 0.5) * 2;
+      const marker = L.circleMarker([lat, lon], {
+        radius: 8, color, fillColor: color, fillOpacity: 0.5, weight: 2,
+      }).addTo(capas.clima);
+      marker.bindPopup(`<b>⚠️ Alerta meteorológica</b><br><b>${a.titulo}</b><br>${a.descripcion || ""}<br><small>${a.fuente || ""} — ${a.region || "España"}</small>`);
+    });
+  }
+
+  async function loadClimaMap() {
+    try {
+      const data = await apiGet("/api/clima");
+      renderClima(data.alertas || []);
+    } catch (err) {
+      console.error("Clima error:", err);
+    }
+  }
+
+  const SPAIN_LAT = 40.4168;
+  const SPAIN_LON = -3.7038;
+
   async function loadAlertasMap() {
     try {
       const data = await apiGet("/api/alertas");
@@ -336,6 +363,7 @@ function initMap() {
   document.getElementById("toggle-necesidades")?.addEventListener("change", e => toggleLayer("necesidades", e.target.checked));
   document.getElementById("toggle-ayudas")?.addEventListener("change", e => toggleLayer("ayudas", e.target.checked));
   document.getElementById("toggle-incendios")?.addEventListener("change", e => toggleLayer("incendios", e.target.checked));
+  document.getElementById("toggle-clima")?.addEventListener("change", e => toggleLayer("clima", e.target.checked));
 
   // Map click -> set coordinates + reverse geocode
   let tempMarker = null;
@@ -849,6 +877,7 @@ window.dashboardExportCSV = function() {
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
   loadIncendiosMap();
+  loadClimaMap();
   initAlerts();
   initDonaciones();
   loadDashboard();

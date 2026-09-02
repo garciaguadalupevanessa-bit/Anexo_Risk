@@ -44,3 +44,6 @@ JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "
 # NASA FIRMS — incendiossatélite
 NASA_FIRMS_API_KEY = os.getenv("NASA_FIRMS_API_KEY", "")
 NASA_FIRMS_CACHE_TTL_SECONDS = int(os.getenv("NASA_FIRMS_CACHE_TTL_SECONDS", "3600"))
+
+# AEMET — meteorología oficial España (con fallback a Open-Meteo)
+AEMET_API_KEY = os.getenv("AEMET_API_KEY", "")
