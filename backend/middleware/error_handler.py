@@ -1,4 +1,4 @@
-"""Manejo centralizado de errores de la API de Nexo.
+"""Manejo centralizado de errores de la API de Anexo Risk.
 
 Este archivo permite que todos los módulos devuelvan los errores con el
 mismo formato JSON:
@@ -13,16 +13,20 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from middleware.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 def registrar_manejadores_de_error(app: FastAPI) -> None:
-    """Registra en FastAPI los manejadores de errores comunes de Nexo."""
+    """Registra en FastAPI los manejadores de errores comunes de Anexo Risk."""
 
     @app.exception_handler(RequestValidationError)
     async def error_de_validacion(
         request: Request,
         exc: RequestValidationError,
     ) -> JSONResponse:
-        """Convierte los errores automáticos 422 al formato común de Nexo.
+        """Convierte los errores automáticos 422 al formato común de Anexo Risk.
 
         FastAPI genera un error 422 cuando los datos recibidos no cumplen
         el esquema Pydantic. Por ejemplo:
@@ -80,12 +84,18 @@ def registrar_manejadores_de_error(app: FastAPI) -> None:
         request: Request,
         exc: Exception,
     ) -> JSONResponse:
-        """Devuelve los errores internos con el formato común de Nexo."""
+        """Devuelve los errores internos con el formato común de Anexo Risk.
 
+        No expone ``str(exc)`` al cliente para evitar fuga de rutas internas
+        de módulos, nombres de tablas o fragmentos de stack. El detalle
+        completo se registra en logs del servidor.
+        """
+
+        logger.exception("Unhandled error on %s %s", request.method, request.url.path)
         return JSONResponse(
             status_code=500,
             content={
-                "error": "Error interno de Nexo",
-                "detalle": str(exc),
+                "error": "Error interno de Anexo Risk",
+                "detalle": "Se ha producido un error inesperado. Consulte los logs del servidor.",
             },
         )

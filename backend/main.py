@@ -1,4 +1,4 @@
-"""Punto de arranque del backend de Nexo (FastAPI).
+"""Punto de arranque del backend de Anexo Risk (FastAPI).
 
 Parte de la base común: registra los routers de cada módulo, CORS y
 manejo de errores. Los equipos NO deberían tener que tocar este
@@ -30,8 +30,8 @@ from modules.personas.routes import router as personas_router
 from sync.sync_controller import router as sync_router
 
 app = FastAPI(
-    title="Nexo API",
-    description="Conectados para ayudarnos — respuesta a emergencias y desastres.",
+    title="Anexo Risk API",
+    description="Plataforma de respuesta a emergencias con mapa, alertas, necesidades y ayudas en tiempo real.",
     version="0.1.0",
 )
 
@@ -57,4 +57,4 @@ init_db()
 @app.get("/api/health")
 def health():
     """Si esto responde, la base común está bien montada."""
-    return {"status": "ok", "app": "Nexo"}
+    return {"status": "ok", "app": "Anexo Risk"}

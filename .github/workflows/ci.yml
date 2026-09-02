@@ -2,13 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, anexo-risk]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, anexo-risk]
 
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -19,19 +23,37 @@ jobs:
 
       - name: Instalar dependencias
         run: |
-          cd backend
-          python -m pip install -r requirements-dev.txt
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Verificar imports de anex_risk
+        env:
+          DATABASE_URL: sqlite:///./anexo_risk.db
+        run: |
+          python -c "from main import app; print('OK', app.title)"
 
       - name: Ejecutar tests
-        run: PYTHONPATH=backend python -m pytest tests/
+        env:
+          DATABASE_URL: sqlite:///./anexo_risk.db
+        run: |
+          cd ..
+          PYTHONPATH=backend python -m pytest tests/ -v
 
-  frontend-lint:
+  frontend-static-check:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Comprobación básica de HTML/JS
+      - name: Verificar SPA entry point
         run: |
-          echo "Sin build step: frontend estático (HTML/CSS/JS puro)."
           test -f frontend/index.html
+          test -f frontend/js/spa.js
+          test -f frontend/manifest.json
+
+      - name: Verificar que no hay referencias visibles a NEXO
+        run: |
+          ! grep -i "NEXO" frontend/index.html
+          ! grep -i "NEXO" frontend/manifest.json
+          ! grep -i "Nexo " frontend/index.html
+          echo "Identidad limpia: OK"

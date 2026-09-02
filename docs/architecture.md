@@ -1,4 +1,4 @@
-# Arquitectura de Nexo
+# Arquitectura de Anexo Risk
 
 ## Visión general
 

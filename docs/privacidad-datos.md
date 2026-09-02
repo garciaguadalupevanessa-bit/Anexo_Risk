@@ -1,6 +1,6 @@
 # Privacidad y tratamiento de datos (borrador)
 
-Nexo maneja dos tipos de datos especialmente sensibles: ubicación en tiempo
+Anexo Risk maneja dos tipos de datos especialmente sensibles: ubicación en tiempo
 real (mapa de necesidades) y datos de personas desaparecidas/localizadas. Este
 documento recoge los criterios mínimos a seguir, pendiente de revisión legal
 antes de cualquier despliegue real.
@@ -18,7 +18,7 @@ antes de cualquier despliegue real.
   públicos (necesidades, alertas) y cuáles deberían restringirse (datos de
   contacto de personas desaparecidas, por ejemplo).
 - **GDACS y Protección Civil**: solo se consumen datos públicos de estas
-  fuentes, no se les envía ningún dato de usuarios de Nexo.
+  fuentes, no se les envía ningún dato de usuarios de Anexo Risk.
 
 Este documento es un punto de partida para la evaluación académica, no un
 análisis legal completo.

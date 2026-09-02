@@ -71,7 +71,7 @@ def send_admin_new_volunteer_email(
 ) -> None:
     """Notifica al administrador de una nueva solicitud pendiente."""
 
-    subject = f"[Nexo] Nueva solicitud de voluntariado: {volunteer['nombre']}"
+    subject = f"[Anexo Risk] Nueva solicitud de voluntariado: {volunteer['nombre']}"
     body = (
         "Se ha recibido una nueva solicitud de voluntariado.\n\n"
         f"Nombre: {volunteer['nombre']}\n"
@@ -83,7 +83,7 @@ def send_admin_new_volunteer_email(
         "Acciones:\n"
         f"- Aprobar: {approve_url}\n"
         f"- Rechazar: {reject_url}\n\n"
-        "También puedes usar la API protegida con la cabecera X-Nexo-Key."
+        "También puedes usar la API protegida con la cabecera X-Anexo-Key."
     )
     _deliver_email(ADMIN_EMAIL, subject, body)
 
@@ -94,10 +94,10 @@ def send_volunteer_approved_email(
 ) -> None:
     """Confirma al voluntario que su solicitud ha sido aprobada."""
 
-    subject = "[Nexo] Tu solicitud de voluntariado ha sido aprobada"
+    subject = "[Anexo Risk] Tu solicitud de voluntariado ha sido aprobada"
     body = (
         f"Hola {volunteer['nombre']},\n\n"
-        "Tu solicitud de voluntariado en Nexo ha sido aprobada.\n"
+        "Tu solicitud de voluntariado en Anexo Risk ha sido aprobada.\n"
         "Ya puedes aparecer como disponible o no disponible en la app.\n\n"
         "Para marcar tu disponibilidad activa usa este enlace o la API:\n"
         f"{availability_url}\n\n"
@@ -109,10 +109,10 @@ def send_volunteer_approved_email(
 def send_volunteer_rejected_email(volunteer: dict[str, Any]) -> None:
     """Informa al voluntario de que su solicitud no ha sido aceptada."""
 
-    subject = "[Nexo] Actualización sobre tu solicitud de voluntariado"
+    subject = "[Anexo Risk] Actualización sobre tu solicitud de voluntariado"
     body = (
         f"Hola {volunteer['nombre']},\n\n"
-        "Gracias por tu interés en colaborar con Nexo.\n"
+        "Gracias por tu interés en colaborar con Anexo Risk.\n"
         "En esta ocasión tu solicitud no ha sido aceptada.\n\n"
         "Si crees que se trata de un error, contacta con el equipo organizador."
     )
