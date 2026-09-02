@@ -69,6 +69,12 @@ def get_need(need_id: int) -> dict[str, Any] | None:
 def create_need(need: NeedCreate) -> dict[str, Any]:
     """Guarda una necesidad validada y devuelve el registro completo."""
 
+    direccion_final = (need.address or "").strip()
+    if not direccion_final and need.latitude is not None and need.longitude is not None:
+        direccion_final = f"{need.latitude:.6f}, {need.longitude:.6f}"
+    if not direccion_final:
+        direccion_final = "Ubicación no especificada"
+
     with get_cursor() as cursor:
         # SQLite genera el id, el estado inicial y la fecha de creación.
         cursor.execute(
@@ -79,7 +85,7 @@ def create_need(need: NeedCreate) -> dict[str, Any]:
                 need.title,
                 need.need_type.value,
                 need.description,
-                need.address,
+                direccion_final,
                 need.latitude,
                 need.longitude,
                 need.priority.value,

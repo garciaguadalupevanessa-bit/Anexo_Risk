@@ -25,6 +25,11 @@ def get_donation(donation_id: int):
 
 @router.post("", response_model=DonationResponse, status_code=201)
 def create_donation(donation: DonationCreate):
+    if donation.necesidad_id is not None:
+        result = models.create_donation_for_need(donation, donation.necesidad_id)
+        if result is None:
+            raise HTTPException(status_code=400, detail="Necesidad no disponible o ya cubierta")
+        return result
     return models.create_donation(donation)
 
 

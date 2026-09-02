@@ -66,6 +66,7 @@ class DonationBase(BaseModel):
 class DonationCreate(DonationBase):
     latitud: Optional[float] = Field(default=None, alias="latitud")
     longitud: Optional[float] = Field(default=None, alias="longitud")
+    necesidad_id: Optional[int] = Field(default=None, alias="necesidad_id")
 
 
 class DonationStatusUpdate(BaseModel):
@@ -73,10 +74,6 @@ class DonationStatusUpdate(BaseModel):
     status: DonationStatus = Field(alias="estado")
 
 
-class DonationResponse(DonationBase):
-    id: int = Field(gt=0)
-    status: DonationStatus = Field(alias="estado")
-    created_at: datetime = Field(alias="creado_en")
 class DonationResponse(DonationBase):
     id: int = Field(gt=0)
     status: DonationStatus = Field(alias="estado")
