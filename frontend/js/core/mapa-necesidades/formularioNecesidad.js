@@ -1,267 +1,200 @@
 // frontend/js/core/mapa-necesidades/formularioNecesidad.js
-import { crearNecesidad, configurarBaseUrl } from "./necesidadesApi.js";
+
+import { crearNecesidad } from "./necesidadesApi.js";
 import { buscarDireccion, direccionInversa } from "./geocodificacion.js";
 
-// Si trabajas localmente con Live Server (puerto 5500) y FastAPI en 8000:
-configurarBaseUrl("http://localhost:8000/api/necesidades");
-
 /**
- * Formulario simplificado de "Reportar necesidad" (rediseño Grupo 1).
- *
- * Registrar una necesidad exige solo dos cosas: elegir una de las 8
- * categorías cerradas (botones con emoji) y decir dónde. La ubicación
- * se puede fijar de tres formas, todas equivalentes:
- *   1. Escribiendo la dirección a mano (se geocodifica al enviar).
- *   2. Pulsando "Usar mi ubicación" (GPS; se traduce a una dirección
- *      legible mediante geocodificación inversa).
- *   3. Haciendo clic en el mapa (mapaNecesidades.js; también se traduce
- *      a una dirección legible).
- *
- * No hay campo de título: el backend genera uno a partir de la
- * categoría (ver services.py). La descripción es el único texto libre
- * que rellena la persona, y es opcional.
+ * Controlador para el formulario simplificado de "Reportar necesidad" (rediseño G1).
+ * Rediseño del MVP: el ciudadano solo tiene que elegir una de las 8 categorías
+ * cerradas (botones con emoji) y decir dónde. El título se autogenera en el backend.
  */
 export class NeedFormController {
-  constructor(container, onSubmit) {
-    this.container =
-      typeof container === "string"
-        ? document.querySelector(container)
-        : container;
-    this.onSubmit = onSubmit;
-    this.formElement = null;
-    this.tipoSeleccionado = null;
-    // Coordenadas ya confirmadas por GPS o clic en el mapa. Si la persona
-    // edita el campo de dirección a mano después, se invalidan (ver
-    // setupDireccion) y se geocodifican de nuevo al enviar el formulario.
-    this.coordenadasConfirmadas = null;
-    this.init();
-  }
-
-  init() {
-    if (!this.container) return;
-    this.formElement =
-      this.container.tagName === "FORM"
-        ? this.container
-        : this.container.querySelector("form");
-
-    if (this.formElement) {
-      this.setupCategorias();
-      this.setupDireccion();
-      this.bindEvents();
-      this.setupGeolocation();
-      this.setupClicEnMapa();
+    constructor(container, onSubmit) {
+        this.container = typeof container === "string" ? document.querySelector(container) : container;
+        this.onSubmit = onSubmit;
+        this.formElement = null;
+        this.tipoSeleccionado = null;
+        
+        // Coordenadas ya confirmadas por GPS o clic en el mapa.
+        this.coordenadasConfirmadas = null;
+        
+        this.init();
     }
-  }
 
-  /**
-   * Convierte el grupo de botones .nexo-categoria-btn (data-tipo) en el
-   * selector de categoría cerrada. Sustituye al antiguo <select id="select-tipo">.
-   */
-  setupCategorias() {
-    const botones = this.formElement.querySelectorAll(".nexo-categoria-btn");
-    if (!botones.length) return;
+    init() {
+        if (!this.container) return;
+        this.formElement = this.container.tagName === "FORM" ? this.container : this.container.querySelector("form");
+        
+        this.setupCategorias();
+        this.setupDireccion();
+        this.setupGeolocation();
+        this.setupClicEnMapa();
+        this.bindEvents();
+    }
 
-    botones.forEach((boton) => {
-      boton.setAttribute("aria-pressed", "false");
-      boton.addEventListener("click", () => {
-        botones.forEach((b) => {
-          b.classList.remove("is-selected");
-          b.setAttribute("aria-pressed", "false");
+    /**
+     * Convierte el grupo de botones de categoría cerrados (.nexo-categoria-btn)
+     * en un selector exclusivo. Sustituye al antiguo <select id="select-tipo">.
+     */
+    setupCategorias() {
+        const botones = this.formElement.querySelectorAll(".nexo-categoria-btn");
+        botones.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                // Deseleccionar los demás botones
+                botones.forEach((b) => {
+                    b.classList.remove("is-selected");
+                    b.setAttribute("aria-pressed", "false");
+                });
+                
+                // Seleccionar el actual
+                btn.classList.add("is-selected");
+                btn.setAttribute("aria-pressed", "true");
+                this.tipoSeleccionado = btn.dataset.tipo;
+            });
         });
-        boton.classList.add("is-selected");
-        boton.setAttribute("aria-pressed", "true");
-        this.tipoSeleccionado = boton.dataset.tipo;
-      });
-    });
+    }
 
-    // Preseleccionamos la primera categoría para que el formulario
-    // funcione igual de rápido si la persona no toca los botones.
-    const primero = botones[0];
-    primero.classList.add("is-selected");
-    primero.setAttribute("aria-pressed", "true");
-    this.tipoSeleccionado = primero.dataset.tipo;
-  }
+    /**
+     * Si la persona edita la dirección a mano, invalidamos las coordenadas
+     * obtenidas por GPS o clic en el mapa, forzando una geocodificación del
+     * nuevo texto al enviar.
+     */
+    setupDireccion() {
+        const direccionInput = this.formElement.querySelector("#input-direccion");
+        if (!direccionInput) return;
+        direccionInput.addEventListener("input", () => {
+            this.coordenadasConfirmadas = null;
+        });
+    }
 
-  /**
-   * Si la persona escribe o edita la dirección a mano, invalidamos las
-   * coordenadas que hubiera confirmadas por GPS/clic: al enviar el
-   * formulario se geocodificará el texto actual, no las coordenadas viejas.
-   *
-   * Importante: esto solo salta con tecleo real de la persona ("input"),
-   * no cuando este mismo controlador rellena el campo por su cuenta tras
-   * el GPS o un clic en el mapa (asignar `.value` en JS no dispara "input").
-   */
-  setupDireccion() {
-    const direccionInput = this.formElement.querySelector("#input-direccion");
-    if (!direccionInput) return;
-
-    direccionInput.addEventListener("input", () => {
-      this.coordenadasConfirmadas = null;
-    });
-  }
-
-  setupGeolocation() {
-    const gpsBtn = this.formElement.querySelector("#btn-usar-gps");
-    if (!gpsBtn) return;
-
-    gpsBtn.addEventListener("click", () => {
-      if (!navigator.geolocation) {
-        alert("Tu navegador no soporta geolocalización.");
-        return;
-      }
-      gpsBtn.textContent = "⏳ Obteniendo ubicación...";
-      gpsBtn.disabled = true;
-
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          await this.confirmarUbicacion(latitude, longitude);
-          gpsBtn.textContent = "✓ Ubicación capturada";
-          setTimeout(() => {
-            gpsBtn.textContent = "📍 Usar mi ubicación";
-            gpsBtn.disabled = false;
-          }, 2000);
-        },
-        () => {
-          alert("No se pudo obtener tu ubicación.");
-          gpsBtn.textContent = "📍 Usar mi ubicación";
-          gpsBtn.disabled = false;
-        },
-        { enableHighAccuracy: true, timeout: 10000 },
-      );
-    });
-  }
-
-  /**
-   * Segunda vía para fijar la ubicación (además del GPS): un clic en el
-   * mapa. mapaNecesidades.js dispara este evento con las coordenadas
-   * pulsadas; aquí solo escuchamos, sin importar directamente ese módulo.
-   */
-  setupClicEnMapa() {
-    document.addEventListener("nexo:ubicacion-seleccionada", async (evento) => {
-      const { lat, lng } = evento.detail || {};
-      if (typeof lat === "number" && typeof lng === "number") {
-        await this.confirmarUbicacion(lat, lng);
-      }
-    });
-  }
-
-  /**
-   * Punto común para GPS y clic en el mapa: guarda las coordenadas como
-   * "confirmadas" (no habrá que volver a geocodificarlas al enviar) y
-   * rellena el campo de dirección con su traducción legible, si la hay.
-   */
-  async confirmarUbicacion(lat, lng) {
-    this.coordenadasConfirmadas = { lat, lng };
-
-    const direccionInput = this.formElement.querySelector("#input-direccion");
-    if (!direccionInput) return;
-
-    const direccionLegible = await direccionInversa(lat, lng);
-    // Si Nominatim no devuelve nada legible, dejamos las coordenadas en
-    // crudo: seguimos teniendo ubicación válida aunque no haya texto bonito.
-    direccionInput.value =
-      direccionLegible || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  }
-
-  bindEvents() {
-    this.formElement.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      if (!this.tipoSeleccionado) {
-        alert("Selecciona qué necesitas.");
-        return;
-      }
-
-      const direccionInput = this.formElement.querySelector("#input-direccion");
-      const descTextarea =
-        this.formElement.querySelector("#textarea-desc") ||
-        this.formElement.querySelector("#needDescription");
-      const textoDireccion = direccionInput ? direccionInput.value.trim() : "";
-
-      const submitBtn = this.formElement.querySelector('button[type="submit"]');
-
-      let lat;
-      let lng;
-      let direccionParaGuardar = textoDireccion;
-
-      if (this.coordenadasConfirmadas) {
-        // Vino de GPS o de un clic en el mapa: ya tenemos coordenadas
-        // exactas, no hace falta geocodificar nada.
-        ({ lat, lng } = this.coordenadasConfirmadas);
-      } else if (textoDireccion) {
-        // La persona ha escrito (o editado) la dirección a mano: hay que
-        // geocodificarla antes de poder guardar la necesidad.
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.textContent = "Buscando dirección...";
-        }
-
-        try {
-          const resultado = await buscarDireccion(textoDireccion);
-
-          if (!resultado) {
-            alert(
-              "No hemos encontrado esa dirección. Prueba a escribirla de otra forma, usar tu ubicación o hacer clic en el mapa.",
+    /**
+     * Obtiene la ubicación actual del dispositivo usando la API de Geolocalización nativa.
+     */
+    setupGeolocation() {
+        const gpsBtn = this.formElement.querySelector("#btn-usar-gps");
+        if (!gpsBtn) return;
+        gpsBtn.addEventListener("click", async () => {
+            gpsBtn.disabled = true;
+            const textoOriginal = gpsBtn.textContent;
+            gpsBtn.textContent = "⏳ Obteniendo ubicación...";
+            
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    await this.confirmarUbicacion(latitude, longitude);
+                    gpsBtn.disabled = false;
+                    gpsBtn.textContent = textoOriginal;
+                },
+                (err) => {
+                    console.warn("Fallo en la geolocalización nativa del dispositivo:", err);
+                    alert("No se pudo obtener el GPS automáticamente. Haz clic directo en el mapa o escribe la dirección.");
+                    gpsBtn.disabled = false;
+                    gpsBtn.textContent = textoOriginal;
+                }
             );
-            return;
-          }
+        });
+    }
 
-          lat = resultado.lat;
-          lng = resultado.lng;
-          direccionParaGuardar = resultado.direccion;
-        } catch (error) {
-          console.error("Error geocodificando la dirección:", error);
-          alert(
-            "No hemos podido buscar esa dirección ahora mismo. Prueba a usar tu ubicación o hacer clic en el mapa.",
-          );
-          return;
-        } finally {
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Publicar Necesidad";
-          }
+    /**
+     * Escucha eventos globales de clics en el mapa (disparados por mapaNecesidades.js)
+     * para rellenar la ubicación de la necesidad.
+     */
+    setupClicEnMapa() {
+        document.addEventListener("nexo:ubicacion-seleccionada", async (evento) => {
+            const { lat, lng } = evento.detail || {};
+            if (typeof lat === "number" && typeof lng === "number") {
+                await this.confirmarUbicacion(lat, lng);
+            }
+        });
+    }
+
+    /**
+     * Almacena las coordenadas confirmadas del mapa/GPS y rellena
+     * la dirección legible con geocodificación inversa.
+     */
+    async confirmarUbicacion(lat, lng) {
+        this.coordenadasConfirmadas = { lat, lng };
+        const direccionInput = this.formElement.querySelector("#input-direccion");
+        if (direccionInput) {
+            direccionInput.placeholder = "⏳ Obteniendo dirección legible...";
+            const legible = await direccionInversa(lat, lng);
+            direccionInput.value = legible || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            direccionInput.placeholder = "Dirección de la necesidad";
         }
-      } else {
-        alert(
-          "Escribe una dirección, usa tu ubicación o haz clic en el mapa para decir dónde.",
-        );
-        return;
-      }
+    }
 
-      // titulo se envía vacío: el backend genera uno a partir de la
-      // categoría (ver services.py). descripcion es opcional.
-      const payloadSpanish = {
-        titulo: "",
-        tipo: this.tipoSeleccionado,
-        descripcion: descTextarea ? descTextarea.value.trim() : "",
-        direccion: direccionParaGuardar,
-        latitud: lat,
-        longitud: lng,
-      };
+    bindEvents() {
+        this.formElement.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const submitBtn = this.formElement.querySelector("button[type='submit']");
+            const hint = this.formElement.querySelector(".nexo-hint");
+            
+            if (!this.tipoSeleccionado) {
+                alert("Por favor, selecciona una categoría.");
+                return;
+            }
 
-      try {
-        // Enviar al backend centralizado y recuperar el objeto completo con ID real
-        const nuevaNecesidad = await crearNecesidad(payloadSpanish);
+            const direccionInput = this.formElement.querySelector("#input-direccion");
+            const direccionTexto = direccionInput?.value.trim() || "";
+            let lat = null;
+            let lng = null;
 
-        if (typeof this.onSubmit === "function") {
-          this.onSubmit(nuevaNecesidad);
-        }
+            submitBtn.disabled = true;
+            if (hint) hint.textContent = "Procesando dirección geoespacial...";
 
-        this.reset();
-        alert("¡Necesidad registrada correctamente!");
-      } catch (error) {
-        console.error("Error guardando necesidad:", error);
-        alert(
-          `Error: ${error.message} ${error.detalle ? `(${error.detalle})` : ""}`,
-        );
-      }
-    });
-  }
+            try {
+                if (this.coordenadasConfirmadas) {
+                    lat = this.coordenadasConfirmadas.lat;
+                    lng = this.coordenadasConfirmadas.lng;
+                } else {
+                    if (!direccionTexto) {
+                        throw new Error("Debes proporcionar una dirección de texto o ubicar un punto en el mapa.");
+                    }
+                    const coords = await buscarDireccion(direccionTexto);
+                    if (!coords) {
+                        throw new Error("No pudimos encontrar esa dirección. Intenta marcar el punto directamente en el mapa.");
+                    }
+                    lat = coords.lat;
+                    lng = coords.lng;
+                }
 
-  reset() {
-    if (this.formElement) this.formElement.reset();
-    this.coordenadasConfirmadas = null;
-    this.setupCategorias();
-  }
+                // Validación robusta de límites geográficos requeridos en schemas.py (Pydantic)
+                if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    throw new Error("Las coordenadas geográficas están fuera del rango planetario válido.");
+                }
+
+                const payload = {
+                    tipo: this.tipoSeleccionado,
+                    latitud: lat,
+                    longitud: lng,
+                    direccion: direccionTexto,
+                    descripcion: this.formElement.querySelector("#input-descripcion")?.value || "",
+                    prioridad: this.formElement.querySelector("#select-prioridad")?.value || "media"
+                };
+
+                const nuevaNecesidad = await crearNecesidad(payload);
+                
+                this.reset();
+                if (this.onSubmit) this.onSubmit(nuevaNecesidad);
+                alert("¡Necesidad reportada con éxito!");
+
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                submitBtn.disabled = false;
+                if (hint) hint.textContent = "Selecciona en el mapa o usa GPS para autocompletar.";
+            }
+        });
+    }
+
+    reset() {
+        if (this.formElement) this.formElement.reset();
+        this.coordenadasConfirmadas = null;
+        this.tipoSeleccionado = null;
+        const botones = this.formElement.querySelectorAll(".nexo-categoria-btn");
+        botones.forEach((b) => {
+            b.classList.remove("is-selected");
+            b.setAttribute("aria-pressed", "false");
+        });
+    }
 }
