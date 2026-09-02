@@ -1,11 +1,11 @@
 {
-  "name": "Anexo Finder — Respuesta a emergencias en tiempo real",
+  "name": "Anexo Finder — Centro de Operaciones de Emergencia",
   "short_name": "Anexo",
-  "description": "Plataforma de respuesta a emergencias con mapa de necesidades, alertas y ayudas en tiempo real.",
-  "start_url": "/index.html",
+  "description": "Plataforma de respuesta a emergencias. Mapa de necesidades, alertas oficiales, incendios y ayudas en tiempo real.",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0F2038",
-  "theme_color": "#0F2038",
+  "background_color": "#060810",
+  "theme_color": "#0A0D14",
   "icons": [
     { "src": "assets/logo/anexo-icon.png", "sizes": "192x192", "type": "image/png" },
     { "src": "assets/logo/anexo-icon.png", "sizes": "512x512", "type": "image/png" }

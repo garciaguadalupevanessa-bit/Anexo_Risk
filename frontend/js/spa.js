@@ -37,13 +37,19 @@ document.querySelectorAll(".nav__link").forEach(btn => {
 });
 
 // --- ONLINE STATUS ---
-function updateStatus() {
-  const el = document.getElementById("status-text");
-  if (el) el.textContent = navigator.onLine ? "ONLINE" : "OFFLINE";
-}
-window.addEventListener("online", updateStatus);
-window.addEventListener("offline", updateStatus);
-updateStatus();
+  const offlineBanner = document.getElementById("nexo-offline-banner");
+  if (offlineBanner) {
+    offlineBanner.style.display = navigator.onLine ? "none" : "block";
+  }
+
+  function updateStatus() {
+    const el = document.getElementById("status-text");
+    if (el) el.textContent = navigator.onLine ? "ONLINE" : "OFFLINE";
+    if (offlineBanner) offlineBanner.style.display = navigator.onLine ? "none" : "block";
+  }
+  window.addEventListener("online", updateStatus);
+  window.addEventListener("offline", updateStatus);
+  updateStatus();
 
 // ============================================================
 //  MAPA (G4 — Juan)

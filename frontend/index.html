@@ -310,5 +310,17 @@
   <!-- ====== SCRIPTS ====== -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="js/spa.js?v=3"></script>
+
+  <!-- PWA: Service Worker para modo offline -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").then(
+          (reg) => console.log("SW registrado:", reg.scope),
+          (err) => console.warn("SW error:", err)
+        );
+      });
+    }
+  </script>
 </body>
 </html>
