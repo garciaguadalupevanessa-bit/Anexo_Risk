@@ -1,136 +1,149 @@
 // frontend/js/core/mapa-necesidades/necesidadCard.js
 
+import { actualizarEstadoNecesidad } from "./necesidadesApi.js";
+
 /**
- * Componente Objeto para las Tarjetas de Necesidad y Estados UI.
- *
- * Los campos de needData vienen del backend en español
- * (ver schemas.py -> NeedResponse): titulo (generado por el backend a
- * partir de la categoría, ya no lo escribe la persona), tipo, descripcion,
- * direccion (texto legible del lugar, ver geocodificacion.js), prioridad,
- * estado, latitud, longitud, id, creado_en, categoria_etiqueta (p. ej.
- * "💧 Agua", ya lista para pintar).
- *
- * Rediseño: el ciclo de vida ahora es un solo paso, abierta -> cubierta
- * (ver STATUS_TRANSITIONS en models.py). Ya no hay estado intermedio.
+ * Componente para representar las tarjetas de necesidad individuales
+ * en la lista lateral de la aplicación (rediseño G1).
+ * 
+ * Cumple con el ciclo de vida simplificado de un paso: abierta -> cubierta.
  */
-const ETIQUETA_BOTON_CUBRIR = "Marcar cubierta";
-
 export class NeedCardComponent {
-  /**
-   * @param {Object} needData - Datos de la necesidad
-   * @param {Function} [onStatusChange] - Callback para marcar como cubierta.
-   *   Recibe (id, "abierta", "cubierta") y debe devolver (o resolver a)
-   *   la necesidad ya actualizada por el backend.
-   */
-  constructor(needData, onStatusChange) {
-    this.data = needData;
-    this.onStatusChange = onStatusChange;
-    this.element = this.createDOMElement();
-  }
-
-  /**
-   * Construye el nodo DOM de la tarjeta
-   */
-  createDOMElement() {
-    const card = document.createElement("article");
-    const prioridad = (this.data.prioridad || "baja").toLowerCase();
-    const tipo = (this.data.tipo || "otros").toLowerCase();
-    const etiquetaCategoria = this.data.categoria_etiqueta || tipo;
-
-    card.className = `nexo-card nexo-card--${prioridad}`;
-    card.dataset.id = this.data.id;
-    card.dataset.tipo = tipo;
-
-    card.innerHTML = `
-      <div class="nexo-card__header">
-        <h3 class="nexo-card__title">${this.data.titulo}</h3>
-        <span class="nexo-card__badge nexo-card__badge--${prioridad}">${prioridad}</span>
-      </div>
-      <p class="nexo-card__desc">${this.data.descripcion || "Sin descripción."}</p>
-      ${this.data.direccion ? `<p class="nexo-card__address">📍 ${this.data.direccion}</p>` : ""}
-      <div class="nexo-card__footer">
-        <span class="nexo-card__type nexo-card__type--${tipo}">${etiquetaCategoria}</span>
-        <span class="nexo-card__estado-slot"></span>
-      </div>
-    `;
-
-    this.renderEstado(card);
-
-    return card;
-  }
-
-  /**
-   * Pinta la zona de estado/botón según this.data.estado actual.
-   * Separado en su propio método para poder repintarlo tras un cambio
-   * de estado sin reconstruir toda la tarjeta.
-   */
-  renderEstado(card) {
-    const slot = card.querySelector(".nexo-card__estado-slot");
-
-    if (this.data.estado === "cubierta") {
-      slot.innerHTML = '<span class="check-done">✓ Cubierta</span>';
-      return;
+    /**
+     * @param {Object} needData - Datos de la necesidad provenientes del backend.
+     * @param {Function} [onStatusChange] - Callback opcional que se ejecuta cuando
+     * la necesidad se marca como cubierta (útil para que G4 actualice el mapa).
+     */
+    constructor(needData, onStatusChange) {
+        this.data = needData;
+        this.onStatusChange = onStatusChange;
+        this.element = this.createDOMElement();
     }
 
-    slot.innerHTML = `<button type="button" class="btn-cover" data-id="${this.data.id}">${ETIQUETA_BOTON_CUBRIR}</button>`;
+    /**
+     * Construye y retorna la estructura HTML estructurada del componente.
+     */
+    createDOMElement() {
+        const card = document.createElement("article");
+        const prioridad = (this.data.prioridad || "baja").toLowerCase();
+        const tipo = (this.data.tipo || "otros").toLowerCase();
+        const etiquetaCategoria = this.data.categoria_etiqueta || tipo;
 
-    const btn = slot.querySelector(".btn-cover");
-    btn.addEventListener("click", async () => {
-      if (typeof this.onStatusChange !== "function") return;
+        // Acuerdo 3: Clases semánticas basadas en variables.css de Vanessa
+        card.className = `nexo-card nexo-card--${prioridad}`;
+        
+        const header = document.createElement("div");
+        header.className = "nexo-card__header";
 
-      btn.disabled = true;
-      btn.textContent = "Actualizando...";
+        const title = document.createElement("h4");
+        title.className = "nexo-card__title";
+        // Si no hay título manual, cae en la etiqueta de la categoría autogenerada
+        title.textContent = this.data.titulo || etiquetaCategoria;
 
-      try {
-        // El propio callback llama a actualizarEstadoNecesidad y nos
-        // devuelve la necesidad ya actualizada por el backend.
-        const necesidadActualizada = await this.onStatusChange(
-          this.data.id,
-          this.data.estado,
-          "cubierta",
-        );
+        const badge = document.createElement("span");
+        badge.className = `nexo-card__badge nexo-card__badge--${prioridad}`;
+        badge.textContent = prioridad;
 
-        if (necesidadActualizada) {
-          this.data = necesidadActualizada;
-          this.renderEstado(card);
+        header.append(title, badge);
+
+        const desc = document.createElement("p");
+        desc.className = "nexo-card__desc";
+        desc.textContent = this.data.descripcion || "Sin descripción proporcionada.";
+
+        const address = document.createElement("p");
+        address.className = "nexo-card__address";
+        address.innerHTML = `📍 <span>${this.data.direccion || "Ubicación en coordenadas"}</span>`;
+
+        const footer = document.createElement("div");
+        footer.className = "nexo-card__footer";
+
+        const typeSlot = document.createElement("span");
+        typeSlot.className = "nexo-card__type";
+        typeSlot.textContent = etiquetaCategoria;
+
+        const statusSlot = document.createElement("div");
+        statusSlot.className = "nexo-card__estado-slot";
+
+        footer.append(typeSlot, statusSlot);
+        card.append(header, desc, address, footer);
+
+        this.renderEstado(card);
+        return card;
+    }
+
+    /**
+     * Pinta de forma reactiva la sección del botón/estado.
+     * Se separa en su propio método para actualizar la UI en el clic sin repintar toda la tarjeta.
+     */
+    renderEstado(card) {
+        const slot = card.querySelector(".nexo-card__estado-slot");
+        if (!slot) return;
+        slot.innerHTML = "";
+
+        if (this.data.estado === "cubierta") {
+            const check = document.createElement("span");
+            check.className = "check-done";
+            check.textContent = "✅ Cubierta";
+            slot.appendChild(check);
+        } else {
+            const btn = document.createElement("button");
+            btn.className = "btn-cover";
+            btn.textContent = "Marcar cubierta";
+            
+            btn.addEventListener("click", async () => {
+                btn.disabled = true;
+                btn.textContent = "⏳...";
+                try {
+                    // LLamada PATCH a la API
+                    const actualizada = await actualizarEstadoNecesidad(this.data.id, "cubierta");
+                    this.data.estado = "cubierta";
+                    
+                    // Repintamos el slot de estado localmente de forma inmediata
+                    this.renderEstado(card); 
+                    
+                    // Si el mapa (Juan) nos pasó un callback, le notificamos para que actualice su marcador
+                    if (this.onStatusChange) {
+                        this.onStatusChange(actualizada);
+                    }
+                } catch (err) {
+                    alert("No se pudo actualizar el estado de la necesidad.");
+                    btn.disabled = false;
+                    btn.textContent = "Marcar cubierta";
+                }
+            });
+            slot.appendChild(btn);
         }
-      } catch (error) {
-        console.error("Error cambiando el estado de la necesidad:", error);
-        alert(
-          `No se pudo actualizar el estado: ${error.message} ${error.detalle ? `(${error.detalle})` : ""}`,
-        );
-        btn.disabled = false;
-        btn.textContent = ETIQUETA_BOTON_CUBRIR;
-      }
-    });
-  }
+    }
 
-  /**
-   * Retorna el elemento DOM listo para insertar en listas o popups de Leaflet
-   */
-  getNode() {
-    return this.element;
-  }
+    /**
+     * Retorna el nodo DOM para ser inyectado en el panel.
+     */
+    getNode() {
+        return this.element;
+    }
 
-  // Métodos Estáticos para Estados UI (Punto 22)
-  static renderLoading() {
-    const el = document.createElement("div");
-    el.className = "nexo-state nexo-state--loading";
-    el.innerHTML = "<p>⏳ Cargando necesidades...</p>";
-    return el;
-  }
+    // ==========================================================================
+    // CUMPLIMIENTO DEL PUNTO 22 (Mobile-first, estados del sistema sin pantallas en blanco)
+    // ==========================================================================
 
-  static renderEmpty() {
-    const el = document.createElement("div");
-    el.className = "nexo-state nexo-state--empty";
-    el.innerHTML = "<p>🍃 No hay necesidades registradas.</p>";
-    return el;
-  }
+    static renderLoading() {
+        const el = document.createElement("div");
+        el.className = "nexo-state nexo-state--loading";
+        el.innerHTML = "<p>⏳ Cargando necesidades en tiempo real...</p>";
+        return el;
+    }
 
-  static renderError(msg = "Error al cargar los datos.") {
-    const el = document.createElement("div");
-    el.className = "nexo-state nexo-state--error";
-    el.innerHTML = `<p>⚠️ ${msg}</p>`;
-    return el;
-  }
+    static renderEmpty() {
+        const el = document.createElement("div");
+        el.className = "nexo-state nexo-state--empty";
+        el.innerHTML = "<p>🍃 No hay necesidades registradas en esta zona.</p>";
+        return el;
+    }
+
+    static renderError(msg = "Fallo al conectar con el servidor.") {
+        const el = document.createElement("div");
+        el.className = "nexo-state nexo-state--error";
+        el.innerHTML = `<p>⚠️ ${msg}</p>`;
+        return el;
+    }
 }
