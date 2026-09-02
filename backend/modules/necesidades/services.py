@@ -1,66 +1,247 @@
-"""Capa de servicios del módulo de necesidades.
+"""
+services.py
 
-Concentra las reglas de negocio que no son ni HTTP (routes.py) ni acceso
-a datos (models.py). De momento hay una sola regla: cuando el formulario
-simplificado no pide título, aquí se genera uno a partir de la categoría
-antes de guardar. routes.py llama siempre a este módulo, nunca a models.py
-directamente, para que esta regla no se pueda saltar por accidente.
+Lógica de negocio y procesamiento para el módulo de necesidades.
+
+Esta capa conecta las rutas HTTP con la persistencia (models.py) y
+centraliza las reglas de negocio, como:
+- generación del título por defecto;
+- limpieza y truncado de dirección;
+- cambios de estado.
 """
 
-from modules.necesidades.models import InvalidStatusTransition
-from modules.necesidades.models import create_need as _create_need
-from modules.necesidades.models import get_need as _get_need
-from modules.necesidades.models import list_needs as _list_needs
-from modules.necesidades.models import update_need_status as _update_need_status
-from modules.necesidades.schemas import (
-    NEED_TYPE_LABELS,
-    NeedCreate,
-    NeedStatus,
-    NeedType,
-)
+from typing import Any, Optional
 
-__all__ = [
-    "InvalidStatusTransition",
-    "list_needs",
-    "get_need",
-    "create_need",
-    "update_need_status",
-]
+from modules.necesidades import models
+from modules.necesidades.schemas import NeedCreate, NeedStatus, NeedType
 
 
-def _default_title(need_type: NeedType) -> str:
-    """Genera un título legible a partir de la categoría (sin el emoji)."""
+# La ruta importa esta excepción desde services.py.
+# Reutilizamos la misma excepción que utiliza models.py para que
+# routes.py pueda capturarla correctamente.
+InvalidStatusTransition = models.InvalidStatusTransition
 
-    etiqueta = NEED_TYPE_LABELS[need_type]
-    _emoji, nombre = etiqueta.split(" ", 1)
-    return f"Necesidad de {nombre.lower()}"
+
+LIMITES_LONGITUD = {
+    "TITULO_MAX": 100,
+    "DIRECCION_MAX": 300,
+}
+
+
+ETIQUETAS_CATEGORIA = {
+    "agua": "💧 Agua",
+    "alimentos": "🍞 Alimentos",
+    "parafarmacia": "💊 Parafarmacia",
+    "ropa": "👕 Ropa",
+    "higiene": "🧴 Higiene",
+    "refugio": "🏠 Refugio",
+    "transporte": "🚗 Transporte",
+    "otros": "📦 Otros",
+}
+
+
+def _extraer_valor(obj: Any, *claves: str, defecto: Any = None) -> Any:
+    """Obtiene el primer campo disponible desde Pydantic o diccionario."""
+
+    for clave in claves:
+        if isinstance(obj, dict):
+            if clave in obj and obj[clave] is not None:
+                return obj[clave]
+
+        elif hasattr(obj, clave):
+            valor = getattr(obj, clave, None)
+            if valor is not None:
+                return valor
+
+    return defecto
+
+
+def truncar_texto(texto: Optional[str], max_len: int = 300) -> str:
+    """Limpia espacios laterales y limita el texto a max_len caracteres."""
+
+    if not texto:
+        return ""
+
+    return str(texto).strip()[:max_len]
+
+
+def generar_titulo_predeterminado(tipo: str) -> str:
+    """Genera un título automático basado en el valor de la categoría."""
+    tipo_norm = (tipo or "otros").lower()
+    return f"Necesidad de {tipo_norm}"
+
+
+def procesar_datos_necesidad(datos: Any) -> dict[str, Any]:
+    """
+    Extrae, limpia y normaliza los datos de una necesidad.
+
+    Es compatible tanto con objetos Pydantic como con diccionarios.
+    """
+
+    tipo = _extraer_valor(
+        datos,
+        "tipo",
+        "need_type",
+        "type",
+        defecto="otros",
+    )
+
+    # Pydantic puede proporcionar el enum NeedType, mientras que un
+    # diccionario puede proporcionar directamente el string.
+    if isinstance(tipo, NeedType):
+        tipo = tipo.value
+
+    tipo = str(tipo).lower()
+
+    titulo_raw = _extraer_valor(
+        datos,
+        "titulo",
+        "title",
+        defecto="",
+    )
+
+    if not titulo_raw or not str(titulo_raw).strip():
+        titulo = generar_titulo_predeterminado(tipo)
+    else:
+        titulo = truncar_texto(
+            str(titulo_raw),
+            LIMITES_LONGITUD["TITULO_MAX"],
+        )
+
+    direccion_raw = _extraer_valor(
+        datos,
+        "direccion",
+        "address",
+        defecto="",
+    )
+
+    direccion = truncar_texto(
+        direccion_raw,
+        LIMITES_LONGITUD["DIRECCION_MAX"],
+    )
+
+    descripcion = _extraer_valor(
+        datos,
+        "descripcion",
+        "description",
+        defecto="",
+    )
+
+    if descripcion:
+        descripcion = str(descripcion).strip()
+
+    prioridad = _extraer_valor(
+        datos,
+        "prioridad",
+        "priority",
+        defecto="media",
+    )
+
+    if hasattr(prioridad, "value"):
+        prioridad = prioridad.value
+
+    estado = _extraer_valor(
+        datos,
+        "estado",
+        "status",
+        defecto="abierta",
+    )
+
+    if hasattr(estado, "value"):
+        estado = estado.value
+
+    latitud = float(
+        _extraer_valor(
+            datos,
+            "latitud",
+            "latitude",
+            "lat",
+            defecto=0.0,
+        )
+    )
+
+    longitud = float(
+        _extraer_valor(
+            datos,
+            "longitud",
+            "longitude",
+            "lng",
+            "lon",
+            defecto=0.0,
+        )
+    )
+
+    return {
+        "titulo": titulo,
+        "tipo": tipo,
+        "descripcion": descripcion,
+        "direccion": direccion,
+        "latitud": latitud,
+        "longitud": longitud,
+        "prioridad": prioridad,
+        "estado": estado,
+        "categoria_etiqueta": ETIQUETAS_CATEGORIA.get(
+            tipo,
+            ETIQUETAS_CATEGORIA["otros"],
+        ),
+    }
+
+
+def create_need(need: NeedCreate) -> dict[str, Any]:
+    """
+    Crea una necesidad aplicando las reglas de negocio.
+
+    El título vacío se genera automáticamente y la dirección se limita
+    a 300 caracteres antes de pasar los datos a la persistencia.
+    """
+
+    datos = procesar_datos_necesidad(need)
+
+    # Reconstruimos NeedCreate para mantener la validación del esquema
+    # antes de llegar a models.py.
+    need_normalizada = NeedCreate(
+        titulo=datos["titulo"],
+        tipo=datos["tipo"],
+        descripcion=datos["descripcion"],
+        direccion=datos["direccion"],
+        latitud=datos["latitud"],
+        longitud=datos["longitud"],
+        prioridad=datos["prioridad"],
+    )
+
+    return models.create_need(need_normalizada)
+
+
+def get_need(need_id: int) -> dict[str, Any] | None:
+    """Obtiene una necesidad por su identificador."""
+
+    return models.get_need(need_id)
 
 
 def list_needs(
     status: NeedStatus | None = None,
     need_type: NeedType | None = None,
-):
-    """Lista necesidades, con los mismos filtros opcionales que la API pública."""
+) -> list[dict[str, Any]]:
+    """Lista necesidades con filtros opcionales."""
 
-    return _list_needs(status=status, need_type=need_type)
-
-
-def get_need(need_id: int):
-    """Devuelve una necesidad por id, o ``None`` si no existe."""
-
-    return _get_need(need_id)
+    return models.list_needs(
+        status=status,
+        need_type=need_type,
+    )
 
 
-def create_need(need: NeedCreate):
-    """Rellena el título por defecto cuando el formulario lo deja vacío y guarda."""
+def update_need_status(
+    need_id: int,
+    status: NeedStatus,
+) -> dict[str, Any] | None:
+    """
+    Cambia el estado de una necesidad.
 
-    if not need.title.strip():
-        need = need.model_copy(update={"title": _default_title(need.need_type)})
+    La validación de la transición se realiza en models.py, donde se
+    mantiene la regla abierta -> cubierta.
+    """
 
-    return _create_need(need)
-
-
-def update_need_status(need_id: int, status: NeedStatus):
-    """Avanza el estado de una necesidad (abierta -> cubierta)."""
-
-    return _update_need_status(need_id=need_id, status=status)
+    return models.update_need_status(
+        need_id=need_id,
+        status=status,
+    )
