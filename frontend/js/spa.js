@@ -258,19 +258,40 @@ function initMap() {
   document.getElementById("toggle-h3-necesidades")?.addEventListener("change", e => toggleLayer("zonasNecesidades", e.target.checked));
   document.getElementById("toggle-h3-ayudas")?.addEventListener("change", e => toggleLayer("zonasAyudas", e.target.checked));
 
-  // Map click -> set coordinates
+  // Map click -> set coordinates + reverse geocode
   let tempMarker = null;
-  map.on("click", e => {
+  map.on("click", async e => {
     const { lat, lng } = e.latlng;
     document.getElementById("input-lat").value = lat.toFixed(6);
     document.getElementById("input-lng").value = lng.toFixed(6);
+    const dirInput = document.getElementById("input-direccion");
     const msg = document.getElementById("ubicacion-mensaje");
     if (msg) {
-      msg.textContent = `✓ Ubicación: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-      msg.style.color = "var(--cyan)";
+      msg.textContent = `Buscando dirección... (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+      msg.style.color = "var(--text-muted)";
     }
     if (tempMarker) map.removeLayer(tempMarker);
     tempMarker = L.circleMarker([lat, lng], { radius: 10, color: "var(--orange)", fillColor: "var(--orange)", fillOpacity: 0.4, weight: 2 }).addTo(map);
+
+    try {
+      const { direccionInversa } = await import("./core/mapa-necesidades/geocodificacion.js");
+      const direccion = await direccionInversa(lat, lng);
+      if (direccion && dirInput) {
+        dirInput.value = direccion;
+        if (msg) {
+          msg.textContent = `✓ ${direccion}`;
+          msg.style.color = "var(--cyan)";
+        }
+      } else if (msg) {
+        msg.textContent = `✓ Ubicación fijada: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        msg.style.color = "var(--cyan)";
+      }
+    } catch {
+      if (msg) {
+        msg.textContent = `✓ Ubicación fijada: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        msg.style.color = "var(--cyan)";
+      }
+    }
   });
 
   // Need form
