@@ -48,7 +48,7 @@ updateStatus();
 //  MAPA (G4 — Juan)
 // ============================================================
 function initMap() {
-  const map = L.map("map").setView([40.0, -3.5], 6);
+  const map = L.map("map").setView([40.4168, -3.7038], 6);
   window._map = map;
 
   L.tileLayer("https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2qa8_1_a275e8c9b45d6b70d3b144df", {
@@ -126,7 +126,7 @@ function initMap() {
         </div>`);
       marker.addTo(capas.necesidades);
     });
-    renderZonasH3(needsList, capas.zonasNecesidades, "var(--cyan)", "Zona Necesidades");
+
   }
 
   function renderAyudas(list) {
@@ -139,7 +139,7 @@ function initMap() {
       m.bindPopup(`<b>${a.tipo || a.type || "Ayuda"}</b><br>${a.categoria || a.category || ""}<br><small>${a.estado || a.status || ""}</small>`);
       m.addTo(capas.ayudas);
     });
-    renderZonasH3(list, capas.zonasAyudas, "var(--green)", "Zona Ayudas");
+
   }
 
   function renderAlertasOnMap(alerts) {
@@ -255,8 +255,6 @@ function initMap() {
   document.getElementById("toggle-zonas")?.addEventListener("change", e => toggleLayer("zonas", e.target.checked));
   document.getElementById("toggle-necesidades")?.addEventListener("change", e => toggleLayer("necesidades", e.target.checked));
   document.getElementById("toggle-ayudas")?.addEventListener("change", e => toggleLayer("ayudas", e.target.checked));
-  document.getElementById("toggle-h3-necesidades")?.addEventListener("change", e => toggleLayer("zonasNecesidades", e.target.checked));
-  document.getElementById("toggle-h3-ayudas")?.addEventListener("change", e => toggleLayer("zonasAyudas", e.target.checked));
 
   // Map click -> set coordinates
   let tempMarker = null;
@@ -406,6 +404,11 @@ function initDonaciones() {
   const descEl = document.getElementById("don-descripcion");
   const counterEl = document.getElementById("contador-desc");
   const listEl = document.getElementById("lista-donaciones");
+  const needsListEl = document.getElementById("lista-necesidades-ayuda");
+  const submitBtn = document.getElementById("btn-publicar-ayuda");
+  const necesidadInfo = document.getElementById("don-necesidad-info");
+
+  let selectedNeed = null;
 
   if (tipoEl) {
     tipoEl.addEventListener("change", () => {
@@ -426,6 +429,62 @@ function initDonaciones() {
     });
   }
 
+  function selectNeed(need) {
+    selectedNeed = need;
+    document.getElementById("don-necesidad-id").value = need.id;
+    if (necesidadInfo) {
+      necesidadInfo.style.display = "block";
+          necesidadInfo.textContent = `✓ Ayudando con: ${need.titulo || need.tipo} — ${need.direccion || (need.latitud && need.longitud ? `${need.latitud}, ${need.longitud}` : "sin ubicación")}`;
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = `Ofrecer ayuda para esta necesidad`;
+    }
+    document.querySelectorAll(".need-card").forEach(c => c.classList.remove("is-selected"));
+  }
+
+  async function loadNecesidadesParaAyuda() {
+    if (!needsListEl) return;
+    needsListEl.innerHTML = '<div class="state-loading"><p>Cargando necesidades...</p></div>';
+    try {
+      const data = await apiGet("/api/necesidades?estado=abierta");
+      if (!data || !data.length) {
+        needsListEl.innerHTML = '<div class="state-empty"><p>No hay necesidades activas. ¡Buenas noticias!</p></div>';
+        return;
+      }
+      const ICONS = {
+        agua: "💧", alimentos: "🍞", parafarmacia: "💊", ropa: "👕",
+        higiene: "🧴", refugio: "🏠", transporte: "🚗", otros: "📦",
+      };
+      needsListEl.innerHTML = data.map(n => {
+        const tipo = n.tipo || n.categoria || "otros";
+        const isSelected = selectedNeed && selectedNeed.id === n.id;
+        return `
+          <div class="need-card ${isSelected ? "is-selected" : ""}" data-need-id="${n.id}" style="cursor:pointer; padding: 12px; border: 1px solid ${isSelected ? "var(--cyan)" : "var(--border)"}; border-radius: 8px; margin-bottom: 8px; background: ${isSelected ? "var(--cyan-subtle)" : "transparent"};">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.4rem;">${ICONS[tipo] || "📦"}</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">${n.titulo || tipo}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">${n.direccion || (n.latitud && n.longitud ? `${n.latitud}, ${n.longitud}` : "Sin ubicación")}</div>
+                ${n.descripcion ? `<div style="font-size: 0.85rem; margin-top: 4px;">${n.descripcion}</div>` : ""}
+              </div>
+              <button type="button" class="btn btn--primary btn--sm" data-need-select="${n.id}">Elegir</button>
+            </div>
+          </div>`;
+      }).join("");
+
+      needsListEl.querySelectorAll("[data-need-select]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const need = data.find(n => n.id === parseInt(btn.dataset.needSelect));
+          if (need) selectNeed(need);
+        });
+      });
+    } catch {
+      needsListEl.innerHTML = '<div class="state-error"><p>No se pudieron cargar las necesidades.</p></div>';
+    }
+  }
+
   async function loadDonaciones() {
     if (!listEl) return;
     listEl.innerHTML = '<div class="state-loading"><p>Cargando ayudas...</p></div>';
@@ -442,15 +501,12 @@ function initDonaciones() {
       listEl.innerHTML = data.map(d => {
         const status = d.status || d.estado || "abierta";
         const isActive = status === "abierta" || status === "activa";
-        const lat = d.latitud ?? d.latitude;
-        const lng = d.longitud ?? d.longitude;
         return `
-          <div class="donation-card" ${lat && lng ? `onclick="window._map?.flyTo([${lat}, ${lng}], 14); window.showSection('mapa');"` : ""} style="${lat && lng ? "cursor:pointer;" : ""}">
+          <div class="donation-card">
             <div class="donation-card__icon"><span style="font-size:1.2rem;">${ICONS[d.recurso || d.category] || "📦"}</span></div>
             <div class="donation-card__body">
               <div class="donation-card__title">${d.recurso || d.category || "General"} — ${d.tipo || d.type || "Ayuda"}</div>
               ${d.descripcion ? `<div class="donation-card__desc">${d.descripcion}</div>` : ""}
-              ${lat && lng ? `<div class="donation-card__meta">📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>` : ""}
               <div class="donation-card__meta">Contacto: ${d.contacto || "No especificado"}${d.dni ? ` · DNI: ${d.dni}` : ""}</div>
             </div>
             <span class="donation-card__status donation-card__status--${isActive ? "active" : "done"}">${isActive ? "Activa" : "Completada"}</span>
@@ -462,67 +518,52 @@ function initDonaciones() {
   }
 
   if (form) {
-    // Map click -> set ayudas location
-    let tempMarkerAyuda = null;
-    map.on("click", (e) => {
-      if (!document.getElementById("section-ayudas")?.classList.contains("active")) return;
-      const { lat, lng } = e.latlng;
-      document.getElementById("don-lat").value = lat.toFixed(6);
-      document.getElementById("don-lng").value = lng.toFixed(6);
-      const msg = document.getElementById("don-ubicacion-mensaje");
-      if (msg) {
-        msg.textContent = `✓ Ubicación: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-        msg.style.color = "var(--cyan)";
-      }
-      if (tempMarkerAyuda) map.removeLayer(tempMarkerAyuda);
-      tempMarkerAyuda = L.circleMarker([lat, lng], { radius: 10, color: "var(--green)", fillColor: "var(--green)", fillOpacity: 0.4, weight: 2 }).addTo(map);
-    });
-
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!selectedNeed) { alert("Selecciona una necesidad para ayudar."); return; }
       const recurso = document.getElementById("don-recurso").value;
       if (!recurso) { alert("Selecciona una categoría."); return; }
-      const lat = document.getElementById("don-lat").value;
-      const lng = document.getElementById("don-lng").value;
       const payload = {
         tipo: tipoEl.value,
         recurso,
         descripcion: descEl.value.trim(),
         contacto: document.getElementById("don-contacto").value.trim(),
         dni: tipoEl.value === "tiempo" ? dniInput.value.trim() : null,
+        necesidad_id: selectedNeed.id,
       };
-      if (lat && lng) {
-        payload.latitud = parseFloat(lat);
-        payload.longitud = parseFloat(lng);
-      }
-      const btn = form.querySelector("button[type=submit]");
-      btn.disabled = true;
-      btn.textContent = "Publicando...";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Enviando...";
       try {
-        await fetch(`${API_BASE}/api/donaciones`, {
+        const resp = await fetch(`${API_BASE}/api/donaciones`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail || `Error ${resp.status}`);
+        }
         form.reset();
         counterEl.textContent = "0 / 1000";
         campoDni.style.display = "none";
-        document.getElementById("don-lat").value = "";
-        document.getElementById("don-lng").value = "";
-        document.getElementById("don-ubicacion-mensaje").textContent = "";
-        if (tempMarkerAyuda) { map.removeLayer(tempMarkerAyuda); tempMarkerAyuda = null; }
-        await loadDonaciones();
+        selectedNeed = null;
+        document.getElementById("don-necesidad-id").value = "";
+        if (necesidadInfo) necesidadInfo.style.display = "none";
+        submitBtn.textContent = "Selecciona una necesidad para ayudar";
+        await Promise.all([loadNecesidadesParaAyuda(), loadDonaciones()]);
+        if (typeof window.loadNecesidades === "function") await window.loadNecesidades();
       } catch (err) {
         console.error(err);
-        alert("No se pudo publicar la ayuda.");
+        alert("No se pudo publicar la ayuda: " + err.message);
       } finally {
-        btn.disabled = false;
-        btn.textContent = "Publicar Ayuda";
+        submitBtn.disabled = false;
       }
     });
   }
 
   loadDonaciones();
+  loadNecesidadesParaAyuda();
+  window.loadNecesidades = loadNecesidadesParaAyuda;
 }
 
 // ============================================================

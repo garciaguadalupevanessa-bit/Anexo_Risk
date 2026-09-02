@@ -63,14 +63,7 @@
                 <input type="checkbox" id="toggle-ayudas" checked />
                 Ayudas / Donaciones
               </label>
-              <label class="layer-toggle">
-                <input type="checkbox" id="toggle-h3-necesidades" />
-                Clusters Necesidades
-              </label>
-              <label class="layer-toggle">
-                <input type="checkbox" id="toggle-h3-ayudas" />
-                Clusters Ayudas
-              </label>
+
             </div>
 
             <!-- Filtro de categoría -->
@@ -112,8 +105,10 @@
                 </div>
               </div>
               <div class="form-group">
-                <label>Dirección</label>
-                <input type="text" id="input-direccion" class="form-input" placeholder="Escribe la dirección o haz clic en el mapa" />
+                <label>Ubicación</label>
+                <button type="button" id="need-btn-gps" class="btn btn--ghost btn--sm" style="width: 100%; margin-bottom: 6px;">📍 Usar mi ubicación</button>
+                <input type="text" id="input-direccion" class="form-input" placeholder="O escribe una dirección" />
+                <p style="font-size: var(--text-xs); color: var(--text-muted); margin-top: 6px;">También puedes hacer clic en el mapa para fijar la ubicación</p>
                 <input type="hidden" id="input-lat" />
                 <input type="hidden" id="input-lng" />
                 <p id="ubicacion-mensaje" style="font-size: var(--text-xs); color: var(--text-muted); margin-top: 4px;"></p>
@@ -172,22 +167,27 @@
     <section id="section-ayudas" class="section">
       <div class="section-header">
         <div class="section-header__label">MÓDULO G3 — AYUDAS</div>
-        <h1 class="section-header__title">Ayudas Disponibles</h1>
-        <p class="section-header__desc">Publica o consulta ayudas: recursos, servicios y tiempo voluntario. Asigna una ubicación para que aparezca en el mapa.</p>
+        <h1 class="section-header__title">Necesidades y Ayudas</h1>
+        <p class="section-header__desc">Selecciona una necesidad para ofrecer ayuda. La necesidad se marcará como cubierta.</p>
       </div>
 
       <div class="content-grid">
-        <!-- Lista -->
+        <!-- Columna izquierda -->
         <div>
-          <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-md); text-transform: uppercase; letter-spacing: 0.1em;">Ayudas activas</h3>
+          <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-md); text-transform: uppercase; letter-spacing: 0.1em;">Necesidades activas</h3>
+          <div id="lista-necesidades-ayuda" class="cards-list"></div>
+
+          <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin: var(--space-lg) 0 var(--space-md); text-transform: uppercase; letter-spacing: 0.1em;">Ayudas publicadas</h3>
           <div id="lista-donaciones" class="cards-list"></div>
           <p id="estado-lista" class="state-empty" hidden></p>
         </div>
 
         <!-- Formulario -->
         <div class="glass-card" style="height: fit-content; position: sticky; top: 80px;">
-          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-lg);">Publicar Ayuda</h3>
+          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-lg);">Ofrecer Ayuda</h3>
+          <p id="don-necesidad-info" style="font-size: var(--text-sm); color: var(--cyan); margin-bottom: var(--space-md); display: none;"></p>
           <form id="form-donacion">
+            <input type="hidden" id="don-necesidad-id" />
             <div class="form-group">
               <label>Tipo de Ayuda</label>
               <select id="don-tipo" class="form-select">
@@ -221,14 +221,7 @@
               <label>Contacto</label>
               <input id="don-contacto" class="form-input" type="text" placeholder="Email o teléfono" required />
             </div>
-            <div class="form-group">
-              <label>Ubicación <span style="color: var(--text-muted); font-weight: 400;">(opcional — para que aparezca en el mapa)</span></label>
-              <input type="text" id="don-direccion" class="form-input" placeholder="Escribe una dirección o haz clic en el mapa" />
-              <input type="hidden" id="don-lat" />
-              <input type="hidden" id="don-lng" />
-              <p id="don-ubicacion-mensaje" style="font-size: var(--text-xs); color: var(--text-muted); margin-top: 4px;"></p>
-            </div>
-            <button type="submit" class="btn btn--primary" style="width: 100%;">Publicar Ayuda</button>
+            <button type="submit" class="btn btn--primary" style="width: 100%;" id="btn-publicar-ayuda">Selecciona una necesidad para ayudar</button>
           </form>
         </div>
       </div>

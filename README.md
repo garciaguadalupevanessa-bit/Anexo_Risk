@@ -1,14 +1,22 @@
 # Anexo Risk
 
-> **Plataforma de respuesta a emergencias** que unifica alertas
-> oficiales, necesidades de la población y ofertas de ayuda en un único
-> panel de operaciones visible para coordinadores, voluntarios y
-> ciudadanía.
+<p align="center">
+  <img src="frontend/assets/logo/anexo-icon.png" alt="Anexo Risk logo" width="180" />
+</p>
 
-![Status](https://img.shields.io/badge/status-MVP-success)
-![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20SQLite%20%2B%20Vanilla%20JS-blue)
-![Tests](https://img.shields.io/badge/tests-79%20passing-brightgreen)
-![License](https://img.shields.io/badge/license-Academic-lightgrey)
+<p align="center">
+  <strong>Plataforma de respuesta a emergencias</strong> que unifica alertas
+  oficiales, necesidades de la población y ofertas de ayuda en un único
+  panel de operaciones visible para coordinadores, voluntarios y
+  ciudadanía.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/status-MVP-success" alt="Status" />
+  <img src="https://img.shields.io/badge/stack-FastAPI%20%2B%20SQLite%20%2B%20Vanilla%20JS-blue" alt="Stack" />
+  <img src="https://img.shields.io/badge/tests-84%20passing-brightgreen" alt="Tests" />
+  <img src="https://img.shields.io/badge/license-Academic-lightgrey" alt="License" />
+</p>
 
 ---
 
