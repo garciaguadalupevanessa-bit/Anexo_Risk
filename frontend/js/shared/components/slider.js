@@ -1,13 +1,13 @@
 // Slider moderno de la base común: autoplay con barra de progreso,
 // flechas, puntos clicables y soporte de gesto táctil (swipe).
-// Uso: cualquier página con la estructura .nexo-slider > .nexo-slider__track
-// puede llamar a iniciarSlider(document.querySelector(".nexo-slider")).
+// Uso: cualquier página con la estructura .anr-slider > .anr-slider__track
+// puede llamar a iniciarSlider(document.querySelector(".anr-slider")).
 
 export function iniciarSlider(root, { intervalo = 6000 } = {}) {
   if (!root) return;
-  const track = root.querySelector(".nexo-slider__track");
+  const track = root.querySelector(".anr-slider__track");
   const slides = Array.from(track.children);
-  const dotsWrap = root.querySelector(".nexo-slider__dots");
+  const dotsWrap = root.querySelector(".anr-slider__dots");
   const prevBtn = root.querySelector("[data-slider-prev]");
   const nextBtn = root.querySelector("[data-slider-next]");
 
@@ -17,7 +17,7 @@ export function iniciarSlider(root, { intervalo = 6000 } = {}) {
   // puntos de progreso
   const dots = slides.map((_, i) => {
     const dot = document.createElement("button");
-    dot.className = "nexo-slider__dot";
+    dot.className = "anr-slider__dot";
     dot.setAttribute("aria-label", `Ir a la diapositiva ${i + 1}`);
     dot.innerHTML = '<span class="fill"></span>';
     dot.addEventListener("click", () => irA(i));

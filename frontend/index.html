@@ -3,109 +3,241 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#101010" />
-  <title>Anexo Finder — Respuesta a emergencias en tiempo real</title>
+  <meta name="theme-color" content="#0A0D14" />
+  <title>Anexo Finder — Centro de Operaciones de Emergencia</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="assets/logo/nexo-icon.png" />
+  <link rel="icon" href="assets/logo/anexo-icon.png" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/components.css" />
 </head>
 <body>
-  <div id="nexo-offline-banner" class="nexo-offline-banner">Sin conexión — tus acciones se guardarán y se enviarán al recuperar señal.</div>
 
-  <header class="nexo-header">
-    <a href="index.html" class="nexo-header__brand">
-      <img src="assets/logo/nexo-icon.png" alt="Anexo Finder" />
-      Anexo Finder
+  <!-- ====== HEADER ====== -->
+  <header class="header">
+    <a href="#" class="header__brand" onclick="showSection('mapa'); return false;">
+      <img src="assets/logo/anexo-icon.png" alt="Anexo Finder" />
+      <span>Anexo Finder</span>
     </a>
-    <nav class="nexo-nav">
-      <a href="pages/mapa.html">Mapa</a>
-      <a href="pages/alertas.html">Alertas</a>
-      <a href="pages/voluntariado.html">Voluntariado</a>
-      <a href="pages/donaciones.html">Donaciones</a>
-      <a href="pages/personas.html">Personas</a>
-      <a href="pages/estoy-bien.html">Estoy bien</a>
+    <nav class="nav">
+      <button class="nav__link active" data-section="mapa">MAPA</button>
+      <button class="nav__link" data-section="alertas">ALERTAS</button>
+      <button class="nav__link" data-section="ayudas">AYUDAS</button>
     </nav>
+    <div class="header__status">
+      <div class="status-dot"></div>
+      <span id="status-text">ONLINE</span>
+    </div>
   </header>
 
-  <section class="nexo-hero nexo-hero--split">
-    <div>
-      <p class="nexo-hero__kicker">Conectados para ayudarnos</p>
-      <h1 class="nexo-hero__title">El pueblo<br />salva <em>al pueblo</em></h1>
-      <p class="nexo-hero__lead">
-        Cuando un desastre natural lo arrasa todo, la primera ayuda no llega de fuera:
-        está al lado. Anexo Finder conecta necesidades, voluntarios y recursos en tiempo real.
-      </p>
-      <div class="nexo-hero__actions">
-        <a class="nexo-btn" href="pages/mapa.html">Ver el mapa</a>
-        <a class="nexo-btn nexo-btn--secondary" href="pages/estoy-bien.html">Estoy bien</a>
-      </div>
-    </div>
-    <img class="nexo-hero__art" src="assets/images/ilustracion-sos.svg" alt="Un teléfono emite una señal de SOS que llega a las personas cercanas" />
-  </section>
+  <!-- ====== MAIN ====== -->
+  <main class="main">
 
-  <main>
-    <p class="nexo-section-label">Así funciona Anexo Finder</p>
-
-    <div class="nexo-slider" id="slider-funciona">
-      <div class="nexo-slider__track">
-
-        <article class="nexo-slide">
-          <div>
-            <p class="nexo-slide__label">01 — Mapa de necesidades</p>
-            <h2 class="nexo-slide__title">Reporta lo que falta,<br />mira dónde ayudar</h2>
-            <p class="nexo-slide__text">
-              Agua, comida, refugio o medicinas. Cada necesidad aparece en el mapa
-              en tiempo real, con su prioridad, para que la ayuda llegue donde hace falta.
-            </p>
-            <a class="nexo-btn nexo-btn--secondary" href="pages/mapa.html">Abrir mapa</a>
+    <!-- ========== SECCIÓN MAPA ========== -->
+    <section id="section-mapa" class="section active">
+      <div class="map-section">
+        <!-- Sidebar -->
+        <aside class="map-sidebar">
+          <div class="map-sidebar__header">
+            <div class="map-sidebar__title">
+              Centro de Mando <span class="badge" id="intensityBadge">0 total</span>
+            </div>
           </div>
-          <img class="nexo-slide__art" src="assets/images/ilustracion-mapa.svg" alt="Mapa con una ruta y un marcador de ubicación destacado" />
-        </article>
 
-        <article class="nexo-slide">
-          <div>
-            <p class="nexo-slide__label">02 — Voluntariado y donaciones</p>
-            <h2 class="nexo-slide__title">Cada persona,<br />donde más suma</h2>
-            <p class="nexo-slide__text">
-              Apúntate con tus habilidades u ofrece recursos. Anexo Finder evita que todos
-              vayan al mismo sitio mientras otros lugares quedan desatendidos.
-            </p>
-            <a class="nexo-btn nexo-btn--secondary" href="pages/voluntariado.html">Participar</a>
+          <div class="map-sidebar__content">
+            <!-- Toggles de capas -->
+            <div class="layer-toggles" style="margin-bottom: var(--space-lg);">
+              <label class="layer-toggle">
+                <input type="checkbox" id="toggle-alertas" checked />
+                Alertas oficiales
+              </label>
+              <label class="layer-toggle">
+                <input type="checkbox" id="toggle-zonas" checked />
+                Zonas ALTO RIESGO
+              </label>
+              <label class="layer-toggle">
+                <input type="checkbox" id="toggle-necesidades" checked />
+                Necesidades activas
+              </label>
+              <label class="layer-toggle">
+                <input type="checkbox" id="toggle-ayudas" checked />
+                Ayudas / Donaciones
+              </label>
+              <label class="layer-toggle">
+                <input type="checkbox" id="toggle-h3-necesidades" />
+                Clusters Necesidades
+              </label>
+              <label class="layer-toggle">
+                <input type="checkbox" id="toggle-h3-ayudas" />
+                Clusters Ayudas
+              </label>
+            </div>
+
+            <!-- Filtro de categoría -->
+            <div class="form-group">
+              <label>Categoría de necesidad</label>
+              <select id="typeFilter" class="form-select">
+                <option value="all">Todas</option>
+                <option value="agua">Agua</option>
+                <option value="alimentos">Alimentos</option>
+                <option value="parafarmacia">Parafarmacia</option>
+                <option value="ropa">Ropa</option>
+                <option value="higiene">Higiene</option>
+                <option value="refugio">Refugio</option>
+                <option value="transporte">Transporte</option>
+                <option value="otros">Otros</option>
+              </select>
+            </div>
+
+            <!-- Lista de necesidades activas -->
+            <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-sm); text-transform: uppercase; letter-spacing: 0.1em;">Necesidades Activas</h3>
+            <div id="needs-list" class="cards-list"></div>
           </div>
-          <img class="nexo-slide__art" src="assets/images/ilustracion-voluntarios.svg" alt="Personas en círculo conectadas a un corazón central" />
-        </article>
 
-        <article class="nexo-slide">
-          <div>
-            <p class="nexo-slide__label">03 — Alertas y personas</p>
-            <h2 class="nexo-slide__title">Saber qué pasa,<br />saber de los tuyos</h2>
-            <p class="nexo-slide__text">
-              Alertas oficiales de desastres a nivel mundial, registro de personas
-              desaparecidas y un botón de "estoy bien" para tranquilizar a tu gente.
-            </p>
-            <a class="nexo-btn nexo-btn--secondary" href="pages/alertas.html">Ver alertas</a>
+          <!-- Formulario reportar necesidad -->
+          <div class="map-sidebar__footer">
+            <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-sm); text-transform: uppercase; letter-spacing: 0.1em;">Reportar Necesidad</h3>
+            <form id="need-form">
+              <div class="form-group">
+                <label>Categoría</label>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;" id="category-grid">
+                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="agua">💧</button>
+                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="alimentos">🍞</button>
+                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="parafarmacia">💊</button>
+                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="ropa">👕</button>
+                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="higiene">🧴</button>
+                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="refugio">🏠</button>
+                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="transporte">🚗</button>
+                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="otros">📦</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="input-direccion" class="form-input" placeholder="Escribe la dirección o haz clic en el mapa" />
+                <input type="hidden" id="input-lat" />
+                <input type="hidden" id="input-lng" />
+                <p id="ubicacion-mensaje" style="font-size: var(--text-xs); color: var(--text-muted); margin-top: 4px;"></p>
+              </div>
+              <div class="form-group">
+                <label>Descripción (opcional)</label>
+                <textarea id="textarea-desc" class="form-textarea" rows="2" maxlength="500" placeholder="Describe brevemente..."></textarea>
+              </div>
+              <button type="submit" class="btn btn--primary" style="width: 100%;">📍 Reportar Necesidad</button>
+            </form>
           </div>
-          <img class="nexo-slide__art" src="assets/images/ilustracion-red.svg" alt="Casas conectadas entre sí por señales y una antena central" />
-        </article>
+        </aside>
 
+        <!-- Mapa -->
+        <div class="map-container">
+          <div id="map"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== SECCIÓN ALERTAS ========== -->
+    <section id="section-alertas" class="section">
+      <div class="section-header">
+        <div class="section-header__label">MÓDULO G2 — ALERTAS</div>
+        <h1 class="section-header__title">Alertas Oficiales</h1>
+        <p class="section-header__desc">Desastres a nivel mundial en tiempo real. Filtros por tipo, severidad y país.</p>
       </div>
 
-      <div class="nexo-slider__dots"></div>
-      <div class="nexo-slider__controls">
-        <button class="nexo-slider__btn" data-slider-prev aria-label="Anterior">&#8592;</button>
-        <button class="nexo-slider__btn" data-slider-next aria-label="Siguiente">&#8594;</button>
+      <div class="filters-bar">
+        <select id="type-filter" class="form-select">
+          <option value="">Todos los tipos</option>
+          <option value="terremoto">Terremoto</option>
+          <option value="ciclon">Ciclón</option>
+          <option value="inundacion">Inundación</option>
+          <option value="incendio">Incendio</option>
+          <option value="volcan">Volcán</option>
+          <option value="sequia">Sequía</option>
+          <option value="otro">Otro</option>
+        </select>
+        <select id="severity-filter" class="form-select">
+          <option value="">Todas las severidades</option>
+          <option value="red">Crítico</option>
+          <option value="orange">Atención</option>
+          <option value="green">Bajo riesgo</option>
+        </select>
+        <input id="country-filter" class="form-input" type="text" placeholder="País (ej. España)" />
+        <button class="btn btn--primary" onclick="fetchAlerts()" type="button">Filtrar</button>
       </div>
-    </div>
+
+      <div class="content-grid content-grid--full" style="padding-top: var(--space-lg);">
+        <div id="alerts-container" class="cards-list"></div>
+      </div>
+    </section>
+
+    <!-- ========== SECCIÓN AYUDAS ========== -->
+    <section id="section-ayudas" class="section">
+      <div class="section-header">
+        <div class="section-header__label">MÓDULO G3 — AYUDAS</div>
+        <h1 class="section-header__title">Ayudas Disponibles</h1>
+        <p class="section-header__desc">Publica o consulta ayudas: recursos, servicios y tiempo voluntario. Asigna una ubicación para que aparezca en el mapa.</p>
+      </div>
+
+      <div class="content-grid">
+        <!-- Lista -->
+        <div>
+          <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-md); text-transform: uppercase; letter-spacing: 0.1em;">Ayudas activas</h3>
+          <div id="lista-donaciones" class="cards-list"></div>
+          <p id="estado-lista" class="state-empty" hidden></p>
+        </div>
+
+        <!-- Formulario -->
+        <div class="glass-card" style="height: fit-content; position: sticky; top: 80px;">
+          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-lg);">Publicar Ayuda</h3>
+          <form id="form-donacion">
+            <div class="form-group">
+              <label>Tipo de Ayuda</label>
+              <select id="don-tipo" class="form-select">
+                <option value="recursos">Recursos</option>
+                <option value="servicios">Servicios</option>
+                <option value="tiempo">Tiempo (Voluntariado)</option>
+              </select>
+            </div>
+            <div class="form-group" id="campo-dni" style="display: none;">
+              <label>DNI <span style="color: var(--text-muted); font-weight: 400;">(requerido para tiempo)</span></label>
+              <input id="dni" class="form-input" type="text" placeholder="Ej. 12345678Z" />
+            </div>
+            <div class="form-group">
+              <label>Categoría</label>
+              <select id="don-recurso" class="form-select">
+                <option value="">Selecciona una categoría</option>
+                <option value="Comida">Comida</option>
+                <option value="Medicamentos">Medicamentos</option>
+                <option value="Transporte">Transporte</option>
+                <option value="Alojamiento temporal">Alojamiento temporal</option>
+                <option value="Apoyo logistico">Apoyo logístico</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Descripción <span style="color: var(--text-muted); font-weight: 400;">(máx. 1000)</span></label>
+              <textarea id="don-descripcion" class="form-textarea" maxlength="1000" rows="3" placeholder="¿Qué vas a ofrecer?"></textarea>
+              <span id="contador-desc" style="font-size: var(--text-xs); color: var(--text-muted);">0 / 1000</span>
+            </div>
+            <div class="form-group">
+              <label>Contacto</label>
+              <input id="don-contacto" class="form-input" type="text" placeholder="Email o teléfono" required />
+            </div>
+            <div class="form-group">
+              <label>Ubicación <span style="color: var(--text-muted); font-weight: 400;">(opcional — para que aparezca en el mapa)</span></label>
+              <input type="text" id="don-direccion" class="form-input" placeholder="Escribe una dirección o haz clic en el mapa" />
+              <input type="hidden" id="don-lat" />
+              <input type="hidden" id="don-lng" />
+              <p id="don-ubicacion-mensaje" style="font-size: var(--text-xs); color: var(--text-muted); margin-top: 4px;"></p>
+            </div>
+            <button type="submit" class="btn btn--primary" style="width: 100%;">Publicar Ayuda</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
   </main>
 
-  <footer>ANEXO FINDER — PLATAFORMA DE RESPUESTA A EMERGENCIAS</footer>
-
-  <script type="module" src="js/app.js"></script>
-  <script type="module">
-    import { iniciarSlider } from "./js/shared/components/slider.js";
-    iniciarSlider(document.getElementById("slider-funciona"));
-  </script>
+  <!-- ====== SCRIPTS ====== -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="js/spa.js?v=3"></script>
 </body>
 </html>

@@ -62,16 +62,16 @@ function renderMap(needsList) {
     const icon = getIconByPriority(need.prioridad);
     const marker = L.marker([need.latitud, need.longitud], { icon });
     const popupContent = `
-      <div class="nexo-popup" style="font-family:var(--font-base); min-width:220px;">
-        <div style="background: linear-gradient(135deg, var(--nexo-teal,#17A2A0), var(--nexo-navy,#0F2038)); color: white; margin: -12px -12px 10px -12px; padding:10px 12px; border-radius:8px 8px 0 0; display:flex; gap:6px; align-items:center;">
+      <div class="anr-popup" style="font-family:var(--font-base); min-width:220px;">
+        <div style="background: linear-gradient(135deg, var(--anr-teal,#17A2A0), var(--anr-navy,#0F2038)); color: white; margin: -12px -12px 10px -12px; padding:10px 12px; border-radius:8px 8px 0 0; display:flex; gap:6px; align-items:center;">
           <span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:12px; font-size:0.7rem; font-weight:600;">${need.prioridad}</span>
           <span style="background:rgba(255,255,255,0.15); padding:2px 8px; border-radius:12px; font-size:0.7rem;">${need.tipo}</span>
         </div>
-        <h3 style="color: var(--nexo-dark,#16181D); margin:0 0 6px 0; font-size:1.05rem; font-weight:700;">${need.titulo || need.categoria_etiqueta || need.tipo}</h3>
-        ${need.direccion ? `<p style="color:var(--nexo-text-muted,#9CA0A8);margin:0 0 6px 0;font-size:0.8rem; display:flex; align-items:center; gap:4px;">📍 ${need.direccion}</p>` : ""}
+        <h3 style="color: var(--anr-dark,#16181D); margin:0 0 6px 0; font-size:1.05rem; font-weight:700;">${need.titulo || need.categoria_etiqueta || need.tipo}</h3>
+        ${need.direccion ? `<p style="color:var(--anr-text-muted,#9CA0A8);margin:0 0 6px 0;font-size:0.8rem; display:flex; align-items:center; gap:4px;">📍 ${need.direccion}</p>` : ""}
         <p style="color:#4b5563;margin:0;font-size:0.85rem; line-height:1.4;">${need.descripcion || ""}</p>
         ${need.categoria_etiqueta ? `<div style="margin-top:8px; font-size:1.1rem;">${need.categoria_etiqueta}</div>` : ""}
-        <button onclick="window.cambiarEstadoNecesidad(${need.id}, 'cubierta')" style="margin-top:10px; width:100%; padding:8px; background: linear-gradient(135deg, var(--nexo-teal,#17A2A0), var(--nexo-orange,#F2542D)); color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600; box-shadow:0 2px 8px rgba(242,84,45,0.3);">✓ Marcar cubierta</button>
+        <button onclick="window.cambiarEstadoNecesidad(${need.id}, 'cubierta')" style="margin-top:10px; width:100%; padding:8px; background: linear-gradient(135deg, var(--anr-teal,#17A2A0), var(--anr-orange,#F2542D)); color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600; box-shadow:0 2px 8px rgba(242,84,45,0.3);">✓ Marcar cubierta</button>
       </div>`;
     marker.bindPopup(popupContent);
     marker.addTo(capas.necesidades);
@@ -87,7 +87,7 @@ function renderAyudas(ayudasList) {
     const lon = ayuda.longitud ?? ayuda.longitude;
     if (lat == null || lon == null) return;
     const marker = L.marker([lat, lon], { icon: getAyudaIcon(ayuda.tipo || ayuda.type) });
-    marker.bindPopup(`<div class="nexo-popup"><b>${ayuda.tipo || ayuda.type}</b><br>${ayuda.categoria || ayuda.category || ""}<br><small>${ayuda.estado || ayuda.status || ""}</small></div>`);
+    marker.bindPopup(`<div class="anr-popup"><b>${ayuda.tipo || ayuda.type}</b><br>${ayuda.categoria || ayuda.category || ""}<br><small>${ayuda.estado || ayuda.status || ""}</small></div>`);
     marker.addTo(capas.ayudas);
   });
   renderZonasAyudas(ayudasList);
@@ -104,7 +104,7 @@ function renderZonasNecesidades(needsList) {
     grid.get(key).count++;
   });
   grid.forEach((cell) => {
-    const color = cell.count > 5 ? "var(--nexo-alert-red, #ef4444)" : cell.count > 2 ? "var(--nexo-orange, #F2542D)" : "var(--nexo-teal, #17A2A0)";
+    const color = cell.count > 5 ? "var(--anr-alert-red, #ef4444)" : cell.count > 2 ? "var(--anr-orange, #F2542D)" : "var(--anr-teal, #17A2A0)";
     const bounds = [[cell.lat - res / 2, cell.lon - res / 2], [cell.lat + res / 2, cell.lon + res / 2]];
     L.rectangle(bounds, { color, weight: 1, fillColor: color, fillOpacity: 0.18 }).addTo(capas.zonasNecesidades).bindPopup(`<b>Zona Necesidades</b><br>${cell.count} necesidades<br><small>H3-like res 0.02°</small>`);
   });
@@ -124,7 +124,7 @@ function renderZonasAyudas(ayudasList) {
     grid.get(key).count++;
   });
   grid.forEach((cell) => {
-    const color = "var(--nexo-teal, #17A2A0)";
+    const color = "var(--anr-teal, #17A2A0)";
     const bounds = [[cell.lat - res / 2, cell.lon - res / 2], [cell.lat + res / 2, cell.lon + res / 2]];
     L.rectangle(bounds, { color, weight: 1, dashArray: "4,4", fillColor: color, fillOpacity: 0.12 }).addTo(capas.zonasAyudas).bindPopup(`<b>Zona Ayudas</b><br>${cell.count} ayudas`);
   });
@@ -142,7 +142,7 @@ function renderAlertas(alerts) {
     if (isHigh && zone) {
       try {
         const geo = typeof zone === "string" ? JSON.parse(zone) : zone;
-        const layer = L.geoJSON(geo, { style: { color: "var(--nexo-alert-red, #ef4444)", weight: 3, fillOpacity: 0.15 } }).addTo(capas.zonas);
+        const layer = L.geoJSON(geo, { style: { color: "var(--anr-alert-red, #ef4444)", weight: 3, fillOpacity: 0.15 } }).addTo(capas.zonas);
         zonaActiva = geo;
         try { map.fitBounds(layer.getBounds(), { padding: [20, 20] }); } catch {}
       } catch {}
@@ -186,8 +186,8 @@ function applyFilter() {
   const badge = document.getElementById("intensityBadge");
   if (badge) {
     badge.textContent = zonaActiva ? `${count} en zona` : `${count} total`;
-    badge.className = count > 5 ? "nexo-badge nexo-badge--critica" : count > 2 ? "nexo-badge nexo-badge--alta" : "nexo-badge nexo-badge--media";
-    badge.style.background = count > 5 ? "var(--nexo-alert-red, #ef4444)" : count > 2 ? "var(--nexo-orange, #F2542D)" : "var(--nexo-primary, #10b981)";
+    badge.className = count > 5 ? "anr-badge anr-badge--critica" : count > 2 ? "anr-badge anr-badge--alta" : "anr-badge anr-badge--media";
+    badge.style.background = count > 5 ? "var(--anr-alert-red, #ef4444)" : count > 2 ? "var(--anr-orange, #F2542D)" : "var(--anr-primary, #10b981)";
   }
 }
 
@@ -202,7 +202,7 @@ map.on("click", (e) => {
   if (inputLng) inputLng.value = lng.toFixed(6);
   if (mensaje) {
     mensaje.textContent = `✓ Ubicación seleccionada: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    mensaje.style.color = "var(--nexo-teal, #17A2A0)";
+    mensaje.style.color = "var(--anr-teal, #17A2A0)";
   }
   if (tempMarker) map.removeLayer(tempMarker);
   tempMarker = L.circleMarker([lat, lng], {

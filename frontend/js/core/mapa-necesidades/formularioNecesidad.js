@@ -33,11 +33,11 @@ export class NeedFormController {
     }
 
     /**
-     * Convierte el grupo de botones de categoría cerrados (.nexo-categoria-btn)
+     * Convierte el grupo de botones de categoría cerrados (.anr-categoria-btn)
      * en un selector exclusivo. Sustituye al antiguo <select id="select-tipo">.
      */
     setupCategorias() {
-        const botones = this.formElement.querySelectorAll(".nexo-categoria-btn");
+        const botones = this.formElement.querySelectorAll(".anr-categoria-btn");
         botones.forEach((btn) => {
             btn.addEventListener("click", () => {
                 // Deseleccionar los demás botones
@@ -100,7 +100,7 @@ export class NeedFormController {
      * para rellenar la ubicación de la necesidad.
      */
     setupClicEnMapa() {
-        document.addEventListener("nexo:ubicacion-seleccionada", async (evento) => {
+        document.addEventListener("anr:ubicacion-seleccionada", async (evento) => {
             const { lat, lng } = evento.detail || {};
             if (typeof lat === "number" && typeof lng === "number") {
                 await this.confirmarUbicacion(lat, lng);
@@ -127,7 +127,7 @@ export class NeedFormController {
         this.formElement.addEventListener("submit", async (e) => {
             e.preventDefault();
             const submitBtn = this.formElement.querySelector("button[type='submit']");
-            const hint = this.formElement.querySelector(".nexo-hint");
+            const hint = this.formElement.querySelector(".anr-hint");
             
             if (!this.tipoSeleccionado) {
                 alert("Por favor, selecciona una categoría.");
@@ -191,7 +191,7 @@ export class NeedFormController {
         if (this.formElement) this.formElement.reset();
         this.coordenadasConfirmadas = null;
         this.tipoSeleccionado = null;
-        const botones = this.formElement.querySelectorAll(".nexo-categoria-btn");
+        const botones = this.formElement.querySelectorAll(".anr-categoria-btn");
         botones.forEach((b) => {
             b.classList.remove("is-selected");
             b.setAttribute("aria-pressed", "false");

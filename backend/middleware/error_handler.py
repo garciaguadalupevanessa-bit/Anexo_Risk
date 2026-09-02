@@ -1,4 +1,4 @@
-"""Manejo centralizado de errores de la API de Nexo.
+"""Manejo centralizado de errores de la API de Anexo Risk.
 
 Este archivo permite que todos los módulos devuelvan los errores con el
 mismo formato JSON:
@@ -15,14 +15,14 @@ from fastapi.responses import JSONResponse
 
 
 def registrar_manejadores_de_error(app: FastAPI) -> None:
-    """Registra en FastAPI los manejadores de errores comunes de Nexo."""
+    """Registra en FastAPI los manejadores de errores comunes de Anexo Risk."""
 
     @app.exception_handler(RequestValidationError)
     async def error_de_validacion(
         request: Request,
         exc: RequestValidationError,
     ) -> JSONResponse:
-        """Convierte los errores automáticos 422 al formato común de Nexo.
+        """Convierte los errores automáticos 422 al formato común de Anexo Risk.
 
         FastAPI genera un error 422 cuando los datos recibidos no cumplen
         el esquema Pydantic. Por ejemplo:
@@ -80,12 +80,12 @@ def registrar_manejadores_de_error(app: FastAPI) -> None:
         request: Request,
         exc: Exception,
     ) -> JSONResponse:
-        """Devuelve los errores internos con el formato común de Nexo."""
+        """Devuelve los errores internos con el formato común de Anexo Risk."""
 
         return JSONResponse(
             status_code=500,
             content={
-                "error": "Error interno de Nexo",
+                "error": "Error interno de Anexo Risk",
                 "detalle": str(exc),
             },
         )

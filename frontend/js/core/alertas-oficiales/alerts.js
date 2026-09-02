@@ -80,7 +80,7 @@ export function renderAlert(alert) {
   if (enlace) {
     card.appendChild(
       el("a", {
-        class: "nexo-btn nexo-btn--secondary alerts-link",
+        class: "anr-btn anr-btn--secondary alerts-link",
         href: enlace,
         target: "_blank",
         rel: "noopener",
@@ -113,7 +113,7 @@ export function showLoading() {
 
 export function showError() {
   const retryButton = el("button", {
-    class: "nexo-btn nexo-btn--secondary",
+    class: "anr-btn anr-btn--secondary",
     type: "button",
     text: "Reintentar",
   });

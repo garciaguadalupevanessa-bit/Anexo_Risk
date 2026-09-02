@@ -1,4 +1,4 @@
-"""Centralized logging configuration module for the Nexo API."""
+"""Centralized logging configuration module for the Anexo Risk API."""
 
 import logging
 from pathlib import Path

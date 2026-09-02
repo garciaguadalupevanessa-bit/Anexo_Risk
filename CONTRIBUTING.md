@@ -1,4 +1,4 @@
-# Cómo contribuir a Nexo
+# Cómo contribuir a Anexo Risk
 
 Este documento se activa en la fase de código abierto (roadmap futuro). Por ahora,
 para el equipo del proyecto:
