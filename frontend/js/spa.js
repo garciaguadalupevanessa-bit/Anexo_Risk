@@ -48,7 +48,7 @@ updateStatus();
 //  MAPA (G4 — Juan)
 // ============================================================
 function initMap() {
-  const map = L.map("map").setView([40.0, -3.5], 6);
+  const map = L.map("map").setView([40.4168, -3.7038], 6);
   window._map = map;
 
   L.tileLayer("https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2qa8_1_a275e8c9b45d6b70d3b144df", {
