@@ -1,8 +1,75 @@
 [
-  { "id": 1, "type": "resource", "category": "food", "latitude": 40.411, "longitude": -3.699, "status": "available" },
-  { "id": 2, "type": "resource", "category": "clothing", "latitude": 40.413, "longitude": -3.697, "status": "available" },
-  { "id": 3, "type": "resource", "category": "medication", "latitude": 40.407, "longitude": -3.704, "status": "available" },
-  { "id": 4, "type": "service", "category": "transport", "latitude": 40.444, "longitude": -3.744, "status": "available" },
-  { "id": 5, "type": "service", "category": "housing", "latitude": 40.442, "longitude": -3.747, "status": "available" },
-  { "id": 6, "type": "time", "category": "presencial", "latitude": 40.410, "longitude": -3.702, "status": "available" }
+  {
+    "id": 1,
+    "type": "recursos",
+    "category": "food",
+    "tipo": "recursos",
+    "recurso": "food",
+    "descripcion": "Entrega de paquetes de comida no perecedera.",
+    "contacto": "donaciones@nexo.org",
+    "lat": 40.411,
+    "lon": -3.699,
+    "status": "abierta"
+  },
+  {
+    "id": 2,
+    "type": "recursos",
+    "category": "clothing",
+    "tipo": "recursos",
+    "recurso": "clothing",
+    "descripcion": "Ropa de abrigo e impermeable para damnificados.",
+    "contacto": "donaciones@nexo.org",
+    "lat": 40.413,
+    "lon": -3.697,
+    "status": "abierta"
+  },
+  {
+    "id": 3,
+    "type": "recursos",
+    "category": "medication",
+    "tipo": "recursos",
+    "recurso": "medication",
+    "descripcion": "Kits de primeros auxilios y botiquín de emergencia.",
+    "contacto": "salud@nexo.org",
+    "lat": 40.407,
+    "lon": -3.704,
+    "status": "abierta"
+  },
+  {
+    "id": 4,
+    "type": "servicios",
+    "category": "transport",
+    "tipo": "servicios",
+    "recurso": "transport",
+    "descripcion": "Vehículo 4x4 disponible para traslado de suministros.",
+    "contacto": "logistica@nexo.org",
+    "lat": 40.444,
+    "lon": -3.744,
+    "status": "abierta"
+  },
+  {
+    "id": 5,
+    "type": "servicios",
+    "category": "housing",
+    "tipo": "servicios",
+    "recurso": "housing",
+    "descripcion": "Alojamiento temporal de emergencia para familias.",
+    "contacto": "acogida@nexo.org",
+    "lat": 40.442,
+    "lon": -3.747,
+    "status": "abierta"
+  },
+  {
+    "id": 6,
+    "type": "tiempo",
+    "category": "presencial",
+    "tipo": "tiempo",
+    "recurso": "presencial",
+    "descripcion": "Voluntariado presencial para tareas de limpieza y desescombro.",
+    "contacto": "voluntarios@nexo.org",
+    "dni": "12345678Z",
+    "lat": 40.410,
+    "lon": -3.702,
+    "status": "abierta"
+  }
 ]

@@ -1,0 +1,1 @@
+ALTER TABLE donaciones ADD COLUMN dni TEXT;
