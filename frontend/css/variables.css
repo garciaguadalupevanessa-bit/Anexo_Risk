@@ -1,70 +1,94 @@
-/* Paleta de marca Anexo_Risk — rediseño minimalista/elegante inspirado en
-   webs de ONG modernas: fondo oscuro casi negro, blanco de alto
-   contraste y un único acento (naranja del logo).
-   Parte de la base común: todos los equipos usan estas variables en
-   vez de escribir colores nuevos, para que la app se vea coherente. */
+/* =============================================
+   ANEXO FINDER — Design System (v2)
+   Centro de Operaciones de Emergencia
+   Dark + Glassmorphism + Mission Control
+   ============================================= */
+
 :root {
-  --nexo-black: #101010;
-  --nexo-dark: #16181D;
-  --nexo-navy: #0F2038;
-  --nexo-white: #FFFFFF;
-  --nexo-orange: #F2542D;
-  --nexo-teal: #17A2A0;
+  /* === FONDOS === */
+  --bg-void:        #060810;
+  --bg-primary:     #0A0D14;
+  --bg-secondary:   #121620;
+  --bg-elevated:    #1A1F2E;
+  --bg-surface:     #1E2538;
+  --bg-glass:       rgba(18, 22, 32, 0.72);
+  --bg-glass-hover: rgba(30, 37, 56, 0.85);
 
-  --nexo-bg: #101010;
-  --nexo-bg-alt: #1A1C22;
-  --nexo-text: #F5F5F3;
-  --nexo-text-muted: #9CA0A8;
-  --nexo-border: #2A2D34;
+  /* === TEXTO === */
+  --text-primary:   #F0F2F5;
+  --text-secondary: #8B95A8;
+  --text-muted:     #5A6378;
+  --text-inverse:   #0A0D14;
 
-  /* Requeridos por el Acuerdo 3 (Contrato de equipo con Juan y Luis) */
-  --nexo-primary: #10b981;
-  --nexo-alert-red: #ef4444;
-  --nexo-bg-dark: #0a192f;
+  /* === ACENTOS PRINCIPALES === */
+  --cyan:           #38BDF8;
+  --cyan-dim:       #2196C9;
+  --cyan-glow:      rgba(56, 189, 248, 0.25);
+  --cyan-subtle:    rgba(56, 189, 248, 0.08);
 
-  /* alias de compatibilidad (usados por módulos de los equipos) */
-  --nexo-green: #4CAF50;
-  --nexo-blue: #5B9BD5;
+  --blue:           #60A5FA;
+  --blue-dim:       #3B82F6;
+  --blue-glow:      rgba(96, 165, 250, 0.20);
 
-  --radius-md: 4px;
-  --radius-lg: 8px;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 2rem;
-  --space-xl: 4rem;
+  /* === ALERTAS === */
+  --red:            #FF334B;
+  --red-dim:        #CC2A3C;
+  --red-glow:       rgba(255, 51, 75, 0.30);
 
-  --font-base: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --letter-wide: 0.18em;
-}
+  --orange:         #FF6B00;
+  --orange-dim:     #CC5500;
+  --orange-glow:    rgba(255, 107, 0, 0.25);
 
-/* Ejemplo de uso en tus componentes de Ayudas */
-.card-ayuda {
-  background-color: var(--nexo-bg-alt);
-  color: var(--nexo-text);
-  border: 1px solid var(--nexo-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-}
+  /* === ESTADO === */
+  --green:          #00E676;
+  --green-dim:      #00B85C;
+  --green-glow:     rgba(0, 230, 118, 0.20);
 
-.btn-ayuda-primary {
-  background-color: var(--nexo-orange);
-  color: var(--nexo-white);
-  border-radius: var(--radius-md);
-}
+  --purple:         #A78BFA;
+  --purple-glow:    rgba(167, 139, 250, 0.20);
 
-CSS
+  /* === BORDES === */
+  --border:         rgba(255, 255, 255, 0.06);
+  --border-active:  rgba(56, 189, 248, 0.30);
+  --border-glow:    rgba(56, 189, 248, 0.15);
 
-/* Ejemplo de uso en tus componentes de Ayudas */
-.card-ayuda {
-  background-color: var(--nexo-bg-alt);
-  color: var(--nexo-text);
-  border: 1px solid var(--nexo-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-}
+  /* === RADIOS === */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+  --radius-full: 9999px;
 
-.btn-ayuda-primary {
-  background-color: var(--nexo-orange);
-  color: var(--nexo-white);
-  border-radius: var(--radius-md);
+  /* === ESPACIADO === */
+  --space-xs:  0.25rem;
+  --space-sm:  0.5rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+
+  /* === TIPOGRAFÍA === */
+  --font:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs:  0.7rem;
+  --text-sm:  0.8rem;
+  --text-base: 0.9rem;
+  --text-lg:  1.05rem;
+  --text-xl:  1.25rem;
+  --text-2xl: 1.6rem;
+  --text-3xl: 2.2rem;
+  --text-hero: 3.2rem;
+
+  /* === SOMBRAS === */
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:   0 4px 12px rgba(0,0,0,0.5);
+  --shadow-lg:   0 8px 32px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 20px var(--cyan-glow);
+  --shadow-red:  0 0 20px var(--red-glow);
+  --shadow-orange: 0 0 20px var(--orange-glow);
+
+  /* === TRANSICIONES === */
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }

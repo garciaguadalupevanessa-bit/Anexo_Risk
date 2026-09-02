@@ -1,4 +1,4 @@
-// Punto único por el que pasan todas las llamadas a la API de Nexo.
+// Punto único por el que pasan todas las llamadas a la API de Anexo Risk.
 // Parte de la base común: cada equipo importa apiGet/apiPost en vez de
 // usar fetch() directamente, para que la cola offline funcione igual
 // en todos los módulos.

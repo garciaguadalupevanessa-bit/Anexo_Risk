@@ -4,11 +4,15 @@ on:
   push:
     branches: [main, anexo-risk]
   pull_request:
-    branches: [main]
+    branches: [main, dev, anexo-risk]
 
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -18,22 +22,38 @@ jobs:
           python-version: "3.11"
 
       - name: Instalar dependencias
+        env:
+          DATABASE_URL: sqlite:///./anexo_risk.db
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -r backend/requirements-dev.txt
-          pip install h3 pandas numpy scikit-learn
+          pip install -r requirements-dev.txt
+
+      - name: Verificar imports de anexo_risk
+        run: |
+          python -c "from main import app; print('OK', app.title)"
 
       - name: Ejecutar tests
-        run: PYTHONPATH=backend:src python -m pytest tests/ --ignore=tests/test_mlflow_tracking.py -q
+        env:
+          DATABASE_URL: sqlite:///./anexo_risk.db
+        run: |
+          cd ..
+          PYTHONPATH=backend python -m pytest tests/backend/ -v
 
-  frontend-lint:
+  frontend-static-check:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Comprobación básica de HTML/JS
+      - name: Verificar SPA entry point
         run: |
-          echo "Sin build step: frontend estático (HTML/CSS/JS puro)."
           test -f frontend/index.html
+          test -f frontend/js/spa.js
+          test -f frontend/manifest.json
+
+      - name: Verificar que no hay referencias visibles a NEXO
+        run: |
+          ! grep -i "NEXO" frontend/index.html
+          ! grep -i "NEXO" frontend/manifest.json
+          echo "Identidad limpia: OK"

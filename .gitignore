@@ -6,13 +6,19 @@ venv/
 .venv/
 .env
 
-# Base de datos local - Nexo
+# Base de datos local - Anexo Risk
 *.db
 *.sqlite3
 backend/logs/
 *.log
+backend_server.log
+backend_server.err
+frontend_server.log
+frontend_server.err
 backend/uploads/
 docs/equipos/grupo2-alertas.md
+backend/venv/
+docs/auditoria-mvp-jueves.md
 
 # Node / editores
 node_modules/

@@ -2,11 +2,11 @@
 import { el } from "../utils.js";
 
 export function crearTarjeta({ titulo, lineas = [], badge }) {
-  const card = el("div", { class: "nexo-card" });
+  const card = el("div", { class: "anr-card" });
   const h3 = el("h3", { text: titulo });
   if (badge) {
     const badgeEl = el("span", {
-      class: `nexo-badge nexo-badge--${badge.tipo}`,
+      class: `anr-badge anr-badge--${badge.tipo}`,
       text: badge.texto,
     });
     h3.appendChild(document.createTextNode(" "));
@@ -14,7 +14,7 @@ export function crearTarjeta({ titulo, lineas = [], badge }) {
   }
   card.appendChild(h3);
   lineas.forEach((linea) => {
-    card.appendChild(el("p", { class: "nexo-card__meta", text: linea }));
+    card.appendChild(el("p", { class: "anr-card__meta", text: linea }));
   });
   return card;
 }

@@ -45,19 +45,19 @@ function renderAvailabilityCalendar() {
     return date;
   });
 
-  calendar.replaceChildren(el('span', { class: 'nexo-voluntarios__calendar-header', text: 'Hora' }));
+  calendar.replaceChildren(el('span', { class: 'anr-voluntarios__calendar-header', text: 'Hora' }));
   days.forEach((date) => calendar.append(el('span', {
-    class: 'nexo-voluntarios__calendar-header',
+    class: 'anr-voluntarios__calendar-header',
     text: new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric' }).format(date),
   })));
   for (let hour = 0; hour < 24; hour += 1) {
-    calendar.append(el('span', { class: 'nexo-voluntarios__calendar-hour', text: `${String(hour).padStart(2, '0')}:00` }));
+    calendar.append(el('span', { class: 'anr-voluntarios__calendar-hour', text: `${String(hour).padStart(2, '0')}:00` }));
     days.forEach((date) => {
       const dateValue = formatLocalDate(date);
       const hourValue = String(hour).padStart(2, '0');
       const input = el('input', { type: 'checkbox', name: 'availability_slots', value: `${dateValue}T${hourValue}:00:00` });
       calendar.append(el('label', {
-        class: 'nexo-voluntarios__calendar-slot',
+        class: 'anr-voluntarios__calendar-slot',
         'aria-label': `Disponible el ${dateValue} a las ${hourValue}:00`,
       }, [input]));
     });
@@ -106,16 +106,16 @@ function renderVolunteers(volunteers) {
   volunteers.forEach((volunteer) => {
     const status = volunteer.status || 'available';
     const fullName = volunteer.full_name || `${volunteer.first_name || ''} ${volunteer.last_name || ''}`.trim();
-    const card = el('article', { class: 'nexo-card nexo-voluntarios__card' });
-    const header = el('div', { class: 'nexo-voluntarios__card-header' }, [
+    const card = el('article', { class: 'anr-card anr-voluntarios__card' });
+    const header = el('div', { class: 'anr-voluntarios__card-header' }, [
       el('h3', { text: fullName }),
-      el('span', { class: `nexo-badge nexo-voluntarios__status--${status}`, text: STATUS_LABELS[status] }),
+      el('span', { class: `anr-badge anr-voluntarios__status--${status}`, text: STATUS_LABELS[status] }),
     ]);
     const taskText = volunteer.tasks?.length ? volunteer.tasks.join(', ') : 'Sin tareas indicadas';
     const details = el('p', { text: taskText });
     const slotCount = volunteer.availability_slots?.length || 0;
     const locality = volunteer.locality || volunteer.location;
-    const meta = el('p', { class: 'nexo-voluntarios__meta', text: `${locality} · ${slotCount} horas indicadas` });
+    const meta = el('p', { class: 'anr-voluntarios__meta', text: `${locality} · ${slotCount} horas indicadas` });
     const statusSelect = el('select', { 'aria-label': `Actualizar estado de ${fullName}` });
     Object.entries(STATUS_LABELS).forEach(([value, label]) => statusSelect.add(new Option(label, value, false, value === status)));
     statusSelect.addEventListener('change', async () => {
@@ -129,7 +129,7 @@ function renderVolunteers(volunteers) {
         statusSelect.disabled = false;
       }
     });
-    card.append(header, details, meta, el('div', { class: 'nexo-voluntarios__card-footer' }, [statusSelect]));
+    card.append(header, details, meta, el('div', { class: 'anr-voluntarios__card-footer' }, [statusSelect]));
     volunteersList.append(card);
   });
 }

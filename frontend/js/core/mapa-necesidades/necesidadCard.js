@@ -30,39 +30,39 @@ export class NeedCardComponent {
         const etiquetaCategoria = this.data.categoria_etiqueta || tipo;
 
         // Acuerdo 3: Clases semánticas basadas en variables.css de Vanessa
-        card.className = `nexo-card nexo-card--${prioridad}`;
+        card.className = `anr-card anr-card--${prioridad}`;
         
         const header = document.createElement("div");
-        header.className = "nexo-card__header";
+        header.className = "anr-card__header";
 
         const title = document.createElement("h4");
-        title.className = "nexo-card__title";
+        title.className = "anr-card__title";
         // Si no hay título manual, cae en la etiqueta de la categoría autogenerada
         title.textContent = this.data.titulo || etiquetaCategoria;
 
         const badge = document.createElement("span");
-        badge.className = `nexo-card__badge nexo-card__badge--${prioridad}`;
+        badge.className = `anr-card__badge anr-card__badge--${prioridad}`;
         badge.textContent = prioridad;
 
         header.append(title, badge);
 
         const desc = document.createElement("p");
-        desc.className = "nexo-card__desc";
+        desc.className = "anr-card__desc";
         desc.textContent = this.data.descripcion || "Sin descripción proporcionada.";
 
         const address = document.createElement("p");
-        address.className = "nexo-card__address";
+        address.className = "anr-card__address";
         address.innerHTML = `📍 <span>${this.data.direccion || "Ubicación en coordenadas"}</span>`;
 
         const footer = document.createElement("div");
-        footer.className = "nexo-card__footer";
+        footer.className = "anr-card__footer";
 
         const typeSlot = document.createElement("span");
-        typeSlot.className = "nexo-card__type";
+        typeSlot.className = "anr-card__type";
         typeSlot.textContent = etiquetaCategoria;
 
         const statusSlot = document.createElement("div");
-        statusSlot.className = "nexo-card__estado-slot";
+        statusSlot.className = "anr-card__estado-slot";
 
         footer.append(typeSlot, statusSlot);
         card.append(header, desc, address, footer);
@@ -76,7 +76,7 @@ export class NeedCardComponent {
      * Se separa en su propio método para actualizar la UI en el clic sin repintar toda la tarjeta.
      */
     renderEstado(card) {
-        const slot = card.querySelector(".nexo-card__estado-slot");
+        const slot = card.querySelector(".anr-card__estado-slot");
         if (!slot) return;
         slot.innerHTML = "";
 
@@ -128,21 +128,21 @@ export class NeedCardComponent {
 
     static renderLoading() {
         const el = document.createElement("div");
-        el.className = "nexo-state nexo-state--loading";
+        el.className = "anr-state anr-state--loading";
         el.innerHTML = "<p>⏳ Cargando necesidades en tiempo real...</p>";
         return el;
     }
 
     static renderEmpty() {
         const el = document.createElement("div");
-        el.className = "nexo-state nexo-state--empty";
+        el.className = "anr-state anr-state--empty";
         el.innerHTML = "<p>🍃 No hay necesidades registradas en esta zona.</p>";
         return el;
     }
 
     static renderError(msg = "Fallo al conectar con el servidor.") {
         const el = document.createElement("div");
-        el.className = "nexo-state nexo-state--error";
+        el.className = "anr-state anr-state--error";
         el.innerHTML = `<p>⚠️ ${msg}</p>`;
         return el;
     }
