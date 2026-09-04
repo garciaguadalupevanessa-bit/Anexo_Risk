@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0A0D14" />
-  <title>Anexo Finder — Centro de Operaciones de Emergencia</title>
+  <meta name="description" content="Anexo Risk — Centro de Operaciones de Emergencia. Mapa en tiempo real de alertas, incendios, necesidades y ayudas." />
+  <title>Anexo Risk — Centro de Operaciones de Emergencia</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="assets/logo/anexo-icon.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,148 +14,189 @@
 </head>
 <body>
 
-  <!-- Notificaciones críticas -->
-  <div id="notification-container" style="position:fixed; top:72px; right:20px; z-index:2000; display:flex; flex-direction:column; gap:8px; max-width:360px;"></div>
+  <!-- Skip link -->
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+  <!-- Notificaciones -->
+  <div id="notification-container" role="alert" aria-live="assertive" aria-atomic="false"
+       style="position:fixed; top:72px; right:20px; z-index:2000; display:flex; flex-direction:column; gap:8px; max-width:360px;"></div>
 
   <!-- ====== HEADER ====== -->
-  <header class="header">
-    <a href="#" class="header__brand" onclick="showSection('mapa'); return false;">
-      <img src="assets/logo/anexo-icon.png" alt="Anexo Finder" />
-      <span>Anexo Finder</span>
-    </a>
-    <nav class="nav">
-      <button class="nav__link active" data-section="mapa">MAPA</button>
+  <header class="header" role="banner">
+    <div class="header__left">
+      <!-- Mobile menu toggle -->
+      <button class="header__menu-btn" id="sidebar-toggle" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="app-sidebar">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <a href="#" class="header__brand" onclick="showSection('mapa'); return false;" aria-label="Anexo Risk — Ir al mapa">
+        <img src="assets/logo/anexo-icon.png" alt="" aria-hidden="true" />
+        <span>Anexo Risk</span>
+      </a>
+    </div>
+    <nav class="nav" role="navigation" aria-label="Navegación principal">
+      <button class="nav__link active" data-section="mapa" aria-current="page">MAPA</button>
       <button class="nav__link" data-section="dashboard">DASHBOARD</button>
       <button class="nav__link" data-section="alertas">ALERTAS</button>
       <button class="nav__link" data-section="ayudas">AYUDAS</button>
     </nav>
-    <div class="header__status">
-      <div class="status-dot"></div>
+    <div class="header__status" aria-label="Estado de conexión">
+      <div class="status-dot" aria-hidden="true"></div>
       <span id="status-text">ONLINE</span>
     </div>
   </header>
 
+  <!-- ====== SIDEBAR OVERLAY (mobile) ====== -->
+  <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+  <!-- ====== SIDEBAR ====== -->
+  <aside class="app-sidebar" id="app-sidebar" role="complementary" aria-label="Panel de control" aria-hidden="false">
+    <div class="app-sidebar__header">
+      <div class="app-sidebar__title">
+        Centro de Mando
+      </div>
+      <span class="badge" id="intensityBadge" aria-live="polite">0 total</span>
+      <button class="app-sidebar__close" id="sidebar-close" aria-label="Cerrar panel de control">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="app-sidebar__content">
+      <!-- Capas del mapa -->
+      <fieldset class="app-sidebar__fieldset">
+        <legend class="sr-only">Capas del mapa</legend>
+        <div class="layer-toggles">
+          <label class="layer-toggle">
+            <input type="checkbox" id="toggle-alertas" checked />
+            <span class="layer-toggle__icon" aria-hidden="true">🚨</span>
+            Alertas oficiales
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="toggle-zonas" checked />
+            <span class="layer-toggle__icon" aria-hidden="true">⛔</span>
+            Zonas ALTO RIESGO
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="toggle-necesidades" checked />
+            <span class="layer-toggle__icon" aria-hidden="true">📋</span>
+            Necesidades activas
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="toggle-ayudas" checked />
+            <span class="layer-toggle__icon" aria-hidden="true">🤝</span>
+            Ayudas / Donaciones
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="toggle-incendios" checked />
+            <span class="layer-toggle__icon" aria-hidden="true">🔥</span>
+            Incendios (NASA FIRMS)
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="toggle-clima" />
+            <span class="layer-toggle__icon" aria-hidden="true">🌤️</span>
+            Meteorología
+          </label>
+        </div>
+      </fieldset>
+
+      <!-- Lista de necesidades -->
+      <div class="form-group">
+        <label>Necesidades activas</label>
+        <div id="needs-list" role="list" aria-label="Lista de necesidades"></div>
+      </div>
+
+      <!-- Filtro de categoría -->
+      <div class="form-group">
+        <label for="typeFilter">Categoría de necesidad</label>
+        <select id="typeFilter" class="form-select">
+          <option value="all">Todas</option>
+          <option value="agua">💧 Agua</option>
+          <option value="alimentos">🍞 Alimentos</option>
+          <option value="parafarmacia">💊 Parafarmacia</option>
+          <option value="ropa">👕 Ropa</option>
+          <option value="higiene">🧴 Higiene</option>
+          <option value="refugio">🏠 Refugio</option>
+          <option value="transporte">🚗 Transporte</option>
+          <option value="otros">📦 Otros</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Formulario reportar necesidad -->
+    <div class="app-sidebar__footer">
+      <h3 class="app-sidebar__section-title">Reportar Necesidad</h3>
+      <form id="need-form" aria-label="Reportar nueva necesidad">
+        <div class="form-group">
+          <label>Categoría</label>
+          <div class="category-grid" id="category-grid" role="radiogroup" aria-label="Categoría de necesidad">
+            <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="agua" aria-label="Agua">💧</button>
+            <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="alimentos" aria-label="Alimentos">🍞</button>
+            <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="parafarmacia" aria-label="Parafarmacia">💊</button>
+            <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="ropa" aria-label="Ropa">👕</button>
+            <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="higiene" aria-label="Higiene">🧴</button>
+            <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="refugio" aria-label="Refugio">🏠</button>
+            <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="transporte" aria-label="Transporte">🚗</button>
+            <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="otros" aria-label="Otros">📦</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="input-direccion">Ubicación</label>
+          <button type="button" id="need-btn-gps" class="btn btn--ghost btn--sm" style="width:100%;margin-bottom:4px;">📍 Usar mi ubicación</button>
+          <input type="text" id="input-direccion" class="form-input" placeholder="O escribe una dirección" autocomplete="off" />
+          <p class="form-hint">También puedes hacer clic en el mapa</p>
+          <input type="hidden" id="input-lat" />
+          <input type="hidden" id="input-lng" />
+          <p id="ubicacion-mensaje" class="form-hint" aria-live="polite"></p>
+        </div>
+        <div class="form-group">
+          <label for="textarea-desc">Descripción (opcional)</label>
+          <textarea id="textarea-desc" class="form-textarea" rows="2" maxlength="500" placeholder="Describe brevemente..."></textarea>
+        </div>
+        <button type="submit" class="btn btn--primary" style="width:100%;">📍 Reportar Necesidad</button>
+      </form>
+    </div>
+  </aside>
+
   <!-- ====== MAIN ====== -->
-  <main class="main">
+  <main class="main" id="main-content" role="main">
 
-    <!-- ========== SECCIÓN MAPA ========== -->
-    <section id="section-mapa" class="section active">
+    <!-- MAPA -->
+    <section id="section-mapa" class="section active" aria-label="Mapa de operaciones">
       <div class="map-section">
-        <!-- Sidebar -->
-        <aside class="map-sidebar">
-          <div class="map-sidebar__header">
-            <div class="map-sidebar__title">
-              Centro de Mando <span class="badge" id="intensityBadge">0 total</span>
-            </div>
-          </div>
-
-          <div class="map-sidebar__content">
-            <!-- Toggles de capas -->
-            <div class="layer-toggles" style="margin-bottom: var(--space-lg);">
-              <label class="layer-toggle">
-                <input type="checkbox" id="toggle-alertas" checked />
-                Alertas oficiales
-              </label>
-              <label class="layer-toggle">
-                <input type="checkbox" id="toggle-zonas" checked />
-                Zonas ALTO RIESGO
-              </label>
-              <label class="layer-toggle">
-                <input type="checkbox" id="toggle-necesidades" checked />
-                Necesidades activas
-              </label>
-              <label class="layer-toggle">
-                <input type="checkbox" id="toggle-ayudas" checked />
-                Ayudas / Donaciones
-              </label>
-              <label class="layer-toggle">
-                <input type="checkbox" id="toggle-incendios" checked />
-                Incendios activos (NASA FIRMS)
-              </label>
-              <label class="layer-toggle">
-                <input type="checkbox" id="toggle-clima" />
-                Alertas meteorológicas
-              </label>
-
-            </div>
-
-            <!-- Filtro de categoría -->
-            <div class="form-group">
-              <label>Categoría de necesidad</label>
-              <select id="typeFilter" class="form-select">
-                <option value="all">Todas</option>
-                <option value="agua">Agua</option>
-                <option value="alimentos">Alimentos</option>
-                <option value="parafarmacia">Parafarmacia</option>
-                <option value="ropa">Ropa</option>
-                <option value="higiene">Higiene</option>
-                <option value="refugio">Refugio</option>
-                <option value="transporte">Transporte</option>
-                <option value="otros">Otros</option>
-              </select>
-            </div>
-
-            <!-- Lista de necesidades activas -->
-            <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-sm); text-transform: uppercase; letter-spacing: 0.1em;">Necesidades Activas</h3>
-            <div id="needs-list" class="cards-list"></div>
-          </div>
-
-          <!-- Formulario reportar necesidad -->
-          <div class="map-sidebar__footer">
-            <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-sm); text-transform: uppercase; letter-spacing: 0.1em;">Reportar Necesidad</h3>
-            <form id="need-form">
-              <div class="form-group">
-                <label>Categoría</label>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;" id="category-grid">
-                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="agua">💧</button>
-                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="alimentos">🍞</button>
-                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="parafarmacia">💊</button>
-                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="ropa">👕</button>
-                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="higiene">🧴</button>
-                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="refugio">🏠</button>
-                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="transporte">🚗</button>
-                  <button type="button" class="btn btn--ghost btn--sm anr-categoria-btn" data-tipo="otros">📦</button>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Ubicación</label>
-                <button type="button" id="need-btn-gps" class="btn btn--ghost btn--sm" style="width: 100%; margin-bottom: 6px;">📍 Usar mi ubicación</button>
-                <input type="text" id="input-direccion" class="form-input" placeholder="O escribe una dirección" />
-                <p style="font-size: var(--text-xs); color: var(--text-muted); margin-top: 6px;">También puedes hacer clic en el mapa para fijar la ubicación</p>
-                <input type="hidden" id="input-lat" />
-                <input type="hidden" id="input-lng" />
-                <p id="ubicacion-mensaje" style="font-size: var(--text-xs); color: var(--text-muted); margin-top: 4px;"></p>
-              </div>
-              <div class="form-group">
-                <label>Descripción (opcional)</label>
-                <textarea id="textarea-desc" class="form-textarea" rows="2" maxlength="500" placeholder="Describe brevemente..."></textarea>
-              </div>
-              <button type="submit" class="btn btn--primary" style="width: 100%;">📍 Reportar Necesidad</button>
-            </form>
-          </div>
-        </aside>
-
-        <!-- Mapa -->
         <div class="map-container">
-          <div id="map"></div>
+          <div id="map" role="application" aria-label="Mapa de operaciones de emergencia" tabindex="0"></div>
+          <!-- Map legend -->
+          <div class="map-legend" id="map-legend" role="region" aria-label="Leyenda del mapa">
+            <div class="map-legend__title">Leyenda</div>
+            <div class="map-legend__item"><span class="map-legend__dot" style="background:#FF334B"></span> Alerta crítica</div>
+            <div class="map-legend__item"><span class="map-legend__dot" style="background:#FF6B00"></span> Alerta alta</div>
+            <div class="map-legend__item"><span class="map-legend__dot" style="background:#FBC02D"></span> Alerta moderada</div>
+            <div class="map-legend__item"><span class="map-legend__dot" style="background:#ff5722"></span> 🔥 Detección FIRMS</div>
+            <div class="map-legend__item"><span class="map-legend__dot" style="background:#38BDF8"></span> Necesidad</div>
+            <div class="map-legend__item"><span class="map-legend__dot" style="background:#00E676"></span> Recurso/Ayuda</div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== SECCIÓN ALERTAS ========== -->
-    <section id="section-alertas" class="section">
+    <!-- ALERTAS -->
+    <section id="section-alertas" class="section" aria-label="Alertas oficiales">
       <div class="section-header">
-        <div class="section-header__label">MÓDULO G2 — ALERTAS</div>
+        <div class="section-header__label">ALERTAS</div>
         <h1 class="section-header__title">Alertas Oficiales</h1>
-        <p class="section-header__desc">Alertas oficiales de GDACS en tiempo real. Filtra por zona geográfica, tipo y severidad.</p>
+        <p class="section-header__desc">Alertas de GDACS en tiempo real. Filtra por zona, tipo y severidad.</p>
       </div>
-
-      <div class="filters-bar">
+      <div class="filters-bar" role="search" aria-label="Filtros de alertas">
+        <label for="region-filter" class="sr-only">Región</label>
         <select id="region-filter" class="form-select">
           <option value="espana">España</option>
           <option value="europa">Europa</option>
           <option value="world">Mundial</option>
         </select>
+        <label for="type-filter" class="sr-only">Tipo de evento</label>
         <select id="type-filter" class="form-select">
           <option value="">Todos los tipos</option>
           <option value="terremoto">Terremoto</option>
@@ -165,153 +207,173 @@
           <option value="sequia">Sequía</option>
           <option value="otro">Otro</option>
         </select>
+        <label for="severity-filter" class="sr-only">Severidad</label>
         <select id="severity-filter" class="form-select">
           <option value="">Todas las severidades</option>
-          <option value="red">Crítico</option>
-          <option value="orange">Atención</option>
-          <option value="green">Bajo riesgo</option>
+          <option value="critica">Crítico</option>
+          <option value="alta">Alta</option>
+          <option value="moderada">Moderada</option>
+          <option value="informativa">Informativa</option>
         </select>
-        <input id="country-filter" class="form-input" type="text" placeholder="País (ej. España)" />
+        <label for="country-filter" class="sr-only">País</label>
+        <input id="country-filter" class="form-input" type="text" placeholder="País (ej. España)" autocomplete="off" />
         <button class="btn btn--primary" onclick="fetchAlerts()" type="button">Filtrar</button>
       </div>
-
-      <div class="content-grid content-grid--full" style="padding-top: var(--space-lg);">
-        <div id="alerts-container" class="cards-list"></div>
+      <div class="content-area">
+        <div id="alerts-container" class="cards-list" role="list" aria-label="Lista de alertas"></div>
       </div>
     </section>
 
-    <!-- ========== SECCIÓN AYUDAS ========== -->
-    <section id="section-ayudas" class="section">
+    <!-- AYUDAS -->
+    <section id="section-ayudas" class="section" aria-label="Necesidades y ayudas">
       <div class="section-header">
-        <div class="section-header__label">MÓDULO G3 — AYUDAS</div>
+        <div class="section-header__label">AYUDAS</div>
         <h1 class="section-header__title">Necesidades y Ayudas</h1>
-        <p class="section-header__desc">Selecciona una necesidad para ofrecer ayuda. La necesidad se marcará como cubierta.</p>
+        <p class="section-header__desc">Selecciona una necesidad para ofrecer ayuda.</p>
       </div>
-
-      <div class="content-grid">
-        <!-- Columna izquierda -->
-        <div>
-          <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-md); text-transform: uppercase; letter-spacing: 0.1em;">Necesidades activas</h3>
-          <div id="lista-necesidades-ayuda" class="cards-list"></div>
-
-          <h3 style="font-size: var(--text-sm); color: var(--text-muted); margin: var(--space-lg) 0 var(--space-md); text-transform: uppercase; letter-spacing: 0.1em;">Ayudas publicadas</h3>
-          <div id="lista-donaciones" class="cards-list"></div>
+      <div class="content-area content-area--split">
+        <div class="content-area__main">
+          <h3 class="content-area__heading">Necesidades activas</h3>
+          <div id="lista-necesidades-ayuda" class="cards-list" role="list" aria-label="Lista de necesidades activas"></div>
+          <h3 class="content-area__heading" style="margin-top:var(--space-xl)">Ayudas publicadas</h3>
+          <div id="lista-donaciones" class="cards-list" role="list" aria-label="Lista de ayudas publicadas"></div>
           <p id="estado-lista" class="state-empty" hidden></p>
         </div>
-
-        <!-- Formulario -->
-        <div class="glass-card" style="height: fit-content; position: sticky; top: 80px;">
-          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-lg);">Ofrecer Ayuda</h3>
-          <p id="don-necesidad-info" style="font-size: var(--text-sm); color: var(--cyan); margin-bottom: var(--space-md); display: none;"></p>
-          <form id="form-donacion">
-            <input type="hidden" id="don-necesidad-id" />
-            <div class="form-group">
-              <label>Tipo de Ayuda</label>
-              <select id="don-tipo" class="form-select">
-                <option value="recursos">Recursos</option>
-                <option value="servicios">Servicios</option>
-                <option value="tiempo">Tiempo (Voluntariado)</option>
-              </select>
-            </div>
-            <div class="form-group" id="campo-dni" style="display: none;">
-              <label>DNI <span style="color: var(--text-muted); font-weight: 400;">(requerido para tiempo)</span></label>
-              <input id="dni" class="form-input" type="text" placeholder="Ej. 12345678Z" />
-            </div>
-            <div class="form-group">
-              <label>Categoría</label>
-              <select id="don-recurso" class="form-select">
-                <option value="">Selecciona una categoría</option>
-                <option value="Comida">Comida</option>
-                <option value="Medicamentos">Medicamentos</option>
-                <option value="Transporte">Transporte</option>
-                <option value="Alojamiento temporal">Alojamiento temporal</option>
-                <option value="Apoyo logistico">Apoyo logístico</option>
-                <option value="Otros">Otros</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Descripción <span style="color: var(--text-muted); font-weight: 400;">(máx. 1000)</span></label>
-              <textarea id="don-descripcion" class="form-textarea" maxlength="1000" rows="3" placeholder="¿Qué vas a ofrecer?"></textarea>
-              <span id="contador-desc" style="font-size: var(--text-xs); color: var(--text-muted);">0 / 1000</span>
-            </div>
-            <div class="form-group">
-              <label>Contacto</label>
-              <input id="don-contacto" class="form-input" type="text" placeholder="Email o teléfono" required />
-            </div>
-            <button type="submit" class="btn btn--primary" style="width: 100%;" id="btn-publicar-ayuda">Selecciona una necesidad para ayudar</button>
-          </form>
+        <div class="content-area__side">
+          <div class="glass-card" style="position:sticky;top:80px;">
+            <h3 style="font-size:var(--text-lg);font-weight:700;margin-bottom:var(--space-lg);">Ofrecer Ayuda</h3>
+            <p id="don-necesidad-info" style="font-size:var(--text-sm);color:var(--cyan);margin-bottom:var(--space-md);display:none;" aria-live="polite"></p>
+            <form id="form-donacion" aria-label="Formulario de ofrecer ayuda">
+              <input type="hidden" id="don-necesidad-id" />
+              <div class="form-group">
+                <label for="don-tipo">Tipo de Ayuda</label>
+                <select id="don-tipo" class="form-select">
+                  <option value="recursos">Recursos</option>
+                  <option value="servicios">Servicios</option>
+                  <option value="tiempo">Tiempo (Voluntariado)</option>
+                </select>
+              </div>
+              <div class="form-group" id="campo-dni" style="display:none;">
+                <label for="dni">DNI <span class="form-label-hint">(requerido para tiempo)</span></label>
+                <input id="dni" class="form-input" type="text" placeholder="Ej. 12345678Z" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="don-recurso">Categoría</label>
+                <select id="don-recurso" class="form-select">
+                  <option value="">Selecciona una categoría</option>
+                  <option value="Comida">Comida</option>
+                  <option value="Medicamentos">Medicamentos</option>
+                  <option value="Transporte">Transporte</option>
+                  <option value="Alojamiento temporal">Alojamiento temporal</option>
+                  <option value="Apoyo logistico">Apoyo logístico</option>
+                  <option value="Otros">Otros</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="don-descripcion">Descripción <span class="form-label-hint">(máx. 1000)</span></label>
+                <textarea id="don-descripcion" class="form-textarea" maxlength="1000" rows="3" placeholder="¿Qué vas a ofrecer?"></textarea>
+                <span id="contador-desc" class="form-hint">0 / 1000</span>
+              </div>
+              <div class="form-group">
+                <label for="don-contacto">Contacto</label>
+                <input id="don-contacto" class="form-input" type="text" placeholder="Email o teléfono" required autocomplete="off" />
+              </div>
+              <button type="submit" class="btn btn--primary" style="width:100%;" id="btn-publicar-ayuda">Selecciona una necesidad para ayudar</button>
+            </form>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== SECCIÓN DASHBOARD ========== -->
-    <section id="section-dashboard" class="section">
+    <!-- DASHBOARD -->
+    <section id="section-dashboard" class="section" aria-label="Dashboard de operaciones">
       <div class="section-header">
         <div class="section-header__label">COORDINACIÓN</div>
         <h1 class="section-header__title">Dashboard de Operaciones</h1>
-        <p class="section-header__desc">Métricas en tiempo real para coordinadores. Vista de seguimiento de actividad.</p>
+        <p class="section-header__desc">Métricas en tiempo real para coordinadores.</p>
       </div>
-
-      <div class="content-grid content-grid--full">
-        <!-- Métricas principales -->
-        <div class="dashboard-grid">
-          <div class="metric-card">
-            <div class="metric-card__label">Necesidades abiertas</div>
-            <div class="metric-card__value" id="metric-necesidades-abiertas">—</div>
-            <div class="metric-card__hint" id="metric-necesidades-hint">de <span id="metric-necesidades-total">0</span> totales</div>
+      <div class="content-area">
+        <!-- KPIs -->
+        <div class="kpi-grid" role="region" aria-label="Métricas principales">
+          <div class="kpi">
+            <div class="kpi__label">Alertas activas</div>
+            <div class="kpi__value" id="metric-alertas-activas" aria-live="polite">—</div>
+            <div class="kpi__hint" id="metric-alertas-criticas">0 críticas</div>
           </div>
-          <div class="metric-card metric-card--success">
-            <div class="metric-card__label">Necesidades cubiertas</div>
-            <div class="metric-card__value" id="metric-necesidades-cubiertas">—</div>
-            <div class="metric-card__hint">% cobertura <span id="metric-cobertura">0</span>%</div>
+          <div class="kpi kpi--info">
+            <div class="kpi__label">Detecciones FIRMS</div>
+            <div class="kpi__value" id="metric-detecciones" aria-live="polite">—</div>
+            <div class="kpi__hint" id="metric-detecciones-hint">incendios activos</div>
           </div>
-          <div class="metric-card metric-card--alert">
-            <div class="metric-card__label">Alertas activas</div>
-            <div class="metric-card__value" id="metric-alertas-activas">—</div>
-            <div class="metric-card__hint" id="metric-alertas-criticas">0 críticas</div>
+          <div class="kpi kpi--alta">
+            <div class="kpi__label">Necesidades abiertas</div>
+            <div class="kpi__value" id="metric-necesidades-abiertas" aria-live="polite">—</div>
+            <div class="kpi__hint" id="metric-necesidades-hint">de <span id="metric-necesidades-total">0</span> totales</div>
           </div>
-          <div class="metric-card metric-card--info">
-            <div class="metric-card__label">Ayudas publicadas</div>
-            <div class="metric-card__value" id="metric-ayudas">—</div>
-            <div class="metric-card__hint" id="metric-ayudas-activas">0 activas</div>
+          <div class="kpi kpi--success">
+            <div class="kpi__label">Necesidades cubiertas</div>
+            <div class="kpi__value" id="metric-necesidades-cubiertas" aria-live="polite">—</div>
+            <div class="kpi__hint">% cobertura <span id="metric-cobertura">0</span>%</div>
           </div>
         </div>
 
-        <div id="dashboard-motivacion" style="text-align:center; font-size:var(--text-lg); font-weight:700; color:var(--cyan); margin-top:var(--space-lg); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--border-active); border-radius:var(--radius);"></div>
+        <div id="dashboard-motivacion" class="dashboard-motivacion" role="status" aria-live="polite"></div>
 
-        <!-- Ranking de tipos de necesidad -->
-        <div class="glass-card" style="margin-top: var(--space-lg);">
-          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-md);">📊 Necesidades activas por categoría</h3>
-          <div id="dashboard-categorias"></div>
-          <p style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-sm);">Ayuda a cubrir las necesidades con más demanda.</p>
+        <!-- Distribuciones -->
+        <div class="dashboard-panels">
+          <div class="glass-card">
+            <h3 class="glass-card__title">📊 Alertas por severidad</h3>
+            <div id="dashboard-severidad" role="list" aria-label="Distribución de severidad"></div>
+          </div>
+          <div class="glass-card">
+            <h3 class="glass-card__title">📊 Alertas por tipo</h3>
+            <div id="dashboard-tipos" role="list" aria-label="Distribución de tipos"></div>
+          </div>
         </div>
 
-        <!-- Urgencia -->
-        <div class="glass-card" style="margin-top: var(--space-lg);">
-          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-md);">⚠️ Necesidades críticas que necesitan ayuda</h3>
-          <div id="dashboard-criticas"></div>
+        <div class="dashboard-panels" style="margin-top:var(--space-lg);">
+          <div class="glass-card">
+            <h3 class="glass-card__title">📦 Necesidades por categoría</h3>
+            <div id="dashboard-categorias" role="list" aria-label="Distribución de categorías"></div>
+          </div>
+          <div class="glass-card">
+            <h3 class="glass-card__title">📍 Top zonas con necesidades</h3>
+            <div id="dashboard-zonas" role="list" aria-label="Zonas con más necesidades"></div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="margin-top:var(--space-lg);">
+          <h3 class="glass-card__title">⚠️ Necesidades críticas</h3>
+          <div id="dashboard-criticas" role="list" aria-label="Necesidades críticas"></div>
           <button class="btn btn--primary" style="margin-top:var(--space-md);" onclick="window.showSection('ayudas')">Ir a Ayudar →</button>
         </div>
 
-        <!-- Top zonas -->
-        <div class="glass-card" style="margin-top: var(--space-lg);">
-          <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-md);">📍 Zonas con más necesidades activas</h3>
-          <div id="dashboard-zonas"></div>
-        </div>
-
-        <div style="margin-top: var(--space-md); text-align: right;">
-          <button type="button" class="btn btn--ghost" onclick="window.dashboardExportCSV()">⬇ Exportar CSV</button>
+        <div style="margin-top:var(--space-md);text-align:right;">
+          <button type="button" class="btn btn--ghost" onclick="window.dashboardExportCSV()" aria-label="Exportar datos a CSV">⬇ Exportar CSV</button>
         </div>
       </div>
     </section>
 
   </main>
 
+  <!-- ====== DRAWER (Detalle de entidad) ====== -->
+  <div class="drawer-backdrop" id="drawer-backdrop" aria-hidden="true"></div>
+  <div class="drawer" id="entity-drawer" role="dialog" aria-label="Detalle de entidad" aria-hidden="true" tabindex="-1">
+    <div class="drawer__header">
+      <h2 class="drawer__title" id="drawer-title">Detalle</h2>
+      <button class="drawer__close" id="drawer-close" aria-label="Cerrar detalle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="drawer__body" id="drawer-body"></div>
+  </div>
+
   <!-- ====== SCRIPTS ====== -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="js/spa.js?v=3"></script>
+  <script type="module" src="js/spa.js?v=5"></script>
 
-  <!-- PWA: Service Worker para modo offline -->
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

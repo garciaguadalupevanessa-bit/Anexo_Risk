@@ -1,5 +1,9 @@
 import json
+import re
 import sqlite3
+
+# Only allow alphanumeric, hyphens, underscores in savepoint names
+_SAFE_OP_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 def process_sync_batch(
@@ -65,6 +69,18 @@ def process_sync_batch(
         # -----------------------------------------------------
         # SAVEPOINT independiente para cada operación
         # -----------------------------------------------------
+
+        # Validate operation_id to prevent SQL injection in savepoint names
+        if not _SAFE_OP_ID_RE.match(str(op_id)):
+            results.append(
+                {
+                    "operation_id": op_id,
+                    "status": "INVALID",
+                    "error_code": "INVALID_OPERATION_ID",
+                    "error_message": "operation_id contains invalid characters",
+                }
+            )
+            continue
 
         # SQLite permite nombres simples de savepoint.
         safe_operation_id = str(op_id).replace("-", "_")

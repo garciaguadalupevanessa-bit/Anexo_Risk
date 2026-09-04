@@ -1,7 +1,6 @@
 /* =============================================
-   ANEXO FINDER — Design System (v2)
-   Centro de Operaciones de Emergencia
-   Dark + Glassmorphism + Mission Control
+   ANEXO RISK — Design System Tokens
+   Emergency Operations / Crisis Management Console
    ============================================= */
 
 :root {
@@ -30,27 +29,67 @@
   --blue-dim:       #3B82F6;
   --blue-glow:      rgba(96, 165, 250, 0.20);
 
-  /* === ALERTAS === */
-  --red:            #FF334B;
-  --red-dim:        #CC2A3C;
-  --red-glow:       rgba(255, 51, 75, 0.30);
+  /* === SEVERIDAD OPERATIVA === */
+  --sev-critica:      #FF334B;
+  --sev-critica-dim:  #CC2A3C;
+  --sev-critica-bg:   rgba(255, 51, 75, 0.12);
+  --sev-critica-border: rgba(255, 51, 75, 0.30);
+  --sev-critica-glow: rgba(255, 51, 75, 0.25);
 
-  --orange:         #FF6B00;
-  --orange-dim:     #CC5500;
-  --orange-glow:    rgba(255, 107, 0, 0.25);
+  --sev-alta:         #FF6B00;
+  --sev-alta-dim:     #CC5500;
+  --sev-alta-bg:      rgba(255, 107, 0, 0.12);
+  --sev-alta-border:  rgba(255, 107, 0, 0.30);
+  --sev-alta-glow:    rgba(255, 107, 0, 0.20);
+
+  --sev-moderada:     #FBC02D;
+  --sev-moderada-dim: #C9A020;
+  --sev-moderada-bg:  rgba(251, 192, 45, 0.12);
+  --sev-moderada-border: rgba(251, 192, 45, 0.30);
+
+  --sev-informativa:  #38BDF8;
+  --sev-informativa-dim: #2196C9;
+  --sev-informativa-bg: rgba(56, 189, 248, 0.10);
+  --sev-informativa-border: rgba(56, 189, 248, 0.25);
+
+  --sev-sin-dato:     #5A6378;
+  --sev-sin-dato-bg:  rgba(90, 99, 120, 0.10);
+
+  /* === COLORES DE LEGADO (compatibilidad) === */
+  --red:            var(--sev-critica);
+  --red-dim:        var(--sev-critica-dim);
+  --red-glow:       var(--sev-critica-glow);
+  --orange:         var(--sev-alta);
+  --orange-dim:     var(--sev-alta-dim);
+  --orange-glow:    var(--sev-alta-glow);
 
   /* === ESTADO === */
   --green:          #00E676;
   --green-dim:      #00B85C;
   --green-glow:     rgba(0, 230, 118, 0.20);
 
+  --yellow:         #FBC02D;
+  --yellow-glow:    rgba(251, 192, 45, 0.20);
+
   --purple:         #A78BFA;
   --purple-glow:    rgba(167, 139, 250, 0.20);
+
+  --error:          #FF334B;
+  --error-bg:       rgba(255, 51, 75, 0.10);
+  --success:        #00E676;
+  --success-bg:     rgba(0, 230, 118, 0.10);
+  --warning:        #FF6B00;
+  --warning-bg:     rgba(255, 107, 0, 0.10);
+  --offline:        #5A6378;
+  --offline-bg:     rgba(90, 99, 120, 0.10);
+  --stale:          #FBC02D;
+  --stale-bg:       rgba(251, 192, 45, 0.10);
 
   /* === BORDES === */
   --border:         rgba(255, 255, 255, 0.06);
   --border-active:  rgba(56, 189, 248, 0.30);
   --border-glow:    rgba(56, 189, 248, 0.15);
+  --border-focus:   var(--cyan);
 
   /* === RADIOS === */
   --radius-sm:  6px;
@@ -85,10 +124,31 @@
   --shadow-md:   0 4px 12px rgba(0,0,0,0.5);
   --shadow-lg:   0 8px 32px rgba(0,0,0,0.6);
   --shadow-glow: 0 0 20px var(--cyan-glow);
-  --shadow-red:  0 0 20px var(--red-glow);
-  --shadow-orange: 0 0 20px var(--orange-glow);
+  --shadow-red:  0 0 20px var(--sev-critica-glow);
+  --shadow-orange: 0 0 20px var(--sev-alta-glow);
 
   /* === TRANSICIONES === */
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* === LAYOUT === */
+  --sidebar-width: 280px;
+  --drawer-width: 400px;
+  --header-height: 56px;
+  --control-height: 36px;
+  --control-height-sm: 28px;
+  --touch-target: 44px;
+
+  /* === Z-INDEX === */
+  --z-base: 1;
+  --z-sidebar: 100;
+  --z-header: 1000;
+  --z-dropdown: 1100;
+  --z-modal-backdrop: 1500;
+  --z-modal: 1600;
+  --z-notification: 2000;
+  --z-tooltip: 2500;
+
+  /* === BREAKPOINTS (referencia, no usados en CSS custom properties) === */
+  /* bp-xs: 360px, bp-sm: 768px, bp-md: 1024px, bp-lg: 1440px, bp-xl: 1920px */
 }

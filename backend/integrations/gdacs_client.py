@@ -75,14 +75,10 @@ def _parse_item(item):
     lat = _get_coordinate(item, "geo:Point/geo:lat")
     if lat is None:
         lat = _get_coordinate(item, "geo:lat")
-    if lat is None:
-        lat = 0.0
 
     lon = _get_coordinate(item, "geo:Point/geo:long")
     if lon is None:
         lon = _get_coordinate(item, "geo:long")
-    if lon is None:
-        lon = 0.0
 
     fecha = _to_iso_date(_get_text(item, "pubDate"))
     if fecha is None:
@@ -104,8 +100,15 @@ def _parse_item(item):
 
 
 def _download_and_parse():
-    response = requests.get(GDACS_API_URL, timeout=10)
-    response.raise_for_status()
+    for attempt in range(3):
+        try:
+            response = requests.get(GDACS_API_URL, timeout=10)
+            response.raise_for_status()
+            break
+        except requests.RequestException:
+            if attempt == 2:
+                raise
+            time.sleep(1 * (attempt + 1))
 
     root = ET.fromstring(response.content)
     items = root.findall(".//item")
@@ -127,5 +130,6 @@ def get_alerts():
     except (requests.RequestException, ET.ParseError):
         return []
 
-    _cache[_CACHE_KEY] = (now, alerts)
-    return alerts
+    filtered = [a for a in alerts if a.get("lat") is not None and a.get("lon") is not None]
+    _cache[_CACHE_KEY] = (now, filtered)
+    return filtered

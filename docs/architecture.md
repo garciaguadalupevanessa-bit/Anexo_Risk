@@ -153,3 +153,67 @@ Small team (4 people) needs simple but disciplined branching.
 - ✅ Clear history
 - ❌ No parallel development on same module
 - ❌ Requires discipline to avoid stale branches
+
+---
+
+## ADR-007: Frontend Modular Architecture
+
+**Date:** 2026-09-04  
+**Status:** Accepted  
+**Decision Makers:** Juan (PM/Tech Lead)
+
+### Context
+The SPA entry point `spa.js` had grown to 1,186 lines containing all map logic (512 lines), alerts, donations, dashboard, navigation, sidebar, and drawer code in a single monolithic file. This made the codebase:
+- Difficult to navigate and maintain
+- Prone to merge conflicts
+- Impossible to test individual sections
+- Hard for new contributors to understand
+
+### Decision
+Extract `spa.js` into ES modules:
+- `shared/config.js` — API config, constants, escapeHtml utility
+- `sections/mapa.js` — Map initialization, 6 layers, markers, popups
+- `sections/alertas.js` — Alert rendering, filters, notifications
+- `sections/ayudas.js` — Donation/aid section
+- `sections/dashboard.js` — KPI dashboard, CSV export
+- `spa.js` — Slim orchestrator (~160 lines): navigation, sidebar, drawer, boot
+
+### Consequences
+- ✅ spa.js reduced from 1,186 → 163 lines (86% reduction)
+- ✅ Each section is independently maintainable
+- ✅ Clear dependency graph (no circular imports)
+- ✅ `escapeHtml()` utility centralized for XSS protection
+- ❌ Slightly more complex import graph
+- ❌ Requires ES module support (all modern browsers)
+
+---
+
+## ADR-008: Security Hardening
+
+**Date:** 2026-09-04  
+**Status:** Accepted  
+**Decision Makers:** Juan (PM/Tech Lead)
+
+### Context
+Full security audit identified critical vulnerabilities:
+- Stored XSS via `innerHTML` with unescaped user data
+- SQL injection in sync SAVEPOINT names
+- Path traversal in SPA catch-all route
+- Timing attacks on admin key comparison
+- Missing input validation on multiple schemas
+
+### Decision
+Apply defense-in-depth:
+1. **XSS:** `escapeHtml()` utility applied to all `innerHTML` interpolations
+2. **SQL injection:** `operation_id` validated against `^[a-zA-Z0-9_-]+$` regex
+3. **Path traversal:** SPA catch-all validates `file_path.is_relative_to(FRONTEND_DIR)`
+4. **Timing attacks:** Admin key compared with `hmac.compare_digest()`
+5. **Input validation:** `max_length` on all string fields, `ge`/`le` on coordinates, `allow_inf_nan=False`
+6. **Info leakage:** Error messages genericized, details logged server-side
+
+### Consequences
+- ✅ All CRITICAL/HIGH security issues resolved
+- ✅ Defense-in-depth approach
+- ✅ No performance impact
+- ❌ Slightly more code in validation layers
+- ❌ Requires ongoing vigilance for new code

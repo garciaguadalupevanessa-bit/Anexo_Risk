@@ -50,8 +50,8 @@ class EventTypeEnum(str, Enum):
 class AlertCreate(BaseModel):
     """Payload model for manual alert creation."""
 
-    titulo: str = Field(..., alias="title", description="Short descriptive title of the alert")
-    descripcion: Optional[str] = Field(default="", alias="description", description="Detailed summary")
+    titulo: str = Field(..., alias="title", description="Short descriptive title of the alert", max_length=500)
+    descripcion: Optional[str] = Field(default="", alias="description", description="Detailed summary", max_length=5000)
     tipo: Optional[EventTypeEnum] = Field(default=EventTypeEnum.OTRO, alias="type", description="Event classification")
     zone: Dict[str, Any] = Field(..., description="GeoJSON Polygon object for spatial coverage")
     nivel_riesgo: Optional[RiskLevelEnum] = Field(default=RiskLevelEnum.LOW, alias="risk_level", description="Initial risk level")
@@ -84,18 +84,18 @@ class AlertResponse(BaseModel):
     external_id: Optional[str] = Field(default=None, description="External provider identifier (e.g. GDACS_1234)")
     source: str = Field(default="GDACS", description="Data source provider name (GDACS|PROTECCION_CIVIL|MANUAL)")
     tipo: EventTypeEnum = Field(..., alias="tipo", description="Standardized event type classification")
-    titulo: str = Field(default="", alias="titulo", description="Short descriptive title of the alert")
-    descripcion: str = Field(default="", alias="descripcion", description="Detailed alert summary or description")
+    titulo: str = Field(default="", alias="titulo", description="Short descriptive title of the alert", max_length=500)
+    descripcion: str = Field(default="", alias="descripcion", description="Detailed alert summary or description", max_length=5000)
     severidad: Optional[SeverityEnum] = Field(default=SeverityEnum.GREEN, alias="severidad", description="GeoRisk severity level tier")
     risk_level: RiskLevelEnum = Field(default=RiskLevelEnum.LOW, description="GeoRisk risk level assessment")
     status: AlertStatusEnum = Field(default=AlertStatusEnum.NORMAL, description="Current operational status")
     is_active: bool = Field(default=True, description="Active status indicator flag")
     zone: Optional[Dict[str, Any]] = Field(default=None, description="GeoJSON Polygon mapping zone")
-    pais: Optional[str] = Field(default="", alias="pais", description="Name of affected country")
+    pais: Optional[str] = Field(default="", alias="pais", description="Name of affected country", max_length=200)
     lat: Optional[float] = Field(default=None, description="Geographical latitude coordinate")
     lon: Optional[float] = Field(default=None, description="Geographical longitude coordinate")
     fecha: Optional[datetime] = Field(default=None, alias="fecha", description="Publication timestamp in ISO format")
-    enlace: Optional[str] = Field(default="", alias="enlace", description="External detailed report URL")
+    enlace: Optional[str] = Field(default="", alias="enlace", description="External detailed report URL", max_length=500)
 
     @model_validator(mode="before")
     @classmethod

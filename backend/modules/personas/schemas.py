@@ -21,12 +21,12 @@ class PersonStatus(str, Enum):
 class PersonBase(BaseModel):
     """Campos comunes para crear y representar una persona."""
 
-    name: str | None = Field(default=None, alias="nombre")
+    name: str | None = Field(default=None, alias="nombre", max_length=500)
     age: int | str | None = Field(default=None, alias="edad")
     status: PersonStatus | str | None = Field(default=None, alias="estado")
-    last_location: str | None = Field(default=None, alias="ultima_ubicacion")
-    reported_by: str | None = Field(default=None, alias="reportado_por")
-    description: str | None = Field(default=None, alias="descripcion")
+    last_location: str | None = Field(default=None, alias="ultima_ubicacion", max_length=500)
+    reported_by: str | None = Field(default=None, alias="reportado_por", max_length=500)
+    description: str | None = Field(default=None, alias="descripcion", max_length=500)
 
     model_config = ConfigDict(
         populate_by_name=True,

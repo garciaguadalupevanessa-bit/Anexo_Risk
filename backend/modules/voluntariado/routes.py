@@ -123,10 +123,12 @@ async def create_new_volunteer(request: Request):
             UnicodeDecodeError,
             ValidationError,
         ) as exc:
+            import logging
+            logging.getLogger(__name__).warning("Registro voluntario inválido: %s", exc)
             return _error_response(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
                 "Datos de registro no válidos",
-                str(exc),
+                "Revise los campos enviados",
             )
 
         return services.register_volunteer_from_frontend(payload)

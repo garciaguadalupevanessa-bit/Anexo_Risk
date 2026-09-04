@@ -15,9 +15,14 @@ from config import NASA_FIRMS_API_KEY, NASA_FIRMS_CACHE_TTL_SECONDS
 
 NASA_FIRMS_URL = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{key}/{source}/{bbox}/{days}"
 
-# Bounding box de España peninsular + Baleares + Canarias
-# west, south, east, north
-SPAIN_BBOX = "-18,27,4,44"
+# Bounding boxes por zona
+FIRE_ZONES = {
+    "spain": "-18,27,4,44",
+    "europa": "-12,35,35,60",
+    "mediterraneo": "-6,30,25,46",
+    "global": "-180,-60,180,60",
+}
+DEFAULT_BBOX = FIRE_ZONES["spain"]
 
 _CACHE: Optional[dict] = None
 _CACHE_TIME: float = 0
@@ -29,7 +34,7 @@ def _is_cache_valid() -> bool:
     return (time.time() - _CACHE_TIME) < NASA_FIRMS_CACHE_TTL_SECONDS
 
 
-def fetch_fires(force_refresh: bool = False) -> dict:
+def fetch_fires(force_refresh: bool = False, zone: str = "spain") -> dict:
     """Obtiene detecciones de incendios en España desde NASA FIRMS.
 
     Resultados cacheados en memoria por NASA_FIRMS_CACHE_TTL_SECONDS.
@@ -48,24 +53,31 @@ def fetch_fires(force_refresh: bool = False) -> dict:
             "error": "Configura NASA_FIRMS_API_KEY en .env",
         }
 
+    bbox = FIRE_ZONES.get(zone, DEFAULT_BBOX)
     url = NASA_FIRMS_URL.format(
         key=NASA_FIRMS_API_KEY,
         source="VIIRS_SNPP_NRT",
-        bbox=SPAIN_BBOX,
+        bbox=bbox,
         days=1,
     )
 
-    try:
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-    except requests.RequestException as exc:
-        return {
-            "total": 0,
-            "detecciones": [],
-            "fuente": "NASA FIRMS",
-            "cached_at": datetime.now().isoformat(),
-            "error": f"No se pudo obtener datos de incendios: {exc}",
-        }
+    for attempt in range(3):
+        try:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            break
+        except requests.RequestException as exc:
+            if attempt == 2:
+                import logging
+                logging.getLogger(__name__).warning("NASA FIRMS falló: %s", exc)
+                return {
+                    "total": 0,
+                    "detecciones": [],
+                    "fuente": "NASA FIRMS",
+                    "cached_at": datetime.now().isoformat(),
+                    "error": "No se pudieron obtener datos de incendios",
+                }
+            time.sleep(1 * (attempt + 1))
 
     reader = csv.DictReader(io.StringIO(resp.text))
     detecciones = []

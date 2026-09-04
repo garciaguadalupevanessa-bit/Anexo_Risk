@@ -15,9 +15,16 @@ from config import AEMET_API_KEY
 AEMET_AVISOS_URL = "https://www.aemet.es/es/api/avisos_cap/llamame_api"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 
-# Bounding box España para Open-Meteo
-SPAIN_LAT = 40.4168
-SPAIN_LON = -3.7038
+# Zonas España para Open-Meteo (múltiples puntos)
+SPAIN_ZONES = [
+    {"name": "Madrid", "lat": 40.4168, "lon": -3.7038},
+    {"name": "Barcelona", "lat": 41.3874, "lon": 2.1686},
+    {"name": "Valencia", "lat": 39.4699, "lon": -0.3763},
+    {"name": "Sevilla", "lat": 37.3891, "lon": -5.9845},
+    {"name": "Bilbao", "lat": 43.2630, "lon": -2.9350},
+    {"name": "Zaragoza", "lat": 41.6488, "lon": -0.8891},
+    {"name": "Málaga", "lat": 36.7213, "lon": -4.4214},
+]
 
 _CACHE: Optional[dict] = None
 _CACHE_TIME: float = 0
@@ -59,76 +66,87 @@ def _fetch_aemet() -> Optional[list]:
 def _fetch_open_meteo() -> Optional[list]:
     """Fallback: Open-Meteo (sin auth, gratis).
 
-    Genera alertas derivadas de condiciones meteorológicas
-    potencialmente peligrosas (viento extremo, calor, lluvia fuerte).
+    Consulta múltiples ciudades españolas y genera alertas derivadas
+    de condiciones meteorológicas peligrosas.
     """
     try:
-        url = (
-            f"{OPEN_METEO_URL}"
-            f"?latitude={SPAIN_LAT}&longitude={SPAIN_LON}"
-            "&current=temperature_2m,wind_speed_10m,precipitation,wind_gusts_10m"
-            "&hourly=temperature_2m,precipitation_probability,wind_speed_10m"
-            "&forecast_days=1"
-        )
-        resp = requests.get(url, timeout=8)
-        resp.raise_for_status()
-        data = resp.json()
-
-        current = data.get("current", {})
         alertas = []
         ahora = datetime.now().strftime("%Y-%m-%dT%H:%M")
 
-        temp = current.get("temperature_2m", 0)
-        viento = current.get("wind_speed_10m", 0)
-        rafaga = current.get("wind_gusts_10m", 0)
-        lluvia = current.get("precipitation", 0)
+        for zone in SPAIN_ZONES:
+            url = (
+                f"{OPEN_METEO_URL}"
+                f"?latitude={zone['lat']}&longitude={zone['lon']}"
+                "&current=temperature_2m,wind_speed_10m,precipitation,wind_gusts_10m"
+                "&forecast_days=1"
+            )
+            try:
+                resp = None
+                for attempt in range(3):
+                    try:
+                        resp = requests.get(url, timeout=5)
+                        resp.raise_for_status()
+                        break
+                    except requests.RequestException:
+                        if attempt == 2:
+                            raise
+                        time.sleep(1 * (attempt + 1))
+                data = resp.json()
+            except (requests.RequestException, ValueError):
+                continue
 
-        if temp >= 38:
-            alertas.append({
-                "id": f"om-heat-{ahora}",
-                "tipo": "calor",
-                "nivel": "rojo" if temp >= 42 else "naranja",
-                "titulo": f"Temperatura extrema: {temp}°C",
-                "descripcion": "Riesgo alto para la salud. Evite exposición prolongada.",
-                "region": "España",
-                "fecha": ahora,
-                "fuente": "Open-Meteo",
-            })
-        if rafaga >= 70:
-            alertas.append({
-                "id": f"om-wind-{ahora}",
-                "tipo": "viento",
-                "nivel": "rojo" if rafaga >= 100 else "naranja",
-                "titulo": f"Ráfagas de viento: {rafaga} km/h",
-                "descripcion": "Precaución: posible caída de árboles y objetos.",
-                "region": "España",
-                "fecha": ahora,
-                "fuente": "Open-Meteo",
-            })
-        elif rafaga >= 50:
-            alertas.append({
-                "id": f"om-wind-{ahora}",
-                "tipo": "viento",
-                "nivel": "amarillo",
-                "titulo": f"Viento fuerte: {rafaga} km/h",
-                "descripcion": "Ráfagas moderadas.",
-                "region": "España",
-                "fecha": ahora,
-                "fuente": "Open-Meteo",
-            })
-        if lluvia >= 20:
-            alertas.append({
-                "id": f"om-rain-{ahora}",
-                "tipo": "lluvia",
-                "nivel": "naranja" if lluvia >= 50 else "amarillo",
-                "titulo": f"Precipitación intensa: {lluvia} mm",
-                "descripcion": "Posibles inundaciones locales.",
-                "region": "España",
-                "fecha": ahora,
-                "fuente": "Open-Meteo",
-            })
-        return alertas
-    except (requests.RequestException, ValueError):
+            current = data.get("current", {})
+            temp = current.get("temperature_2m", 0)
+            rafaga = current.get("wind_gusts_10m", 0)
+            lluvia = current.get("precipitation", 0)
+
+            if temp >= 38:
+                alertas.append({
+                    "id": f"om-heat-{zone['name']}-{ahora}",
+                    "tipo": "calor",
+                    "nivel": "rojo" if temp >= 42 else "naranja",
+                    "titulo": f"Temperatura extrema en {zone['name']}: {temp}°C",
+                    "descripcion": "Riesgo alto para la salud. Evite exposición prolongada.",
+                    "region": zone["name"],
+                    "fecha": ahora,
+                    "fuente": "Open-Meteo",
+                })
+            if rafaga >= 70:
+                alertas.append({
+                    "id": f"om-wind-{zone['name']}-{ahora}",
+                    "tipo": "viento",
+                    "nivel": "rojo" if rafaga >= 100 else "naranja",
+                    "titulo": f"Ráfagas en {zone['name']}: {rafaga} km/h",
+                    "descripcion": "Precaución: posible caída de árboles y objetos.",
+                    "region": zone["name"],
+                    "fecha": ahora,
+                    "fuente": "Open-Meteo",
+                })
+            elif rafaga >= 50:
+                alertas.append({
+                    "id": f"om-wind-{zone['name']}-{ahora}",
+                    "tipo": "viento",
+                    "nivel": "amarillo",
+                    "titulo": f"Viento fuerte en {zone['name']}: {rafaga} km/h",
+                    "descripcion": "Ráfagas moderadas.",
+                    "region": zone["name"],
+                    "fecha": ahora,
+                    "fuente": "Open-Meteo",
+                })
+            if lluvia >= 20:
+                alertas.append({
+                    "id": f"om-rain-{zone['name']}-{ahora}",
+                    "tipo": "lluvia",
+                    "nivel": "naranja" if lluvia >= 50 else "amarillo",
+                    "titulo": f"Precipitación intensa en {zone['name']}: {lluvia} mm",
+                    "descripcion": "Posibles inundaciones locales.",
+                    "region": zone["name"],
+                    "fecha": ahora,
+                    "fuente": "Open-Meteo",
+                })
+
+        return alertas if alertas else []
+    except Exception:
         return None
 
 

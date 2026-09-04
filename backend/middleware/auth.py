@@ -5,6 +5,7 @@ apuntarse como voluntario (baja fricción es clave en una emergencia).
 Queda preparado por si algún equipo necesita proteger una acción
 sensible más adelante.
 """
+import hmac
 from fastapi import Header, HTTPException
 
 from config import ANEXO_ADMIN_KEY
@@ -16,5 +17,5 @@ def requiere_clave_organizador(x_anexo_key: str | None = Header(default=None)):
     """
     if x_anexo_key is None:
         raise HTTPException(status_code=401, detail="Falta cabecera X-Anexo-Key")
-    if x_anexo_key != ANEXO_ADMIN_KEY:
+    if not hmac.compare_digest(x_anexo_key, ANEXO_ADMIN_KEY):
         raise HTTPException(status_code=403, detail="Clave de organizador no válida")

@@ -2,16 +2,14 @@
 
 from datetime import datetime, timezone
 from enum import Enum
+import json
 import logging
-import threading
 from typing import Any, Dict, List, Optional
 
 from integrations import gdacs_client, gdacs_mock, proteccion_civil_client
+from db.database import get_cursor
 
 logger = logging.getLogger(__name__)
-
-LOCAL_ALERTS_DB: Dict[str, Dict[str, Any]] = {}
-_DB_LOCK = threading.Lock()
 
 COUNTRY_ALIASES = {
     "españa": "spain",
@@ -80,7 +78,7 @@ def _normalize_alert(item: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def fetch_base_alerts() -> List[Dict[str, Any]]:
-    """Retrieves raw alert items with deduplication against local state."""
+    """Retrieves raw alert items with deduplication against DB."""
     raw_alerts: List[Dict[str, Any]] = []
 
     try:
@@ -101,22 +99,65 @@ def fetch_base_alerts() -> List[Dict[str, Any]]:
         logger.warning("No external alerts retrieved. Falling back to internal mock dataset.")
         raw_alerts = getattr(gdacs_mock, "MOCK_GDACS_DATA", [])
 
-    with _DB_LOCK:
-        seen_external_ids = {
-            item.get("external_id")
-            for item in LOCAL_ALERTS_DB.values()
-            if item.get("external_id")
-        }
-        result: List[Dict[str, Any]] = list(LOCAL_ALERTS_DB.values())
+    seen_external_ids = set()
+    result: List[Dict[str, Any]] = []
+
+    with get_cursor() as cur:
+        rows = cur.execute("SELECT * FROM alertas").fetchall()
+        for row in rows:
+            item = dict(row)
+            if item.get("zone") and isinstance(item["zone"], str):
+                try:
+                    item["zone"] = json.loads(item["zone"])
+                except (json.JSONDecodeError, TypeError):
+                    item["zone"] = None
+            result.append(item)
+            if item.get("external_id"):
+                seen_external_ids.add(item["external_id"])
 
     for item in raw_alerts:
         norm = _normalize_alert(item)
         ext_id = norm.get("external_id")
         if ext_id and ext_id in seen_external_ids:
             continue
+        _persist_alert(norm)
         result.append(norm)
 
     return result
+
+
+def _persist_alert(alert: Dict[str, Any]) -> None:
+    """Saves a single alert to SQLite."""
+    zone_json = json.dumps(alert.get("zone")) if alert.get("zone") else None
+    fecha_val = alert.get("fecha")
+    if isinstance(fecha_val, datetime):
+        fecha_val = fecha_val.isoformat()
+
+    with get_cursor() as cur:
+        cur.execute(
+            """INSERT OR IGNORE INTO alertas
+               (id, external_id, source, tipo, titulo, descripcion, severidad,
+                risk_level, status, is_active, zone, pais, lat, lon, fecha, enlace)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                alert.get("id"),
+                alert.get("external_id"),
+                alert.get("source", "GDACS"),
+                alert.get("tipo", "otro"),
+                alert.get("titulo", ""),
+                alert.get("descripcion", ""),
+                alert.get("severidad", "GREEN"),
+                alert.get("risk_level", "low"),
+                alert.get("status", "active"),
+                1 if alert.get("is_active", True) else 0,
+                zone_json,
+                alert.get("pais", ""),
+                alert.get("lat"),
+                alert.get("lon"),
+                fecha_val,
+                alert.get("enlace", ""),
+            ),
+        )
 
 
 def list_filtered_alerts(
@@ -161,36 +202,39 @@ def list_filtered_alerts(
 
 
 def create_manual_alert(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Creates a new manual alert item and stores it locally."""
-    with _DB_LOCK:
-        alert_id = f"manual-{len(LOCAL_ALERTS_DB) + 1000}"
-        risk_level = data.get("nivel_riesgo") or data.get("risk_level") or "low"
-        if isinstance(risk_level, Enum):
-            risk_level = risk_level.value
-            
-        tipo_val = data.get("tipo") or data.get("type") or "otro"
-        if isinstance(tipo_val, Enum):
-            tipo_val = tipo_val.value
+    """Creates a new manual alert item and stores it in SQLite."""
+    with get_cursor() as cur:
+        max_id = cur.execute("SELECT MAX(id) FROM alertas").fetchone()[0]
+        num = int(max_id.split("-")[-1]) if max_id and max_id.startswith("manual-") else 999
+        alert_id = f"manual-{num + 1}"
 
-        new_alert = {
-            "id": alert_id,
-            "external_id": alert_id,
-            "source": "MANUAL",
-            "fuente": "MANUAL",
-            "tipo": tipo_val,
-            "titulo": data.get("titulo") or data.get("title") or "Alerta Manual",
-            "descripcion": data.get("descripcion") or data.get("description") or "",
-            "severidad": "RED" if risk_level == "high" else "GREEN",
-            "severity": "RED" if risk_level == "high" else "GREEN",
-            "risk_level": risk_level,
-            "status": "active",
-            "is_active": True,
-            "zone": data.get("zone"),
-            "pais": "Spain",
-            "fecha": data.get("fecha") or data.get("date") or datetime.now(timezone.utc),
-            "enlace": "",
-        }
-        LOCAL_ALERTS_DB[alert_id] = new_alert
+    risk_level = data.get("nivel_riesgo") or data.get("risk_level") or "low"
+    if isinstance(risk_level, Enum):
+        risk_level = risk_level.value
+
+    tipo_val = data.get("tipo") or data.get("type") or "otro"
+    if isinstance(tipo_val, Enum):
+        tipo_val = tipo_val.value
+
+    new_alert = {
+        "id": alert_id,
+        "external_id": alert_id,
+        "source": "MANUAL",
+        "fuente": "MANUAL",
+        "tipo": tipo_val,
+        "titulo": data.get("titulo") or data.get("title") or "Alerta Manual",
+        "descripcion": data.get("descripcion") or data.get("description") or "",
+        "severidad": "RED" if risk_level == "high" else "GREEN",
+        "severity": "RED" if risk_level == "high" else "GREEN",
+        "risk_level": risk_level,
+        "status": "active",
+        "is_active": True,
+        "zone": data.get("zone"),
+        "pais": "Spain",
+        "fecha": data.get("fecha") or data.get("date") or datetime.now(timezone.utc),
+        "enlace": "",
+    }
+    _persist_alert(new_alert)
     return new_alert
 
 
@@ -213,6 +257,22 @@ def set_alert_status(alert_id: str, action: str) -> Dict[str, Any]:
         target["status"] = "deactivated"
         target["is_active"] = False
 
-    with _DB_LOCK:
-        LOCAL_ALERTS_DB[target["id"]] = target
+    zone_json = json.dumps(target.get("zone")) if target.get("zone") else None
+    fecha_val = target.get("fecha")
+    if isinstance(fecha_val, datetime):
+        fecha_val = fecha_val.isoformat()
+
+    with get_cursor() as cur:
+        cur.execute(
+            """UPDATE alertas SET status=?, is_active=?, risk_level=?, severity=?
+               WHERE id=? OR external_id=?""",
+            (
+                target["status"],
+                1 if target.get("is_active", True) else 0,
+                target.get("risk_level", "low"),
+                target.get("severidad", "GREEN"),
+                alert_id,
+                alert_id,
+            ),
+        )
     return target

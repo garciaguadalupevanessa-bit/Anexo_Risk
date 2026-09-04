@@ -9,9 +9,12 @@ uvicorn main:app --reload --port 8000
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Obtener la ruta del directorio base del Backend
 BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
 
 # Inicializar la configuración de logs antes de importar otros módulos 
 from middleware.logging_config import setup_logging
@@ -58,7 +61,27 @@ app.include_router(sync_router)            # Equipo 4 — siguiente prioridad (m
 # Inicializar la base de datos (ejecuta esquemas y migraciones automáticamente)
 init_db()
 
+# Servir archivos estáticos del frontend
+app.mount("/css", StaticFiles(directory=FRONTEND_DIR / "css"), name="css")
+app.mount("/js", StaticFiles(directory=FRONTEND_DIR / "js"), name="js")
+app.mount("/mocks", StaticFiles(directory=FRONTEND_DIR / "mocks"), name="mocks")
+
 @app.get("/api/health")
 def health():
     """Si esto responde, la base común está bien montada."""
     return {"status": "ok", "app": "Anexo Risk"}
+
+@app.get("/manifest.json")
+async def serve_manifest():
+    return FileResponse(FRONTEND_DIR / "manifest.json", media_type="application/json")
+
+@app.get("/sw.js")
+async def serve_sw():
+    return FileResponse(FRONTEND_DIR / "sw.js", media_type="application/javascript")
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    file_path = (FRONTEND_DIR / full_path).resolve()
+    if file_path.is_file() and file_path.is_relative_to(FRONTEND_DIR.resolve()):
+        return FileResponse(file_path)
+    return FileResponse(FRONTEND_DIR / "index.html")
