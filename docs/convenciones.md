@@ -17,7 +17,7 @@ objeción expresa del grupo; ante un choque, se avisa en la daily antes de impro
 | 5 | Protección de ramas | Sí, proteger `dev` y `main` (lo habilita Adriana) |
 | 6 | PRs y revisión | Mínimo 1 revisor del grupo + aprobación del **capitán**; el capitán mergea; **CI obligatoriamente en verde** |
 | 7 | Backend | Módulo = `backend/modules/<modulo>/` (routes, models, schemas, services). REST en `/api/<modulo>`. Errores con formato único `{"error","detalle"}`. Integraciones externas en `backend/integrations/` con caché; fallo de fuente → `[]` con 200, nunca 500. Sin dependencias nuevas sin justificar. `config.py` + `.env.example` |
-| 8 | Frontend | Vanilla JS, ES modules, sin framework. Base común obligatoria: `apiGet/apiPost`, `formatDate`, `el`, `crearTarjeta`. CSS con variables `nexo-`; estilos de pantalla en `css/<pantalla>.css`. 1 pantalla = 1 módulo JS |
+| 8 | Frontend | Vanilla JS, ES modules, sin framework. Estructura modular: `spa.js` (orquestador) → `sections/*.js` (mapa, alertas, ayudas, dashboard) + `shared/config.js` (API, constants, escapeHtml). Base común obligatoria: `apiGet/apiPost`, `formatDate`, `el`, `crearTarjeta`. CSS con variables `nexo-`; estilos de pantalla en `css/<pantalla>.css`. 1 pantalla = 1 módulo JS |
 | 9 | Base de datos | Migraciones nuevas `NNN_nombre.sql`, idempotentes, sin tocar las ajenas. Seed solo en `db/seed.py` |
 | 10 | Contratos entre módulos | Cada módulo documenta su contrato en `docs/` y `schemas.py`; los frontend consumen el contrato sin inventar campos; cambios se anuncian en la daily |
 | 11 | Testing / CI | Backend: `pytest` por módulo con fuentes externas mockeadas. Frontend: `tests/frontend/<modulo>.test.js`. CI en todo push/PR, verde |
@@ -27,7 +27,7 @@ objeción expresa del grupo; ante un choque, se avisa en la daily antes de impro
 | 15 | ADR | `docs/adr/NNN-nombre.md`, uno por decisión, votado en comisión |
 | 16 | Reglas duras | Ver sección B (6 reglas) |
 | 17 | Setup local | Backend: venv + `pip install -r requirements.txt` con versiones fijadas. Puerto 8000. Si no corre en tu máquina: parar y avisar, no seguir a ciegas |
-| 18 | Seguridad mínima | Validar toda entrada de usuario en la API; nunca hardcodear claves; sanitizar texto en UI; CORS solo al origen del front. Amplía la regla dura 1 |
+| 18 | Seguridad mínima | Validar toda entrada de usuario en la API con Pydantic (`max_length`, `ge`/`le`, `allow_inf_nan=False`); nunca hardcodear claves; sanitizar texto en UI con `escapeHtml()`; CORS solo al origen del front; comparar claves con `hmac.compare_digest()`. Amplía la regla dura 1 |
 | 19 | Documentación de módulos | Cada módulo lleva un README.md bilingüe corto (qué hace, cómo probarlo, contrato de datos). Referencia obligatoria en el PR |
 | 20 | Propiedad de archivos | Lista de dueños por archivo; avisar antes de tocar archivo ajeno (regla dura 3); conflictos en PR los resuelve el dueño del archivo |
 | 21 | Integrador rotativo | Una persona por iteración (rotatorio) mergea `feature/*` → `dev` y avisa de roturas; el capitán valida su módulo |
@@ -42,6 +42,7 @@ objeción expresa del grupo; ante un choque, se avisa en la daily antes de impro
 4. No añadir dependencias sin justificar y avisar.
 5. No mergear con CI en rojo.
 6. No commits directos en `dev`/`main`.
+7. Sanitizar todo texto de usuario en UI con `escapeHtml()` antes de insertar en `innerHTML`.
 
 ## C. Criterios de tarea
 - **Ready:** objetivo claro · responsable · contexto · criterios de aceptación · tamaño razonable.

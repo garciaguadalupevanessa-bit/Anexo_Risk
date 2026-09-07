@@ -25,11 +25,15 @@
 - `id` PK · `tipo` · `recurso` · `cantidad` · `contacto` · `creado_en`
 
 ### alertas (núcleo, Grupo 2 — activación de crisis)
-- `id` PK · `nivel_riesgo` (CHECK: bajo/medio/alto) · `zona` TEXT (GeoJSON Polygon)
-- `activa` INTEGER (0/1) · `gestor_token` · `titulo` · `descripcion`
-- `tipo` (opcional, reusa EventTypeEnum) · `fuente` (DEFAULT 'gestor')
-- `latitud` REAL · `longitud` REAL · `creado_en`
-- Creada en `004_alertas_gestor.sql` (Sprint 2, acordada en este modelo).
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT · `external_id` TEXT UNIQUE (dedup key from GDACS/manual)
+- `source` TEXT DEFAULT 'gdacs' (gdacs|manual|aemet)
+- `tipo` (earthquake, cyclone, flood, fire, volcano, drought, other) · `titulo` · `descripcion`
+- `severidad` (critica, alta, moderada, informativa) · `risk_level` (high, medium, low)
+- `status` TEXT DEFAULT 'active' (active, inactive) · `is_active` INTEGER DEFAULT 1
+- `zone` TEXT (GeoJSON zone data) · `pais` TEXT (country name)
+- `lat` REAL · `lon` REAL · `fecha` TEXT · `enlace` TEXT (external link)
+- `created_at` TEXT DEFAULT CURRENT_TIMESTAMP
+- Creada en `008_alertas_persistencia.sql` (Sprint 2, acordada en este modelo).
 
 ### ayudas (concepto Sprint 2 — unifica donación + voluntariado)
 - Módulo de negocio que agrupa `donaciones` (tipos `recursos`/`servicios`) y
@@ -124,17 +128,22 @@ erDiagram
     }
     ALERTAS {
         int id PK
-        string nivel_riesgo
-        string zona
-        int activa
-        string gestor_token
+        string external_id
+        string source
+        string tipo
         string titulo
         string descripcion
-        string tipo
-        string fuente
-        float latitud
-        float longitud
-        string creado_en
+        string severidad
+        string risk_level
+        string status
+        int is_active
+        string zone
+        string pais
+        float lat
+        float lon
+        string fecha
+        string enlace
+        string created_at
     }
     PERSONAS {
         int id PK
@@ -217,17 +226,22 @@ Table DONACIONES {
 }
 Table ALERTAS {
   id integer [primary key]
-  nivel_riesgo varchar
-  zona varchar
-  activa integer
-  gestor_token varchar
+  external_id varchar
+  source varchar
+  tipo varchar
   titulo varchar
   descripcion varchar
-  tipo varchar
-  fuente varchar
-  latitud real
-  longitud real
-  creado_en varchar
+  severidad varchar
+  risk_level varchar
+  status varchar
+  is_active integer
+  zone varchar
+  pais varchar
+  lat real
+  lon real
+  fecha varchar
+  enlace varchar
+  created_at varchar
 }
 Table PERSONAS {
   id integer [primary key]
@@ -271,7 +285,7 @@ Ref: ALERTAS.zona - NECESIDADES.id [note: 'logica por zona GeoJSON, no por id']
 2. Dos tablas de sync (`sync_log` y `sync_operations`) con propósitos solapados.
 3. `edad` y `descripcion` requeridas por el código G4 no están en ninguna migración.
 4. Dos archivos con prefijo `002_` → orden frágil y edición concurrente del mismo `.sql`.
-5. `alertas` (Grupo 2) añadida en Sprint 2 vía `004_alertas_gestor.sql`; ya acordada en este modelo, sin solape con las tablas existentes.
+5. `alertas` (Grupo 2) añadida en Sprint 2 vía `008_alertas_persistencia.sql`; ya acordada en este modelo, sin solape con las tablas existentes.
 
 ## Propuesta de reconciliación
 - **Fuente única:** este modelo ER. Toda decisión de datos se acuerda aquí.

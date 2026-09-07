@@ -1,6 +1,6 @@
 # Sprint Tracking — Anexo Risk
 
-> Last updated: 2026-09-02  
+> Last updated: 2026-09-07  
 > Repository: `garciaguadalupevanessa-bit/Anexo_Risk`  
 > Branching: GitHub Flow (`feat/*` → `main`)
 
@@ -33,7 +33,7 @@
 ## Sprint 2 — IN PROGRESS 🔄
 
 **Duration:** 2026-09-01 → 2026-09-07  
-**Goal:** Production-ready SPA with integrated modules, design system, and CI/CD
+**Goal:** Production-ready SPA with integrated modules, design system, modular architecture, security hardening, and comprehensive test coverage
 
 ### Sprint Backlog
 
@@ -45,12 +45,18 @@
 | S2-04 | Merge Luis's PR #5 (G1 needs refactor) | High | Juan | ✅ Done |
 | S2-05 | Fix seed.py enum error ("Agua embotellada") | High | Juan | ✅ Done |
 | S2-06 | Professional bilingual README | High | Juan | ✅ Done |
-| S2-07 | English Scrum documentation | Medium | Juan | 🔄 In Progress |
+| S2-07 | English Scrum documentation | Medium | Juan | ✅ Done |
 | S2-08 | CI/CD pipeline (GitHub Actions) | High | Javi | ⬜ Todo |
 | S2-09 | PWA manifest + service worker | Medium | Vanessa | ⬜ Todo |
 | S2-10 | Offline mode (localStorage fallback) | Medium | Vanessa | ⬜ Todo |
 | S2-11 | Responsive mobile layout | Medium | Luis | ⬜ Todo |
 | S2-12 | End-to-end integration testing | High | Javi | ⬜ Todo |
+| S2-13 | Frontend modular refactor (spa.js → 6 ES modules) | High | Juan | ✅ Done |
+| S2-14 | Security hardening (XSS, SQL injection, path traversal, timing attack) | High | Juan | ✅ Done |
+| S2-15 | Input validation (max_length, ge/le, allow_inf_nan on all schemas) | Medium | Juan | ✅ Done |
+| S2-16 | Backend test coverage (+4 test files: donaciones, incendios, clima, voluntariado) | Medium | Juan | ✅ Done |
+| S2-17 | Dead code cleanup (20 JS files removed, ~1457 lines) | Low | Juan | ✅ Done |
+| S2-18 | Documentation traceability (backlog, SPRINT, convenciones, roadmap, README updates) | Medium | Juan | ✅ Done |
 
 ### Burndown
 
@@ -58,7 +64,8 @@
 Day 1 (Mon): ████████████████████████ 12 tasks
 Day 2 (Tue): ████████████████░░░░░░░░  8 tasks (4 done)
 Day 3 (Wed): ████████████░░░░░░░░░░░░  5 tasks (7 done)
-Day 4 (Thu): ░░░░░░░░░░░░░░░░░░░░░░░░  remaining
+Day 4 (Thu): ████████░░░░░░░░░░░░░░░░  3 tasks (9 done — S2-07 to S2-12)
+Day 5 (Fri): ░░░░░░░░░░░░░░░░░░░░░░░░  0 tasks (18 done — S2-13 to S2-18)
 ```
 
 ### Risks
@@ -68,6 +75,7 @@ Day 4 (Thu): ░░░░░░░░░░░░░░░░░░░░░░�
 | CI pipeline not active | High | Javi to configure GitHub Actions this sprint |
 | Mobile responsiveness incomplete | Medium | Luis to add responsive breakpoints |
 | GDACS API downtime | Low | Fallback to empty array, cached data |
+| Frontend XSS vulnerability | High | ✅ Mitigated — escapeHtml() applied to all innerHTML |
 
 ---
 

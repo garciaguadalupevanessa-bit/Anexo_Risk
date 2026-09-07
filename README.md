@@ -241,6 +241,7 @@ borra: cada persona mantiene su rama propia y todas convergen en
   usuario queda para post-MVP.
 - **Sin Haversine manual** — la geolocalización usa APIs públicas
   (Nominatim para geocoding inverso, GDACS para alertas).
+- **Seguridad por defecto** — `escapeHtml()` en todo `innerHTML`, `hmac.compare_digest()` para claves, validación Pydantic estricta, path traversal protection.
 
 ## 11. Arquitectura
 
@@ -425,14 +426,16 @@ anexo_risk/
 │   ├── config.py            # Variables de entorno
 │   ├── db/
 │   │   ├── database.py      # Conexión + get_cursor()
-│   │   ├── migrations/      # 001-005 *.sql idempotentes
+│   │   ├── migrations/      # 001-008 *.sql idempotentes
 │   │   └── seed.py          # Datos de ejemplo (idempotente)
 │   ├── modules/
 │   │   ├── necesidades/     # Reporte ciudadano
 │   │   ├── alertas/         # GDACS
 │   │   ├── donaciones/      # Recursos y servicios
 │   │   ├── voluntariado/    # Red de apoyo
-│   │   └── personas/        # Registro y búsqueda
+│   │   ├── personas/        # Registro y búsqueda
+│   │   ├── incendios/       # Detecciones FIRMS
+│   │   └── clima/           # Alertas meteorológicas AEMET
 │   ├── middleware/          # CORS, auth, logging, errores
 │   ├── sync/                # Modo offline (backend listo)
 │   └── integrations/        # GDACS, USGS, Nominatim
@@ -442,8 +445,17 @@ anexo_risk/
 │   ├── manifest.json        # PWA manifest
 │   ├── js/
 │   │   ├── spa.js           # Entry point
-│   │   ├── core/            # Módulos por pantalla
-│   │   └── shared/          # Componentes y utilidades
+│   │   ├── core/
+│   │   │   ├── normalization/    # Data normalization
+│   │   │   └── mapa-necesidades/
+│   │   │       └── geocodificacion.js
+│   │   ├── sections/
+│   │   │   ├── mapa.js       # Mapa interactivo
+│   │   │   ├── alertas.js    # Panel de alertas
+│   │   │   ├── ayudas.js     # Donaciones y voluntariado
+│   │   │   └── dashboard.js  # Dashboard de métricas
+│   │   └── shared/
+│   │       └── config.js     # Configuración global
 │   ├── css/                 # Variables + estilos
 │   ├── assets/              # Logo, iconos
 │   └── mocks/               # Fallback cuando la API cae
@@ -462,17 +474,34 @@ anexo_risk/
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/api/health` | Liveness check |
-| GET | `/api/alertas` | Listar alertas oficiales (filtros: nivel, tipo, país) |
+| GET | `/api/alertas` | Listar alertas (filtros: tipo, severidad, país) |
+| POST | `/api/alertas` | Crear alerta manual |
+| POST | `/api/alertas/{id}/activar` | Activar alerta |
+| POST | `/api/alertas/{id}/alto-riesgo` | Marcar alto riesgo |
+| POST | `/api/alertas/{id}/desactivar` | Desactivar alerta |
 | GET | `/api/necesidades` | Listar necesidades (filtros: tipo, estado) |
+| GET | `/api/necesidades/{id}` | Detalle de necesidad |
 | POST | `/api/necesidades` | Reportar nueva necesidad |
-| GET | `/api/necesidades/{id}` | Detalle de una necesidad |
-| PATCH | `/api/necesidades/{id}/estado` | Cambiar estado (transición válida) |
+| PATCH | `/api/necesidades/{id}` | Actualizar estado |
 | GET | `/api/donaciones` | Listar donaciones (filtro: tipo) |
+| GET | `/api/donaciones/{id}` | Detalle de donación |
 | POST | `/api/donaciones` | Publicar donación |
 | PATCH | `/api/donaciones/{id}/estado` | Marcar entregada |
 | GET | `/api/voluntarios` | Directorio de voluntarios |
+| GET | `/api/voluntarios/pendientes` | Voluntarios pendientes (admin) |
 | POST | `/api/voluntarios` | Alta de voluntario |
-| POST | `/api/personas/{id}/localizada` | Marcar persona como localizada |
+| GET | `/api/voluntarios/{id}/aprobar` | Aprobar voluntario (link email) |
+| GET | `/api/voluntarios/{id}/rechazar` | Rechazar voluntario (link email) |
+| POST | `/api/voluntarios/{id}/aprobar` | Aprobar voluntario (API) |
+| POST | `/api/voluntarios/{id}/rechazar` | Rechazar voluntario (API) |
+| PATCH | `/api/voluntarios/{id}` | Actualizar coordinación (admin) |
+| PATCH | `/api/voluntarios/{id}/disponible` | Actualizar disponibilidad |
+| GET | `/api/personas/` | Listar personas |
+| POST | `/api/personas/` | Crear persona |
+| POST | `/api/personas/estoy-bien` | Marcar persona localizada |
+| GET | `/api/personas/{id}` | Detalle de persona |
+| GET | `/api/incendios` | Detecciones FIRMS (zones: spain/europa/mediterraneo/global) |
+| GET | `/api/clima` | Alertas meteorológicas (AEMET + Open-Meteo) |
 | POST | `/api/sync/batch` | Sincronizar cola offline |
 
 Las cabeceras comunes son:
@@ -484,7 +513,7 @@ Las cabeceras comunes son:
 
 Documentos vigentes del proyecto `anexo_risk`:
 
-- [`docs/architecture.md`](docs/architecture.md) — Decisiones arquitectónicas (ADRs)
+- [`docs/architecture.md`](docs/architecture.md) — Decisiones arquitectónicas (ADRs 001-008)
 - [`docs/manifiesto.md`](docs/manifiesto.md) — Misión y criterios de éxito
 - [`docs/backlog.md`](docs/backlog.md) — Estado actual del trabajo
 - [`docs/sprint.md`](docs/sprint.md) — Seguimiento de sprints

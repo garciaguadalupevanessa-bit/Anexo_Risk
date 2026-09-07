@@ -46,3 +46,33 @@
 **Abierto**
 - **Alcance exacto del offline:** decisión abierta.
 - **Estrategia de despliegue:** pendiente.
+
+## Arquitectura Modular (Sprint 2)
+
+### ¿Por qué se separó spa.js en módulos?
+spa.js tenía 1,186 líneas con toda la lógica del mapa (512 líneas), alertas, donaciones, dashboard, navegación, sidebar y drawer en un solo archivo monolítico. Se extrajo en módulos ES:
+- `shared/config.js` — API config, constants, escapeHtml utility
+- `sections/mapa.js` — Map init, 6 layers, markers, popups
+- `sections/alertas.js` — Alert rendering, filters, notifications
+- `sections/ayudas.js` — Donation/aid section
+- `sections/dashboard.js` — KPI dashboard, CSV export
+- `spa.js` — Slim orchestrator (~160 lines)
+Resultado: spa.js reducido de 1,186 → 163 líneas (86% reducción).
+Ver ADR-007 en `docs/architecture.md`.
+
+### ¿Cómo funciona la normalización de entidades?
+El módulo `core/normalization/` (domain.js + sources.js) unifica los datos de 5 fuentes diferentes (GDACS, FIRMS, Open-Meteo, necesidades, donaciones) en una entidad común con campos: id, type, severity, coords, title, description, source, timestamp, country, status, extras. Esto permite que el frontend renderice cualquier fuente con la misma lógica.
+
+## Seguridad (Sprint 2)
+
+### ¿Cómo se protege contra XSS?
+Se implementó `escapeHtml()` en `shared/config.js` que escapa &, <, >, ", ' en todo texto insertado en `innerHTML`. Se aplica en TODOS los módulos: alertas.js, mapa.js, ayudas.js, dashboard.js. También se fixeó la inyección de atributos en `data-entity` (JSON → escapeHtml completo).
+Ver ADR-008 en `docs/architecture.md`.
+
+### ¿Cómo se valida la entrada de usuario?
+Todos los schemas Pydantic tienen: `max_length` en strings, `ge`/`le` en coordenadas, `allow_inf_nan=False` en floats. El `operation_id` en sync se valida con regex `^[a-zA-Z0-9_-]+$` para prevenir SQL injection en SAVEPOINT names.
+
+### ¿Cómo se protegen las rutas sensibles?
+- Admin key comparada con `hmac.compare_digest()` (timing-safe)
+- SPA catch-all valida `file_path.is_relative_to(FRONTEND_DIR)` (path traversal)
+- Error messages genéricos al cliente, detalles en server-side logging

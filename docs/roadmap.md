@@ -1,17 +1,38 @@
-# Roadmap de Anexo Risk
+# Roadmap — Anexo Risk
 
-## Núcleo (MVP)
-- Mapa en tiempo real de necesidades
-- Alertas oficiales (GDACS, a nivel mundial)
-- Voluntariado y donaciones
+> Last updated: 2026-09-07
 
-## Siguientes prioridades
-- Registro de personas desaparecidas / localizadas y estado "estoy bien"
-- Modo sin conexión (PWA + IndexedDB + cola de sincronización)
+## Completado en Sprint 2 (2026-09-01 → 2026-09-07)
 
-## Futuro (no se construye todavía)
-- Red mesh + nodos satélite para funcionar sin infraestructura de red
-- Apertura del proyecto a código abierto
+- [x] SPA unificada (index.html + spa.js)
+- [x] Design system dark glassmorphism (variables.css + style.css)
+- [x] Frontend modular (spa.js → 6 ES modules, 1186→163 líneas)
+- [x] Security hardening (XSS, SQL injection, path traversal, timing attack)
+- [x] Input validation completa (max_length, ge/le en todos los schemas)
+- [x] Tests: 246 backend + 214 frontend = 460 total
+- [x] Alertas persistidas en SQLite (migration 008)
+- [x] FIRMS zone selector (spain/europa/mediterraneo/global)
+- [x] Open-Meteo 7 ciudades con retry logic
+- [x] Dead code cleanup (20 archivos JS eliminados)
 
-Cada carpeta del proyecto (`core/`, `siguiente/`, `futuro/`) refleja esta misma
-prioridad, para que cualquiera que entre al repo sepa qué construir primero.
+## Siguiente prioridad
+
+- [ ] UI de Voluntariado (backend listo, falta frontend)
+- [ ] UI de Personas / "Estoy bien" (backend listo, falta frontend)
+- [ ] Modo offline (frontend queue + service worker)
+- [ ] Dashboard analytics con gráficas
+- [ ] PWA instalable completa
+
+## Horizonte estratégico (3-6 meses)
+
+- [ ] Autenticación JWT (login de usuario)
+- [ ] PostgreSQL/PostGIS para escalabilidad
+- [ ] Push notifications para alertas críticas
+- [ ] Mobile app (React Native o PWA avanzada)
+- [ ] Multi-idioma (i18n)
+
+## Excluido del MVP
+
+- ❌ Machine learning / clustering de sismos
+- ❌ Red mesh + nodos satelitales
+- ❌ Monetización / premium features
