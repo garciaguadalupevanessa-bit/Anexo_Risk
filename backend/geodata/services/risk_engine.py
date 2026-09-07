@@ -3,13 +3,20 @@
 Calcula scores de riesgo basados en reglas ponderadas.
 Presentado como "Índice de Prioridad Operacional" — no como probabilidad real.
 
-Incluye RiskAssessment con methodology_version para trazabilidad.
+Fuentes:
+- rules-v1: scoring determinista basado en reglas
+- ml-v1: predicción ML (experimental, target rule-based)
+- rules+ml: combinación ponderada cuando ML tiene confianza suficiente
+
+Incluye RiskAssessment con methodology_version, source, generated_at para trazabilidad.
 """
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-METHODOLOGY_VERSION = "rules-v1"
+METHODOLOGY_RULES = "rules-v1"
+METHODOLOGY_ML = "ml-v1"
+METHODOLOGY_COMBINED = "rules+ml-v1"
 
 
 def calculate_risk_score(
@@ -19,8 +26,7 @@ def calculate_risk_score(
     event_density: float = 0.0,
     needs_open: int = 0,
     trend: float = 0.0,
-    ml_score: float | None = None,
-    ml_confidence: float | None = None,
+    ml_prediction: dict | None = None,
 ) -> dict:
     """Calcula score de riesgo combinando reglas + ML opcional.
 
@@ -37,17 +43,15 @@ def calculate_risk_score(
     needs_open : int
         Número de necesidades abiertas.
     trend : float
-        Tendencia de actividad -1 a 1 (negativo = decreciente).
-    ml_score : float or None
-        Score ML 0-1 si disponible.
-    ml_confidence : float or None
-        Confianza del modelo 0-1.
+        Tendencia de actividad -1 a 1.
+    ml_prediction : dict or None
+        Predicción ML completa de predict_with_explanation().
 
     Returns
     -------
     dict
         RiskAssessment con combined_score, priority_level, factors, explanation,
-        methodology_version, generated_at.
+        source, methodology_version, generated_at, ml_info.
     """
     needs_factor = min(needs_open / 10, 1.0)
 
@@ -62,6 +66,81 @@ def calculate_risk_score(
 
     rule_score_100 = round(rule_score * 100, 1)
 
+    factors = _build_rule_factors(severity, exposure, weather, event_density, needs_open, trend)
+
+    ml_score = None
+    ml_confidence = None
+    ml_info = None
+    source = "rules"
+    methodology = METHODOLOGY_RULES
+
+    if ml_prediction and ml_prediction.get("available"):
+        ml_pred = ml_prediction.get("prediction")
+        ml_conf = ml_prediction.get("confidence", 0)
+
+        ml_level_map = {"critico": 0.9, "alto": 0.7, "medio": 0.5, "bajo": 0.2, "informativo": 0.1}
+        ml_score = ml_level_map.get(ml_pred, 0.5) if ml_pred else 0.5
+        ml_confidence = ml_conf
+
+        if ml_confidence >= 0.6:
+            combined = rule_score_100 * 0.6 + ml_score * 100 * 0.4
+            combined = round(combined, 1)
+            source = "rules+ml"
+            methodology = METHODOLOGY_COMBINED
+            factors.append(
+                f"ML contribuye: prioridad {ml_pred} "
+                f"(confianza: {ml_confidence:.0%})"
+            )
+            top_feats = ml_prediction.get("top_features", [])
+            if top_feats:
+                feat_names = [f["name"] for f in top_feats[:2]]
+                factors.append(
+                    f"Factores ML: {', '.join(feat_names)}"
+                )
+        else:
+            combined = rule_score_100
+            factors.append("ML no disponible (confianza insuficiente)")
+    else:
+        combined = rule_score_100
+        if ml_prediction and not ml_prediction.get("available"):
+            reason = ml_prediction.get("disclaimer", "Modelo no cargado")
+            factors.append(f"ML no disponible: {reason}")
+
+    priority_level = _score_to_level(combined)
+    now = datetime.now(timezone.utc).isoformat()
+
+    explanation = _build_explanation(
+        rule_score=rule_score_100,
+        ml_score=round(ml_score * 100, 1) if ml_score is not None else None,
+        ml_confidence=ml_confidence,
+        factors=factors,
+        source=source,
+    )
+
+    return {
+        "combined_score": combined,
+        "priority_level": priority_level,
+        "rule_score": rule_score_100,
+        "ml_risk_score": round(ml_score * 100, 1) if ml_score is not None else None,
+        "ml_confidence": round(ml_confidence, 3) if ml_confidence is not None else None,
+        "factors": factors,
+        "explanation": explanation,
+        "source": source,
+        "methodology_version": methodology,
+        "generated_at": now,
+        "ml_info": ml_prediction if ml_prediction else None,
+    }
+
+
+def _build_rule_factors(
+    severity: float,
+    exposure: float,
+    weather: float,
+    event_density: float,
+    needs_open: int,
+    trend: float,
+) -> list[str]:
+    """Construye factores del scoring determinista."""
     factors = []
     if severity >= 0.8:
         factors.append("Severidad alta")
@@ -89,34 +168,7 @@ def calculate_risk_score(
     elif trend < -0.3:
         factors.append("Tendencia decreciente")
 
-    if ml_score is not None and ml_confidence is not None and ml_confidence >= 0.6:
-        combined = (rule_score_100 * 0.6 + ml_score * 100 * 0.4)
-        combined = round(combined, 1)
-        factors.append(f"ML contribuye (confianza: {ml_confidence:.0%})")
-        explanation = _build_explanation(rule_score_100, ml_score * 100, ml_confidence, factors)
-        source = "rules+ml"
-    else:
-        combined = rule_score_100
-        if ml_confidence is not None and ml_confidence < 0.6:
-            factors.append("Predicción ML no disponible (confianza insuficiente)")
-        explanation = _build_explanation(rule_score_100, None, None, factors)
-        source = "rules"
-
-    priority_level = _score_to_level(combined)
-    now = datetime.now(timezone.utc).isoformat()
-
-    return {
-        "combined_score": combined,
-        "priority_level": priority_level,
-        "rule_score": rule_score_100,
-        "ml_risk_score": round(ml_score * 100, 1) if ml_score is not None else None,
-        "ml_confidence": round(ml_confidence, 3) if ml_confidence is not None else None,
-        "factors": factors,
-        "explanation": explanation,
-        "source": source,
-        "methodology_version": METHODOLOGY_VERSION,
-        "generated_at": now,
-    }
+    return factors
 
 
 def _score_to_level(score: float) -> str:
@@ -136,11 +188,22 @@ def _build_explanation(
     ml_score: float | None,
     ml_confidence: float | None,
     factors: list[str],
+    source: str,
 ) -> str:
-    lines = [f"Reglas: {rule_score}"]
-    if ml_score is not None:
+    """Construye explicación textual del riesgo."""
+    lines = [f"Fuente: {source}"]
+
+    if source == "rules+ml":
+        lines.append(f"Reglas: {rule_score}")
         lines.append(f"ML: {ml_score:.1f}")
-        lines.append(f"Confianza del modelo: {ml_confidence:.0%}")
+        lines.append(f"Confianza ML: {ml_confidence:.0%}")
+        lines.append("Combinación: 60% reglas + 40% ML")
+    elif source == "ml":
+        lines.append(f"ML: {ml_score:.1f}")
+        lines.append(f"Confianza: {ml_confidence:.0%}")
+    else:
+        lines.append(f"Score: {rule_score}")
+
     lines.append("")
     if factors:
         lines.append("Factores:")
@@ -148,4 +211,5 @@ def _build_explanation(
             lines.append(f"  - {f}")
     else:
         lines.append("Sin factores significativos.")
+
     return "\n".join(lines)

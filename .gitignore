@@ -30,6 +30,7 @@ backend/uploads/
 
 # ML artifacts
 ml/artifacts/
+backend/ml/artifacts/
 *.pkl
 *.joblib
 

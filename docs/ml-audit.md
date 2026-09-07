@@ -185,6 +185,64 @@ En toda presentación, API response, y documentación:
 
 ---
 
-## 7. Aprobación para continuar
+## 7. Análisis de Features con Importancia 0
+
+### Resultado post-FASE A
+
+| Feature | Importancia | Disponible en adapters |
+|---------|-------------|----------------------|
+| depth | 63.6% | SÍ (USGS, Smithsonian) |
+| distance_to_coast | 36.5% | SÍ (calculado) |
+| event_density | 0.0% | PARCIAL (calculable desde datos) |
+| needs_open | 0.0% | SÍ (módulo necesidades) |
+| resources_nearby | 0.0% | SÍ (módulo recursos) |
+| weather_score | 0.0% | SÍ (módulo clima) |
+
+### ¿Por qué tienen importancia 0?
+
+Las features `event_density`, `needs_open`, `resources_nearby`, y `weather_score` valen **0 para todos los eventos** en el dataset de entrenamiento. Razón:
+
+- **USGS** solo devuelve: magnitud, profundidad, lat, lon, tiempo. No incluye densidad, necesidades, recursos ni clima.
+- **Smithsonian** solo devuelve: nombre, lat, lon, erupción reciente. No incluye las demás features.
+- El dataset se construye directamente desde los adapters, sin enriquecer con datos de otros módulos.
+
+### ¿Cómo deberían construirse?
+
+Para que estas features tengan valores reales, el pipeline debería:
+
+1. **event_density**: Contar eventos cercanos (radio 100km) del mismo dataset. Ya es calculable con `find_nearby()`.
+
+2. **needs_open**: Para cada evento, buscar necesidades abiertas en la BD dentro de radio 50km. Requiere que existan necesidades en la BD.
+
+3. **resources_nearby**: Para cada evento, buscar recursos disponibles en la BD dentro de radio 50km. Requiere que existan recursos en la BD.
+
+4. **weather_score**: Para cada evento, consultar Open-Meteo o AEMET por coordenadas y hora. Requiere llamada API por evento.
+
+### Implementación recomendada
+
+```python
+# En build_dataset(), enriquecer cada evento:
+for event in events:
+    event["event_density"] = count_nearby(events, event, radius_km=100)
+    event["needs_open"] = count_needs_nearby(event, radius_km=50)
+    event["resources_nearby"] = count_resources_nearby(event, radius_km=50)
+    event["weather_score"] = get_weather_score(event["lat"], event["lon"])
+```
+
+Esto requiere:
+- Acceso a la BD de necesidades y recursos
+- Llamadas a API meteorológica por evento (coste: ~1 request/evento)
+- Cache para evitar llamadas repetidas
+
+### Impacto esperado
+
+Con estas features disponibles:
+- El modelo tendría 6 features con valores reales (no solo 2)
+- La importancia se distribuiría entre variables contextuales
+- El modelo podría generalizar mejor a nuevos eventos
+
+---
+
+## 8. Aprobación para continuar
 
 Esta auditoría está lista para ser revisada y aprobada antes de proceder a las correcciones del pipeline.

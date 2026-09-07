@@ -4,7 +4,7 @@ Proporciona una vista unificada de un incidente con:
 - Situación: tipo, severidad, fuente, timestamp, ubicación
 - Contexto: fuentes relacionadas, meteorología, eventos cercanos, tendencia
 - Impacto: población expuesta, infraestructura, necesidades afectadas, recursos cercanos
-- Riesgo: score 0-100, nivel, factores, confianza
+- Riesgo: score 0-100, nivel, factores, confianza, source (rules/ml/combined)
 - Operación: necesidades abiertas, recursos disponibles, asignaciones, estado
 - Explicación: por qué tiene esta prioridad
 """
@@ -16,6 +16,7 @@ from geodata.adapters.effis_adapter import get_fire_danger_for_point
 from geodata.services.exposure import calculate_exposure, calculate_impact
 from geodata.services.risk_engine import calculate_risk_score
 from geodata.services.spatial import find_nearby, haversine_distance
+from ml.service import predict_with_explanation
 
 
 def build_decision_context(
@@ -102,7 +103,15 @@ def build_decision_context(
     )
     impact = calculate_impact(incident, exposure)
 
-    # 4. Riesgo
+    # 4. ML Prediction (experimental)
+    ml_prediction = predict_with_explanation(
+        event=incident,
+        all_events=all_events,
+        needs=needs,
+        resources=resources,
+    )
+
+    # 5. Riesgo (rules + ML si disponible)
     risk = calculate_risk_score(
         severity=severity,
         exposure=exposure.get("exposure_score", 0),
@@ -110,9 +119,10 @@ def build_decision_context(
         event_density=event_density,
         needs_open=exposure.get("needs_affected", 0),
         trend=trend,
+        ml_prediction=ml_prediction,
     )
 
-    # 5. Operación
+    # 6. Operación
     nearby_needs = find_nearby(lat, lon, needs or [], radius_km=50) if lat and lon else []
     nearby_resources = find_nearby(lat, lon, resources or [], radius_km=50) if lat and lon else []
 
@@ -124,7 +134,7 @@ def build_decision_context(
         "min_distance_resource": exposure.get("min_distance_resource"),
     }
 
-    # 6. Explicación
+    # 7. Explicación
     explanation = _build_explanation(situation, context, exposure, risk, operation)
 
     return {
@@ -154,6 +164,7 @@ def _build_explanation(
     factors = list(risk.get("factors", []))
     score = risk.get("combined_score", 0)
     level = risk.get("priority_level", "informativo")
+    source = risk.get("source", "rules")
 
     why = []
     if score >= 80:
@@ -188,7 +199,8 @@ def _build_explanation(
             "event_density": context.get("event_density", 0),
             "trend": context.get("trend", 0),
         },
-        "methodology": "rules-v1",
+        "methodology": risk.get("methodology_version", "rules-v1"),
+        "source": source,
     }
 
 
