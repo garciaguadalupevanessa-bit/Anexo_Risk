@@ -33,6 +33,10 @@ from modules.personas.routes import router as personas_router
 from modules.incendios.routes import router as incendios_router
 from modules.clima.routes import router as clima_router
 from sync.sync_controller import router as sync_router
+from modules.organizaciones.routes import router as organizaciones_router
+from modules.recursos.routes import router as recursos_router
+from geodata.routes import router as geodata_router
+from modules.decision_center.routes import router as decision_router
 
 app = FastAPI(
     title="Anexo Risk API",
@@ -57,6 +61,10 @@ app.include_router(personas_router)        # Equipo 4 — siguiente prioridad
 app.include_router(incendios_router)       # NASA FIRMS — incendios satélite
 app.include_router(clima_router)           # AEMET + Open-Meteo — meteorología
 app.include_router(sync_router)            # Equipo 4 — siguiente prioridad (modo offline)
+app.include_router(organizaciones_router)  # Fase B — modelo de producto
+app.include_router(recursos_router)        # Fase B — gestión de recursos
+app.include_router(geodata_router)         # Fase C — GeoData Engine
+app.include_router(decision_router)       # Fase D — Centro de Decisión
 
 # Inicializar la base de datos (ejecuta esquemas y migraciones automáticamente)
 init_db()

@@ -6,7 +6,7 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from integrations import gdacs_client, gdacs_mock, proteccion_civil_client
+from integrations import gdacs_client, proteccion_civil_client
 from db.database import get_cursor
 
 logger = logging.getLogger(__name__)
@@ -96,8 +96,7 @@ def fetch_base_alerts() -> List[Dict[str, Any]]:
         logger.error("Failed to fetch alerts from Proteccion Civil client: %s", exc, exc_info=True)
 
     if not raw_alerts:
-        logger.warning("No external alerts retrieved. Falling back to internal mock dataset.")
-        raw_alerts = getattr(gdacs_mock, "MOCK_GDACS_DATA", [])
+        logger.warning("No external alerts retrieved from GDACS or Proteccion Civil.")
 
     seen_external_ids = set()
     result: List[Dict[str, Any]] = []

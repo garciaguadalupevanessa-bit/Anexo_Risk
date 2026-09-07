@@ -91,7 +91,7 @@ class AlertResponse(BaseModel):
     status: AlertStatusEnum = Field(default=AlertStatusEnum.NORMAL, description="Current operational status")
     is_active: bool = Field(default=True, description="Active status indicator flag")
     zone: Optional[Dict[str, Any]] = Field(default=None, description="GeoJSON Polygon mapping zone")
-    pais: Optional[str] = Field(default="", alias="pais", description="Name of affected country", max_length=200)
+    pais: Optional[str] = Field(default="", alias="pais", description="Name of affected country", max_length=2000)
     lat: Optional[float] = Field(default=None, description="Geographical latitude coordinate")
     lon: Optional[float] = Field(default=None, description="Geographical longitude coordinate")
     fecha: Optional[datetime] = Field(default=None, alias="fecha", description="Publication timestamp in ISO format")

@@ -140,6 +140,15 @@ class NeedResponse(NeedBase):
     # frontend tenga que mantener su propia copia de NEED_TYPE_LABELS.
     category_label: str = Field(default="", alias="categoria_etiqueta")
 
+    # Fase B: campos extendidos para gestión de recursos
+    incident_id: str | None = Field(default=None, alias="incident_id")
+    priority_score: float | None = Field(default=None, alias="priority_score")
+    quantity: int | None = Field(default=None, alias="quantity")
+    covered_quantity: int | None = Field(default=None, alias="covered_quantity")
+    assigned_resource_id: int | None = Field(default=None, alias="assigned_resource_id")
+    responsible_organization_id: int | None = Field(default=None, alias="responsible_organization_id")
+    updated_at: str | None = Field(default=None, alias="updated_at")
+
     @model_validator(mode="after")
     def _fill_category_label(self) -> "NeedResponse":
         if not self.category_label:
