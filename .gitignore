@@ -4,28 +4,42 @@ __pycache__/
 *.pyo
 venv/
 .venv/
-.env
 
-# Base de datos local - Anexo Risk
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Database
 *.db
+*.sqlite
 *.sqlite3
+backend/anexo_risk.db
+nexo.db
+
+# Logs
 backend/logs/
 *.log
 backend_server.log
 backend_server.err
 frontend_server.log
 frontend_server.err
-backend/uploads/
-docs/equipos/grupo2-alertas.md
-backend/venv/
-docs/auditoria-mvp-jueves.md
 
-# Node / editores
+# Uploads
+backend/uploads/
+
+# ML artifacts
+ml/artifacts/
+*.pkl
+*.joblib
+
+# Node / editors
 node_modules/
 .DS_Store
 .vscode/
+.idea/
 
-# GeoRisk - datos
+# GeoRisk — data
 data/raw/*
 !data/raw/.gitkeep
 !data/processed/*.csv
@@ -37,7 +51,6 @@ notebooks/.ipynb_checkpoints/
 models/
 *.html
 
-# Anexo Risk — ignorar basura local
-backend_server.err
-frontend_server.err
+# Anexo Risk — local
 docs/auditoria-mvp-jueves.md
+docs/equipos/grupo2-alertas.md
