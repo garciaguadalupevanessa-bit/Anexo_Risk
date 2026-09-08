@@ -46,6 +46,7 @@ from modules.outcome.routes import router as outcome_router
 from modules.ai_tools import router as ai_tools_router
 from modules.regiones.routes import router as regiones_router
 from modules.source_registry.routes import router as source_registry_router
+from modules.normalized_events.routes import router as normalized_events_router
 from middleware.rate_limit import RateLimitMiddleware
 
 app = FastAPI(
@@ -85,6 +86,7 @@ app.include_router(outcome_router)       # Fase 2 — Outcome tracking
 app.include_router(ai_tools_router)     # Fase 19-21 — AI tool-calling endpoints
 app.include_router(regiones_router)    # Fase 2.1 — Region/AOI engine
 app.include_router(source_registry_router)  # Fase 2.1 — Source registry
+app.include_router(normalized_events_router)  # Fase 2.1 — Normalized events
 
 # Inicializar la base de datos (ejecuta esquemas y migraciones automáticamente)
 init_db()
