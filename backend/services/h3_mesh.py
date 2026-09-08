@@ -16,6 +16,11 @@ from geodata.services.h3_resolver import (
     latlon_to_h3,
 )
 
+try:
+    import h3
+except ImportError:
+    h3 = None
+
 logger = logging.getLogger(__name__)
 
 MAX_CELLS_RETURNED = 500
@@ -72,7 +77,6 @@ def region_to_h3_cells(
         if None in (min_lat, min_lon, max_lat, max_lon):
             return []
         try:
-            import h3
             boundary = [
                 (min_lat, min_lon),
                 (min_lat, max_lon),

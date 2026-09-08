@@ -51,6 +51,12 @@ from modules.normalized_events.routes import router as normalized_events_router
 from modules.live_ingestion.routes import router as live_ingestion_router
 from modules.correlation.routes import router as correlation_router
 from modules.h3_mesh.routes import router as h3_mesh_router
+from modules.operational_nodes.routes import router as operational_nodes_router
+from modules.network_links.routes import router as network_links_router
+from modules.accessibility.routes import router as accessibility_router
+from modules.action_areas.routes import router as action_areas_router
+from modules.alert_policies.routes import router as alert_policies_router
+from modules.live_dashboard.routes import router as live_dashboard_router
 from middleware.rate_limit import RateLimitMiddleware
 
 app = FastAPI(
@@ -95,6 +101,12 @@ app.include_router(normalized_events_router)  # Fase 2.1 — Normalized events
 app.include_router(live_ingestion_router)  # Fase 2.1 — Live ingestion
 app.include_router(correlation_router)  # Fase 2.1 — Event correlation
 app.include_router(h3_mesh_router)  # Fase 2.1 — H3 operational mesh
+app.include_router(operational_nodes_router)  # Fase 8 — Operational nodes
+app.include_router(network_links_router)  # Fase 9 — Network links
+app.include_router(accessibility_router)  # Fase 10 — Accessibility/routing
+app.include_router(action_areas_router)  # Fase 11 — Dynamic action areas
+app.include_router(alert_policies_router)  # Fase 12 — Alert policies
+app.include_router(live_dashboard_router)  # Fase 14 — Live dashboard
 
 # Inicializar la base de datos (ejecuta esquemas y migraciones automáticamente)
 init_db()

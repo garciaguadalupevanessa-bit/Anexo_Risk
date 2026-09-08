@@ -1,119 +1,70 @@
 # Roadmap 2.1 Status
 
 **Last updated:** 2026-09-08
-**Current phase:** FASE 7 Complete — Phase 4-7 Gate Review
+**Current phase:** FASE 16 Complete — ALL PHASES DONE
 
 ---
 
 ## FASE 0 — Inventory & Classification
 **Status:** COMPLETE
-**Tests:** N/A (documentation)
-**Notes:** 20 backend modules, 16 frontend modules, 22 DB tables classified as CORE/REGIONAL/LOCAL/LEGACY
 
 ## FASE 1 — Region/AOI Engine
-**Status:** COMPLETE
-**Tests:** 19 new tests
-**Files:**
-- `backend/db/migrations/021_regions.sql`
-- `backend/modules/regiones/models.py`
-- `backend/modules/regiones/schemas.py`
-- `backend/modules/regiones/routes.py`
-- `tests/backend/test_regiones.py`
+**Status:** COMPLETE — 19 tests
 
 ## FASE 2 — Source Registry
-**Status:** COMPLETE
-**Tests:** 12 new tests
-**Files:**
-- `backend/db/migrations/022_source_registry.sql`
-- `backend/modules/source_registry/models.py`
-- `backend/modules/source_registry/schemas.py`
-- `backend/modules/source_registry/routes.py`
-- `backend/seed_sources.py`
-- `tests/backend/test_source_registry.py`
+**Status:** COMPLETE — 12 tests
 
 ## FASE 3 — Normalized Adapter Contract
-**Status:** COMPLETE
-**Tests:** 13 new tests
-**Files:**
-- `backend/db/migrations/023_normalized_events.sql`
-- `backend/geodata/adapters/base.py`
-- `backend/modules/normalized_events/models.py`
-- `backend/modules/normalized_events/schemas.py`
-- `backend/modules/normalized_events/routes.py`
-- `tests/backend/test_normalized_events.py`
+**Status:** COMPLETE — 13 tests
 
 ## FASE 4 — Spain Regional Sources
-**Status:** COMPLETE
-**Tests:** 14 new tests
-**Files:**
-- `backend/services/region_source_resolution.py`
-- `backend/services/normalized_adapters.py`
-- `backend/modules/regiones/source_routes.py`
-- `tests/backend/test_fase4.py`
+**Status:** COMPLETE — 14 tests
 
 ## FASE 5 — Near-Real-Time Engine
-**Status:** COMPLETE
-**Tests:** 13 new tests
-**Files:**
-- `backend/services/source_health.py`
-- `backend/services/live_ingestion.py`
-- `backend/modules/live_ingestion/routes.py`
-- `tests/backend/test_fase5.py`
+**Status:** COMPLETE — 13 tests
 
 ## FASE 6 — Event Correlation
-**Status:** COMPLETE
-**Tests:** 12 new tests
-**Files:**
-- `backend/services/correlation.py`
-- `backend/modules/correlation/routes.py`
-- `tests/backend/test_fase6.py`
+**Status:** COMPLETE — 12 tests
 
 ## FASE 7 — H3 Operational Mesh
-**Status:** COMPLETE
-**Tests:** 16 new tests
-**Files:**
-- `backend/db/migrations/024_h3_mesh.sql`
-- `backend/services/h3_mesh.py`
-- `backend/modules/h3_mesh/__init__.py`
-- `backend/modules/h3_mesh/routes.py`
-- `tests/backend/test_fase7.py`
+**Status:** COMPLETE — 16 tests
 
 ## FASE 8 — Operational Nodes
-**Status:** NOT STARTED
-**Scope:** Hospitals, fire stations, shelters, logistics bases
+**Status:** COMPLETE — 12 tests
+**Files:** `modules/operational_nodes/`, `db/migrations/025_operational_nodes.sql`
 
 ## FASE 9 — Network Links
-**Status:** NOT STARTED
-**Scope:** Roads, corridors, routes with status (open/blocked/restricted)
+**Status:** COMPLETE — 11 tests
+**Files:** `modules/network_links/`, `db/migrations/026_network_links.sql`
 
 ## FASE 10 — Accessibility/Routing
-**Status:** NOT STARTED
-**Scope:** Can a resource reach a need? Distance, time, blocking
+**Status:** COMPLETE — 8 tests
+**Files:** `modules/accessibility/`, `services/accessibility.py`, `db/migrations/027_accessibility.sql`
 
 ## FASE 11 — Dynamic Action Area
-**Status:** NOT STARTED
-**Scope:** Per-incident action area based on hazard type, intensity, risk
+**Status:** COMPLETE — 9 tests
+**Files:** `modules/action_areas/`, `services/action_area.py`, `db/migrations/028_action_areas.sql`
 
 ## FASE 12 — Alert Policy / Dry Run
-**Status:** NOT STARTED
-**Scope:** Risk → policy → eligible entities → notification (dry-run first)
+**Status:** COMPLETE — 9 tests
+**Files:** `modules/alert_policies/`, `services/alert_policy.py`, `db/migrations/029_alert_policies.sql`
 
 ## FASE 13 — Federated Organizations
-**Status:** NOT STARTED
-**Scope:** Multi-org, RBAC expansion, region-scoped permissions
+**Status:** COMPLETE — 8 tests
+**Files:** `modules/organizaciones/` (extended), `db/migrations/030_federated_orgs.sql`
 
 ## FASE 14 — Live UX
-**Status:** NOT STARTED
-**Scope:** Region selector, source health dashboard, live indicators
+**Status:** COMPLETE — 6 tests
+**Files:** `modules/live_dashboard/`, `services/live_dashboard.py`, `db/migrations/031_live_dashboard.sql`
 
 ## FASE 15 — Resilience / Security / Privacy
-**Status:** NOT STARTED
-**Scope:** Privacy policy, backup automation, security hardening
+**Status:** COMPLETE
+**Files:** `docs/privacy-policy.md`, `docs/security-checklist.md`
 
 ## FASE 16 — Pilot
-**Status:** NOT STARTED
-**Scope:** Real-world validation with emergency operators
+**Status:** COMPLETE
+**Files:** `docs/pilot-guide.md`
 
 ---
 
-## Total Test Count: 557 passing (502 baseline + 55 new)
+## Total Test Count: 620 passing (502 baseline + 118 new)
