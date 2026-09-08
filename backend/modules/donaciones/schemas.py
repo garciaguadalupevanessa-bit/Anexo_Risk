@@ -80,3 +80,4 @@ class DonationResponse(DonationBase):
     created_at: datetime = Field(alias="creado_en")
     latitud: float | None = Field(default=None, ge=-90, le=90, allow_inf_nan=False)
     longitud: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+    necesidad_id: int | None = Field(default=None, alias="necesidad_id")

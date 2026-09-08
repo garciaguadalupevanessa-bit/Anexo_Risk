@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 
 import requests
 
+from config import USGS_CACHE_TTL_SECONDS
+
 _BASE_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary"
 
 _FEEDS = {
@@ -22,7 +24,7 @@ _FEEDS = {
 }
 
 _cache: dict = {}
-_CACHE_TTL = 900  # 15 minutes
+_CACHE_TTL = USGS_CACHE_TTL_SECONDS
 
 
 def fetch_earthquakes(feed: str = "week", max_events: int | None = None) -> list[dict]:

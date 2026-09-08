@@ -37,6 +37,14 @@ from modules.organizaciones.routes import router as organizaciones_router
 from modules.recursos.routes import router as recursos_router
 from geodata.routes import router as geodata_router
 from modules.decision_center.routes import router as decision_router
+from modules.asignaciones.routes import router as asignaciones_router
+from modules.external_risk.routes import router as external_risk_router
+from modules.operational.routes import router as operational_router
+from modules.incidentes.routes import router as incidentes_router
+from modules.timeline.routes import router as timeline_router
+from modules.outcome.routes import router as outcome_router
+from modules.ai_tools import router as ai_tools_router
+from middleware.rate_limit import RateLimitMiddleware
 
 app = FastAPI(
     title="Anexo Risk API",
@@ -50,6 +58,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RateLimitMiddleware, requests_per_minute=120)
 
 registrar_manejadores_de_error(app)
 
@@ -65,6 +74,13 @@ app.include_router(organizaciones_router)  # Fase B — modelo de producto
 app.include_router(recursos_router)        # Fase B — gestión de recursos
 app.include_router(geodata_router)         # Fase C — GeoData Engine
 app.include_router(decision_router)       # Fase D — Centro de Decisión
+app.include_router(asignaciones_router)   # Fase C — Asignación de recursos a necesidades
+app.include_router(external_risk_router)  # Fase D — GeoRisk Finder integration
+app.include_router(operational_router)   # Fase D — Operational data for GeoRisk
+app.include_router(incidentes_router)    # Fase 2 — Incidents (vertical slice entry point)
+app.include_router(timeline_router)      # Fase 2 — Timeline events
+app.include_router(outcome_router)       # Fase 2 — Outcome tracking
+app.include_router(ai_tools_router)     # Fase 19-21 — AI tool-calling endpoints
 
 # Inicializar la base de datos (ejecuta esquemas y migraciones automáticamente)
 init_db()

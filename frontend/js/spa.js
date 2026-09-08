@@ -1,12 +1,18 @@
 // =============================================
-// ANEXO FINDER — SPA Orchestrator
-// Navigation, shell (sidebar/drawer), boot
+// ANEXO RISK — SPA Orchestrator 2.x
+// Navigation, shell (sidebar/drawer), status bar, boot
 // =============================================
 
 import { initMap } from "./sections/mapa.js";
 import { fetchAlerts, initAlerts } from "./sections/alertas.js";
 import { initDonaciones } from "./sections/ayudas.js";
 import { loadDashboard } from "./sections/dashboard.js";
+import { initDecisionCenter, loadDecisionContext, loadIncidentDecisionContext } from "./sections/decision-center.js";
+import { renderRiskCard } from "./sections/risk-card.js";
+import { renderTimeline } from "./sections/timeline.js";
+import { updateFreshness } from "./sections/freshness.js";
+
+window._updateFreshness = updateFreshness;
 
 // --- NAVIGATION ---
 function showSection(name) {
@@ -23,12 +29,34 @@ function showSection(name) {
     btn.setAttribute("aria-current", "page");
   }
   if (name === "mapa") setTimeout(() => window._map?.invalidateSize(), 100);
+  if (name === "decision") initDecisionCenter();
   if (name === "dashboard") loadDashboard();
   if (name === "alertas") fetchAlerts();
   if (name === "ayudas") window.loadAyudasSection?.();
   closeSidebar();
 }
 window.showSection = showSection;
+window.loadIncidentDecisionContext = loadIncidentDecisionContext;
+
+// --- COMMAND VIEW ---
+let _commandViewActive = false;
+
+function toggleCommandView() {
+  _commandViewActive = !_commandViewActive;
+  document.body.classList.toggle("command-view", _commandViewActive);
+  const btn = document.getElementById("cmd-view-toggle");
+  if (btn) {
+    btn.classList.toggle("active", _commandViewActive);
+    btn.setAttribute("aria-pressed", _commandViewActive);
+  }
+  setTimeout(() => window._map?.invalidateSize(), 200);
+}
+window.toggleCommandView = toggleCommandView;
+
+// Auto-activate command view on large screens
+if (window.matchMedia("(min-width: 1920px)").matches) {
+  toggleCommandView();
+}
 
 document.querySelectorAll(".nav__link").forEach(btn => {
   btn.addEventListener("click", () => showSection(btn.dataset.section));
@@ -106,7 +134,7 @@ function renderDrawerFields(entity) {
   if (entity.type?.label) fields.push({ label: "Tipo", value: `${entity.type.icon || ""} ${entity.type.label}` });
   if (entity.severity?.level && entity.severity.level !== "sin_severidad") {
     const sevLabels = { critica: "Crítica", alta: "Alta", moderada: "Moderada", informativa: "Informativa" };
-    fields.push({ label: "Severidad", value: sevLabels[entity.severity.level] || entity.severity.level, cls: `sev-badge sev-badge--${entity.severity.level === "critica" ? "critica" : entity.severity.level === "alta" ? "alta" : entity.severity.level === "moderada" ? "moderada" : "informativa"}` });
+    fields.push({ label: "Severidad", value: sevLabels[entity.severity.level] || entity.severity.level, cls: `sev-badge sev-badge--${entity.severity.level}` });
   }
   if (entity.source) fields.push({ label: "Fuente", value: entity.source });
   if (entity.title) fields.push({ label: "Título", value: entity.title });
@@ -117,7 +145,10 @@ function renderDrawerFields(entity) {
   if (entity.timestamp) fields.push({ label: "Fecha", value: entity.timestamp });
   if (entity.status) fields.push({ label: "Estado", value: entity.status });
   if (entity.extras?.riskLevel) fields.push({ label: "Nivel de riesgo", value: entity.extras.riskLevel });
-  if (entity.extras?.enlace) fields.push({ label: "Enlace externo", value: `<a href="${entity.extras.enlace}" target="_blank" rel="noopener noreferrer">Ver detalle →</a>` });
+  if (entity.extras?.enlace) {
+    const safeUrl = /^(https?:\/\/)/i.test(entity.extras.enlace) ? entity.extras.enlace : "#";
+    fields.push({ label: "Enlace", value: `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">Ver detalle →</a>` });
+  }
   if (entity.extras?.satellite) fields.push({ label: "Satélite", value: entity.extras.satellite });
   if (entity.extras?.brightness != null) fields.push({ label: "Brillo", value: `${Number(entity.extras.brightness).toFixed(1)} K` });
   if (entity.extras?.confidence) fields.push({ label: "Confianza", value: entity.extras.confidence });
@@ -140,19 +171,36 @@ window.closeDrawer = closeDrawer;
 window.renderDrawerFields = renderDrawerFields;
 
 // --- ONLINE STATUS ---
-const statusDot = document.querySelector(".status-dot");
+const statusDot = document.getElementById("status-dot");
 function updateStatus() {
   const el = document.getElementById("status-text");
   const online = navigator.onLine;
   if (el) el.textContent = online ? "ONLINE" : "OFFLINE";
   if (statusDot) {
-    statusDot.style.background = online ? "var(--green)" : "var(--offline)";
-    statusDot.style.boxShadow = online ? "0 0 8px var(--green-glow)" : "none";
+    statusDot.classList.toggle("status-dot--offline", !online);
   }
 }
 window.addEventListener("online", updateStatus);
 window.addEventListener("offline", updateStatus);
 updateStatus();
+
+// --- STATUS BAR ---
+let _statusBarData = { critical: 0, high: 0, needs: 0, uncovered: 0, resources: 0, incidents: 0 };
+
+function updateStatusBar(data) {
+  Object.assign(_statusBarData, data);
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  set("sb-critical", _statusBarData.critical);
+  set("sb-high", _statusBarData.high);
+  set("sb-incidents", _statusBarData.incidents);
+  set("sb-needs", _statusBarData.needs);
+  set("sb-uncovered", _statusBarData.uncovered);
+  set("sb-resources", _statusBarData.resources);
+}
+window._updateStatusBar = updateStatusBar;
 
 // --- BOOT ---
 document.addEventListener("DOMContentLoaded", () => {

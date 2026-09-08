@@ -1,104 +1,95 @@
 /* =============================================
-   ANEXO RISK — Design System Tokens
-   Emergency Operations / Crisis Management Console
+   ANEXO RISK — Design System Tokens 2.x
+   Emergency Operations Command Center
+   Light-first, institutional + operational
    ============================================= */
 
 :root {
-  /* === FONDOS === */
-  --bg-void:        #060810;
-  --bg-primary:     #0A0D14;
-  --bg-secondary:   #121620;
-  --bg-elevated:    #1A1F2E;
-  --bg-surface:     #1E2538;
-  --bg-glass:       rgba(18, 22, 32, 0.72);
-  --bg-glass-hover: rgba(30, 37, 56, 0.85);
+  /* === FONDOS — Light Command Center === */
+  --bg-primary:     #F4F7FA;
+  --bg-surface:     #FFFFFF;
+  --bg-surface-alt: #EEF3F7;
+  --bg-elevated:    #FFFFFF;
+  --bg-inset:       #E8EDF2;
+  --bg-overlay:     rgba(21, 32, 43, 0.5);
 
   /* === TEXTO === */
-  --text-primary:   #F0F2F5;
-  --text-secondary: #8B95A8;
-  --text-muted:     #5A6378;
-  --text-inverse:   #0A0D14;
+  --text-primary:   #15202B;
+  --text-secondary: #5B6673;
+  --text-muted:     #8896A6;
+  --text-inverse:   #FFFFFF;
+  --text-link:      #1769AA;
 
-  /* === ACENTOS PRINCIPALES === */
-  --cyan:           #38BDF8;
-  --cyan-dim:       #2196C9;
-  --cyan-glow:      rgba(56, 189, 248, 0.25);
-  --cyan-subtle:    rgba(56, 189, 248, 0.08);
-
-  --blue:           #60A5FA;
-  --blue-dim:       #3B82F6;
-  --blue-glow:      rgba(96, 165, 250, 0.20);
+  /* === COLORES INSTITUCIONALES === */
+  --navy:           #102A43;
+  --navy-light:     #1A3A5C;
+  --blue:           #1769AA;
+  --blue-light:     #2B8ACF;
+  --blue-subtle:    rgba(23, 105, 170, 0.08);
+  --blue-border:    rgba(23, 105, 170, 0.25);
+  --blue-bg:        rgba(23, 105, 170, 0.06);
 
   /* === SEVERIDAD OPERATIVA === */
-  --sev-critica:      #FF334B;
-  --sev-critica-dim:  #CC2A3C;
-  --sev-critica-bg:   rgba(255, 51, 75, 0.12);
-  --sev-critica-border: rgba(255, 51, 75, 0.30);
-  --sev-critica-glow: rgba(255, 51, 75, 0.25);
+  --sev-critica:         #C62828;
+  --sev-critica-bg:      #FDEAEA;
+  --sev-critica-border:  #F5C6CB;
+  --sev-critica-text:    #8B1A1A;
 
-  --sev-alta:         #FF6B00;
-  --sev-alta-dim:     #CC5500;
-  --sev-alta-bg:      rgba(255, 107, 0, 0.12);
-  --sev-alta-border:  rgba(255, 107, 0, 0.30);
-  --sev-alta-glow:    rgba(255, 107, 0, 0.20);
+  --sev-alta:            #E65100;
+  --sev-alta-bg:         #FFF3E0;
+  --sev-alta-border:     #FFCC80;
+  --sev-alta-text:       #BF360C;
 
-  --sev-moderada:     #FBC02D;
-  --sev-moderada-dim: #C9A020;
-  --sev-moderada-bg:  rgba(251, 192, 45, 0.12);
-  --sev-moderada-border: rgba(251, 192, 45, 0.30);
+  --sev-moderada:        #D97706;
+  --sev-moderada-bg:     #FFF8E1;
+  --sev-moderada-border: #FFE082;
+  --sev-moderada-text:   #9E6B04;
 
-  --sev-informativa:  #38BDF8;
-  --sev-informativa-dim: #2196C9;
-  --sev-informativa-bg: rgba(56, 189, 248, 0.10);
-  --sev-informativa-border: rgba(56, 189, 248, 0.25);
+  --sev-informativa:     #2563EB;
+  --sev-informativa-bg:  #EFF6FF;
+  --sev-informativa-border: #BFDBFE;
+  --sev-informativa-text: #1E40AF;
 
-  --sev-sin-dato:     #5A6378;
-  --sev-sin-dato-bg:  rgba(90, 99, 120, 0.10);
-
-  /* === COLORES DE LEGADO (compatibilidad) === */
-  --red:            var(--sev-critica);
-  --red-dim:        var(--sev-critica-dim);
-  --red-glow:       var(--sev-critica-glow);
-  --orange:         var(--sev-alta);
-  --orange-dim:     var(--sev-alta-dim);
-  --orange-glow:    var(--sev-alta-glow);
+  --sev-sin-dato:        #8896A6;
+  --sev-sin-dato-bg:     #F0F3F6;
+  --sev-sin-dato-border: #DCE3EA;
 
   /* === ESTADO === */
-  --green:          #00E676;
-  --green-dim:      #00B85C;
-  --green-glow:     rgba(0, 230, 118, 0.20);
+  --success:        #16845B;
+  --success-bg:     #ECFDF5;
+  --success-border: #A7F3D0;
+  --success-text:   #065F46;
 
-  --yellow:         #FBC02D;
-  --yellow-glow:    rgba(251, 192, 45, 0.20);
+  --warning:        #B7791F;
+  --warning-bg:     #FFFBEB;
+  --warning-border: #FDE68A;
+  --warning-text:   #78350F;
 
-  --purple:         #A78BFA;
-  --purple-glow:    rgba(167, 139, 250, 0.20);
+  --error:          #C62828;
+  --error-bg:       #FDEAEA;
+  --error-border:   #F5C6CB;
 
-  --error:          #FF334B;
-  --error-bg:       rgba(255, 51, 75, 0.10);
-  --success:        #00E676;
-  --success-bg:     rgba(0, 230, 118, 0.10);
-  --warning:        #FF6B00;
-  --warning-bg:     rgba(255, 107, 0, 0.10);
-  --offline:        #5A6378;
-  --offline-bg:     rgba(90, 99, 120, 0.10);
-  --stale:          #FBC02D;
-  --stale-bg:       rgba(251, 192, 45, 0.10);
+  --offline:        #8896A6;
+  --offline-bg:     #F0F3F6;
+
+  --stale:          #D97706;
+  --stale-bg:       #FFF8E1;
 
   /* === BORDES === */
-  --border:         rgba(255, 255, 255, 0.06);
-  --border-active:  rgba(56, 189, 248, 0.30);
-  --border-glow:    rgba(56, 189, 248, 0.15);
-  --border-focus:   var(--cyan);
+  --border:         #DCE3EA;
+  --border-light:   #E8EDF2;
+  --border-active:  #1769AA;
+  --border-focus:   #1769AA;
 
   /* === RADIOS === */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  16px;
-  --radius-xl:  24px;
+  --radius-sm:  4px;
+  --radius-md:  6px;
+  --radius-lg:  10px;
+  --radius-xl:  16px;
   --radius-full: 9999px;
 
   /* === ESPACIADO === */
+  --space-2xs: 0.125rem;
   --space-xs:  0.25rem;
   --space-sm:  0.5rem;
   --space-md:  1rem;
@@ -106,41 +97,47 @@
   --space-xl:  2rem;
   --space-2xl: 3rem;
 
-  /* === TIPOGRAFÍA === */
+  /* === TIPOGRAFIA === */
   --font:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
 
-  --text-xs:  0.7rem;
-  --text-sm:  0.8rem;
-  --text-base: 0.9rem;
-  --text-lg:  1.05rem;
-  --text-xl:  1.25rem;
-  --text-2xl: 1.6rem;
-  --text-3xl: 2.2rem;
-  --text-hero: 3.2rem;
+  --text-2xs: 0.65rem;
+  --text-xs:  0.75rem;
+  --text-sm:  0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg:  1rem;
+  --text-xl:  1.125rem;
+  --text-2xl: 1.375rem;
+  --text-3xl: 1.75rem;
+  --text-4xl: 2.25rem;
 
-  /* === SOMBRAS === */
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md:   0 4px 12px rgba(0,0,0,0.5);
-  --shadow-lg:   0 8px 32px rgba(0,0,0,0.6);
-  --shadow-glow: 0 0 20px var(--cyan-glow);
-  --shadow-red:  0 0 20px var(--sev-critica-glow);
-  --shadow-orange: 0 0 20px var(--sev-alta-glow);
+  /* Numeric KPI — larger for command view */
+  --text-kpi: 2rem;
+  --text-kpi-lg: 2.75rem;
+
+  /* === SOMBRAS — Subtle, institutional === */
+  --shadow-xs:   0 1px 2px rgba(21, 32, 43, 0.05);
+  --shadow-sm:   0 1px 3px rgba(21, 32, 43, 0.08), 0 1px 2px rgba(21, 32, 43, 0.04);
+  --shadow-md:   0 4px 6px rgba(21, 32, 43, 0.07), 0 2px 4px rgba(21, 32, 43, 0.04);
+  --shadow-lg:   0 10px 15px rgba(21, 32, 43, 0.08), 0 4px 6px rgba(21, 32, 43, 0.04);
+  --shadow-xl:   0 20px 25px rgba(21, 32, 43, 0.10), 0 8px 10px rgba(21, 32, 43, 0.04);
 
   /* === TRANSICIONES === */
-  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: 0.15s ease;
+  --transition-slow: 0.25s ease;
 
   /* === LAYOUT === */
-  --sidebar-width: 280px;
-  --drawer-width: 400px;
-  --header-height: 56px;
-  --control-height: 36px;
+  --sidebar-width: 260px;
+  --drawer-width: 420px;
+  --header-height: 48px;
+  --status-bar-height: 36px;
+  --control-height: 34px;
   --control-height-sm: 28px;
   --touch-target: 44px;
 
   /* === Z-INDEX === */
   --z-base: 1;
+  --z-map: 10;
   --z-sidebar: 100;
   --z-header: 1000;
   --z-dropdown: 1100;
@@ -148,7 +145,13 @@
   --z-modal: 1600;
   --z-notification: 2000;
   --z-tooltip: 2500;
+}
 
-  /* === BREAKPOINTS (referencia, no usados en CSS custom properties) === */
-  /* bp-xs: 360px, bp-sm: 768px, bp-md: 1024px, bp-lg: 1440px, bp-xl: 1920px */
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -14,6 +14,15 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from config import (
+    RISK_ENGINE_SEVERITY_WEIGHT,
+    RISK_ENGINE_EXPOSURE_WEIGHT,
+    RISK_ENGINE_WEATHER_WEIGHT,
+    RISK_ENGINE_DENSITY_WEIGHT,
+    RISK_ENGINE_NEEDS_WEIGHT,
+    RISK_ENGINE_TREND_WEIGHT,
+)
+
 METHODOLOGY_RULES = "rules-v1"
 METHODOLOGY_ML = "ml-v1"
 METHODOLOGY_COMBINED = "rules+ml-v1"
@@ -56,12 +65,12 @@ def calculate_risk_score(
     needs_factor = min(needs_open / 10, 1.0)
 
     rule_score = (
-        severity * 0.30
-        + exposure * 0.25
-        + weather * 0.15
-        + event_density * 0.15
-        + needs_factor * 0.10
-        + max(trend, 0) * 0.05
+        severity * RISK_ENGINE_SEVERITY_WEIGHT
+        + exposure * RISK_ENGINE_EXPOSURE_WEIGHT
+        + weather * RISK_ENGINE_WEATHER_WEIGHT
+        + event_density * RISK_ENGINE_DENSITY_WEIGHT
+        + needs_factor * RISK_ENGINE_NEEDS_WEIGHT
+        + max(trend, 0) * RISK_ENGINE_TREND_WEIGHT
     )
 
     rule_score_100 = round(rule_score * 100, 1)

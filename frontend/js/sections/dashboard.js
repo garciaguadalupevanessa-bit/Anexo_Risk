@@ -1,50 +1,73 @@
-// Dashboard section — loadDashboard, dashboardExportCSV
+// Dashboard section — loadDashboard, dashboardExportCSV (light theme)
 import { normalizeGDACSAlerts } from "../core/normalization/index.js";
-import { apiGet } from "../shared/config.js";
+import { apiGet, escapeHtml } from "../shared/config.js";
 
 export async function loadDashboard() {
   const container = document.getElementById("dashboard-categorias");
   const zonasContainer = document.getElementById("dashboard-zonas");
   const sevContainer = document.getElementById("dashboard-severidad");
-  const tiposContainer = document.getElementById("dashboard-tipos");
   const deteccionesEl = document.getElementById("metric-detecciones");
 
   try {
-    const [necesidades, donaciones, alertas, incendios] = await Promise.all([
+    const [necesidades, donaciones, alertas, incendios, incidentsData] = await Promise.all([
       apiGet("/api/necesidades"),
       apiGet("/api/donaciones"),
       apiGet("/api/alertas"),
       apiGet("/api/incendios").catch(() => ({ detecciones: [] })),
+      apiGet("/api/incidents?is_active=true").catch(() => []),
     ]);
 
+    const incidents = Array.isArray(incidentsData) ? incidentsData : [];
     const total = necesidades.length;
     const abiertas = necesidades.filter(n => n.estado === "abierta").length;
     const cubiertas = total - abiertas;
     const cobertura = total > 0 ? Math.round((cubiertas / total) * 100) : 0;
 
-    const totalAyudas = donaciones.length;
-    const activasAyudas = donaciones.filter(d => d.estado === "activa" || d.estado === "abierta").length;
+    const totalDetecciones = (incendios.detecciones || []).length;
 
-    const totalAlertas = alertas.length;
     const normalizedAlerts = normalizeGDACSAlerts(alertas);
     const criticasAlertas = normalizedAlerts.filter(a => a.severity.level === "critica" || a.severity.level === "alta").length;
 
-    const totalDetecciones = (incendios.detecciones || []).length;
-
-    if (document.getElementById("metric-alertas-activas"))
-      document.getElementById("metric-alertas-activas").textContent = totalAlertas;
-    if (document.getElementById("metric-alertas-criticas"))
-      document.getElementById("metric-alertas-criticas").textContent = criticasAlertas + " críticas";
-    if (document.getElementById("metric-necesidades-abiertas"))
-      document.getElementById("metric-necesidades-abiertas").textContent = abiertas;
-    if (document.getElementById("metric-necesidades-total"))
-      document.getElementById("metric-necesidades-total").textContent = total;
-    if (document.getElementById("metric-necesidades-cubiertas"))
-      document.getElementById("metric-necesidades-cubiertas").textContent = cubiertas;
-    if (document.getElementById("metric-cobertura"))
-      document.getElementById("metric-cobertura").textContent = cobertura;
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set("metric-alertas-activas", alertas.length);
+    set("metric-alertas-criticas", `${criticasAlertas} críticas`);
+    set("metric-necesidades-abiertas", abiertas);
+    set("metric-necesidades-total", total);
+    set("metric-necesidades-cubiertas", cubiertas);
+    set("metric-cobertura", cobertura);
     if (deteccionesEl) deteccionesEl.textContent = totalDetecciones;
 
+    // Incident metrics
+    const incActive = incidents.length;
+    const incCritical = incidents.filter(i => i.severity === "roja").length;
+    const incHigh = incidents.filter(i => i.severity === "naranja").length;
+    const incInResponse = incidents.filter(i => i.status === "en_respuesta").length;
+    const metricIncEl = document.getElementById("metric-incidentes-activas");
+    const metricIncCritEl = document.getElementById("metric-incidentes-criticas");
+    if (metricIncEl) metricIncEl.textContent = incActive;
+    if (metricIncCritEl) metricIncCritEl.textContent = `${incCritical} críticos · ${incHigh} altos`;
+
+    // Feedback stats
+    const feedbackContainer = document.getElementById("dashboard-feedback");
+    if (feedbackContainer) {
+      try {
+        const feedbackStats = await apiGet("/api/outcomes/stats");
+        feedbackContainer.innerHTML = `
+          <div class="data-row"><span class="data-row__label">Predicciones registradas</span><span class="data-row__value">${feedbackStats.total_predictions}</span></div>
+          <div class="data-row"><span class="data-row__label">Con resultado</span><span class="data-row__value">${feedbackStats.with_outcome}</span></div>
+          <div class="data-row"><span class="data-row__label">Incidentes cerrados</span><span class="data-row__value">${feedbackStats.incidents_closed}</span></div>
+          <div class="data-row"><span class="data-row__label">Escalaciones</span><span class="data-row__value">${feedbackStats.escalations}</span></div>
+          ${feedbackStats.avg_response_hours ? `<div class="data-row"><span class="data-row__label">Tiempo medio respuesta</span><span class="data-row__value">${Number(feedbackStats.avg_response_hours).toFixed(1)}h</span></div>` : ""}
+        `;
+      } catch {
+        feedbackContainer.innerHTML = '<p class="state-empty" style="font-size:var(--text-sm);padding:var(--space-sm);">Sin datos de feedback</p>';
+      }
+    }
+
+    // Severity bars
     if (sevContainer) {
       const sevCounts = {};
       normalizedAlerts.forEach(a => {
@@ -53,29 +76,20 @@ export async function loadDashboard() {
       });
       const sevLabels = { critica: "Crítica", alta: "Alta", moderada: "Moderada", informativa: "Informativa", sin_severidad: "Sin dato" };
       const sevColors = { critica: "var(--sev-critica)", alta: "var(--sev-alta)", moderada: "var(--sev-moderada)", informativa: "var(--sev-informativa)", sin_severidad: "var(--text-muted)" };
+      const maxSev = Math.max(...Object.values(sevCounts), 1);
       sevContainer.innerHTML = Object.entries(sevCounts).map(([s, c]) => `
-        <div class="data-row" role="listitem">
-          <span class="data-row__dot" style="background:${sevColors[s] || 'var(--text-muted)'}"></span>
-          <span class="data-row__label">${sevLabels[s] || s}</span>
-          <span class="data-row__value">${c}</span>
-        </div>`).join("") || '<p style="color:var(--text-muted);font-size:var(--text-sm);">Sin datos</p>';
+        <div class="dashboard-bar" role="listitem">
+          <span class="dashboard-bar__dot" style="background:${sevColors[s] || 'var(--text-muted)'}"></span>
+          <span class="dashboard-bar__label">${sevLabels[s] || s}</span>
+          <div class="dashboard-bar__track">
+            <div class="dashboard-bar__fill" style="width:${(c / maxSev) * 100}%;background:${sevColors[s] || 'var(--text-muted)'}"></div>
+          </div>
+          <span class="dashboard-bar__count">${c}</span>
+        </div>`).join("") || '<p class="state-empty" style="font-size:var(--text-sm);padding:var(--space-sm);">Sin datos</p>';
     }
 
-    if (tiposContainer) {
-      const typeCounts = {};
-      normalizedAlerts.forEach(a => {
-        const t = a.type.label;
-        typeCounts[t] = (typeCounts[t] || 0) + 1;
-      });
-      tiposContainer.innerHTML = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).map(([t, c]) => `
-        <div class="data-row" role="listitem">
-          <span class="data-row__label">${t}</span>
-          <span class="data-row__value">${c}</span>
-        </div>`).join("") || '<p style="color:var(--text-muted);font-size:var(--text-sm);">Sin datos</p>';
-    }
-
+    // Category bars
     const catLabels = { agua: "💧 Agua", alimentos: "🍞 Alimentos", parafarmacia: "💊 Parafarmacia", ropa: "👕 Ropa", higiene: "🧴 Higiene", refugio: "🏠 Refugio", transporte: "🚗 Transporte", otros: "📦 Otros" };
-
     if (container) {
       const cats = {};
       necesidades.forEach(n => {
@@ -85,51 +99,33 @@ export async function loadDashboard() {
       const maxCat = Math.max(...Object.values(cats), 1);
       const catSorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
       container.innerHTML = catSorted.map(([tipo, count]) => `
-        <div class="dashboard-bar">
+        <div class="dashboard-bar" role="listitem">
           <span class="dashboard-bar__label">${catLabels[tipo] || tipo}</span>
           <div class="dashboard-bar__track">
             <div class="dashboard-bar__fill" style="width:${(count / maxCat) * 100}%"></div>
           </div>
           <span class="dashboard-bar__count">${count}</span>
-        </div>`).join("");
+        </div>`).join("") || '<p class="state-empty" style="font-size:var(--text-sm);padding:var(--space-sm);">Sin datos</p>';
     }
 
-    // Necesidades críticas
+    // Critical needs
     const criticalNecesidades = necesidades.filter(n => n.prioridad === "critica" && n.estado === "abierta");
     const criticasContainer = document.getElementById("dashboard-criticas");
     if (criticasContainer) {
       criticasContainer.innerHTML = criticalNecesidades.length
         ? criticalNecesidades.slice(0, 5).map(n => `
-          <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
-            <span style="font-size:1.2rem;">${catLabels[n.tipo] || "📦"}</span>
-            <div style="flex:1;">
-              <div style="font-weight:600;">${n.titulo || n.tipo}</div>
-              <div style="font-size:0.8rem;color:var(--text-muted);">${n.direccion || "Sin ubicación"}</div>
-            </div>
+          <div class="data-row" style="align-items:center;">
+            <span style="font-size:var(--text-base);">${catLabels[n.tipo] || "📦"}</span>
+            <span class="data-row__label" style="flex:1;">
+              <strong>${escapeHtml(n.titulo || n.tipo)}</strong>
+              <span style="display:block;font-size:var(--text-xs);color:var(--text-muted);">${escapeHtml(n.direccion || "Sin ubicación")}</span>
+            </span>
             <button class="btn btn--primary btn--sm" onclick="window.showSection('ayudas'); window.selectNeedForAid(${n.id})">Ayudar</button>
           </div>`).join("")
-        : '<p style="color:var(--green);font-size:var(--text-sm);">🎉 ¡No hay necesidades críticas! ¡Buen trabajo!</p>';
+        : '<p class="state-empty" style="font-size:var(--text-sm);color:var(--success);padding:var(--space-sm);">✓ No hay necesidades críticas</p>';
     }
 
-    // Motivación
-    const motivacionEl = document.getElementById("dashboard-motivacion");
-    if (motivacionEl) {
-      let motivacion = "";
-      if (abiertas === 0) {
-        motivacion = "🎉 ¡Todas las necesidades han sido cubiertas! La comunidad es increíble.";
-      } else if (cobertura >= 75) {
-        motivacion = `🔥 ¡${cobertura}% de cobertura! Ya casi lo conseguimos. Faltan ${abiertas} necesidades.`;
-      } else if (cobertura >= 50) {
-        motivacion = `💪 ¡Buen avance! ${cobertura}% de necesidades cubiertas. ¡Sigue así!`;
-      } else if (total > 0) {
-        motivacion = `🤝 Hay ${total} necesidades reportadas. Cada ayuda cuenta. ¿Empezamos?`;
-      } else {
-        motivacion = "🚀 Aún no hay necesidades activas. Sé el primero en ayudar cuando llegue una.";
-      }
-      motivacionEl.textContent = motivacion;
-    }
-
-    // Top zonas
+    // Top zones
     if (zonasContainer) {
       const zonas = {};
       necesidades.forEach(n => {
@@ -140,12 +136,15 @@ export async function loadDashboard() {
       });
       const zonasSorted = Object.entries(zonas).sort((a, b) => b[1] - a[1]).slice(0, 5);
       zonasContainer.innerHTML = zonasSorted.length
-        ? zonasSorted.map(([zona, count]) => `<div class="dashboard-zone-item">${zona} — <strong>${count}</strong> necesidad${count > 1 ? "es" : ""}</div>`).join("")
-        : '<p style="color:var(--text-muted);font-size:var(--text-sm);">Sin datos suficientes</p>';
+        ? zonasSorted.map(([zona, count]) => `
+          <div class="data-row">
+            <span class="data-row__label">${escapeHtml(zona)}</span>
+            <span class="data-row__value">${count}</span>
+          </div>`).join("")
+        : '<p class="state-empty" style="font-size:var(--text-sm);padding:var(--space-sm);">Sin datos suficientes</p>';
     }
 
     window._dashboardData = { necesidades, donaciones, alertas };
-    window._dashboardData.alertas = alertas;
   } catch (err) {
     console.error("Dashboard error:", err);
   }
@@ -154,7 +153,7 @@ export async function loadDashboard() {
 window.dashboardExportCSV = function() {
   const data = window._dashboardData;
   if (!data) return;
-  let csv = "=== ANEXO FINDER — EXPORT DE DATOS ===\n";
+  let csv = "=== ANEXO RISK — EXPORT DE DATOS ===\n";
   csv += `Generado: ${new Date().toLocaleString("es-ES")}\n\n`;
 
   csv += "=== NECESIDADES ===\n";

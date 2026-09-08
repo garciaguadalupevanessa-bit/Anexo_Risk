@@ -4,6 +4,7 @@ Proporciona una vista unificada de un incidente con:
 - Situación: tipo, severidad, fuente, timestamp, ubicación
 - Contexto: fuentes relacionadas, meteorología, eventos cercanos, tendencia
 - Impacto: población expuesta, infraestructura, necesidades afectadas, recursos cercanos
+- GeoRisk: riesgo científico territorial (cuando GeoRisk Finder está disponible)
 - Riesgo: score 0-100, nivel, factores, confianza, source (rules/ml/combined)
 - Operación: necesidades abiertas, recursos disponibles, asignaciones, estado
 - Explicación: por qué tiene esta prioridad
@@ -16,7 +17,9 @@ from geodata.adapters.effis_adapter import get_fire_danger_for_point
 from geodata.services.exposure import calculate_exposure, calculate_impact
 from geodata.services.risk_engine import calculate_risk_score
 from geodata.services.spatial import find_nearby, haversine_distance
+from geodata.services.h3_resolver import latlon_to_h3
 from ml.service import predict_with_explanation
+from integrations.georisk_client import get_cell_risk, is_georisk_available, get_circuit_status
 
 
 def build_decision_context(
@@ -111,7 +114,40 @@ def build_decision_context(
         resources=resources,
     )
 
-    # 5. Riesgo (rules + ML si disponible)
+    # 5. GeoRisk Scientific Risk (optional — from GeoRisk Finder)
+    georisk = None
+    h3_index = None
+    if lat and lon:
+        h3_index = latlon_to_h3(lat, lon)
+        if h3_index and is_georisk_available():
+            try:
+                georisk_data = get_cell_risk(h3_index)
+                if georisk_data:
+                    georisk = {
+                        "status": "ok",
+                        "h3_index": h3_index,
+                        "risk_score": georisk_data.get("risk_score", 0),
+                        "risk_level": georisk_data.get("risk_level", "unknown"),
+                        "model_version": georisk_data.get("model_version", ""),
+                        "cluster_id": georisk_data.get("cluster_id"),
+                        "cluster_label": georisk_data.get("cluster_label", ""),
+                        "features": georisk_data.get("features", {}),
+                        "explanation": georisk_data.get("explanation", ""),
+                        "confidence": georisk_data.get("confidence", 0),
+                        "source": "georisk",
+                    }
+            except Exception:
+                georisk = {"status": "error", "message": "Error consultando GeoRisk", "source": "georisk"}
+        elif h3_index:
+            georisk = {
+                "status": "unavailable",
+                "h3_index": h3_index,
+                "message": "GeoRisk no disponible — usando riesgo operacional local",
+                "source": "georisk",
+                "circuit": get_circuit_status(),
+            }
+
+    # 6. Riesgo (rules + ML si disponible)
     risk = calculate_risk_score(
         severity=severity,
         exposure=exposure.get("exposure_score", 0),
@@ -122,9 +158,19 @@ def build_decision_context(
         ml_prediction=ml_prediction,
     )
 
-    # 6. Operación
+    # 7. Operación
     nearby_needs = find_nearby(lat, lon, needs or [], radius_km=50) if lat and lon else []
     nearby_resources = find_nearby(lat, lon, resources or [], radius_km=50) if lat and lon else []
+
+    # Asignaciones activas para el incidente
+    active_assignments = []
+    incident_id = incident.get("incident_id") or incident.get("external_id")
+    if incident_id:
+        try:
+            from modules.asignaciones.models import get_active_assignments_for_incident
+            active_assignments = get_active_assignments_for_incident(incident_id)
+        except Exception:
+            active_assignments = []
 
     operation = {
         "needs_open": len([n for n in nearby_needs if n.get("estado") == "abierta"]),
@@ -132,10 +178,12 @@ def build_decision_context(
         "resources_available": len([r for r in nearby_resources if r.get("status") == "disponible"]),
         "resources_total": len(nearby_resources),
         "min_distance_resource": exposure.get("min_distance_resource"),
+        "active_assignments": len(active_assignments),
+        "assignments": active_assignments,
     }
 
-    # 7. Explicación
-    explanation = _build_explanation(situation, context, exposure, risk, operation)
+    # 8. Explicación
+    explanation = _build_explanation(situation, context, exposure, risk, operation, georisk, h3_index)
 
     return {
         "situation": situation,
@@ -146,6 +194,8 @@ def build_decision_context(
             "resources_nearby": exposure.get("resources_nearby", 0),
             "factors": exposure.get("factors", []),
         },
+        "georisk": georisk,
+        "h3_index": h3_index,
         "risk": risk,
         "operation": operation,
         "explanation": explanation,
@@ -159,6 +209,8 @@ def _build_explanation(
     exposure: dict,
     risk: dict,
     operation: dict,
+    georisk: dict | None = None,
+    h3_index: str | None = None,
 ) -> dict:
     """Construye la explicación del por qué de la prioridad."""
     factors = list(risk.get("factors", []))
@@ -190,6 +242,9 @@ def _build_explanation(
     if operation.get("resources_available", 0) == 0:
         why.append("  - No hay recursos disponibles cerca")
 
+    if operation.get("active_assignments", 0) > 0:
+        why.append(f"  - Hay {operation['active_assignments']} asignaciones activas en curso")
+
     return {
         "summary": " ".join(why),
         "factors": factors,
@@ -201,6 +256,8 @@ def _build_explanation(
         },
         "methodology": risk.get("methodology_version", "rules-v1"),
         "source": source,
+        "georisk_source": "georisk" if georisk and georisk.get("status") == "ok" else None,
+        "h3_index": h3_index,
     }
 
 
