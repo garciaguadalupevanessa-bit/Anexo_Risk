@@ -16,6 +16,7 @@ window._updateFreshness = updateFreshness;
 
 // --- NAVIGATION ---
 function showSection(name) {
+  window._trackEvent?.("section_open", { section: name });
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".nav__link").forEach(b => {
     b.classList.remove("active");
@@ -204,6 +205,7 @@ window._updateStatusBar = updateStatusBar;
 
 // --- BOOT ---
 document.addEventListener("DOMContentLoaded", () => {
+  window._trackEvent?.("app_open");
   initMap();
   initAlerts();
   initDonaciones();

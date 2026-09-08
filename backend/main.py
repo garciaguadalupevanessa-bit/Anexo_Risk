@@ -92,8 +92,46 @@ app.mount("/mocks", StaticFiles(directory=FRONTEND_DIR / "mocks"), name="mocks")
 
 @app.get("/api/health")
 def health():
-    """Si esto responde, la base común está bien montada."""
-    return {"status": "ok", "app": "Anexo Risk"}
+    """Comprehensive health check for pilot observability."""
+    from db.database import get_cursor
+    from datetime import datetime, timezone
+
+    # DB check
+    db_ok = False
+    db_tables = 0
+    try:
+        with get_cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
+            db_tables = cur.fetchone()[0]
+            db_ok = True
+    except Exception:
+        pass
+
+    # ML check
+    ml_ok = False
+    try:
+        from ml.service import is_ml_available
+        ml_ok = is_ml_available()
+    except Exception:
+        pass
+
+    # GeoRisk check
+    georisk_ok = False
+    try:
+        from integrations.georisk_client import is_georisk_available
+        georisk_ok = is_georisk_available()
+    except Exception:
+        pass
+
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "app": "Anexo Risk",
+        "version": "2.0.0-rc1",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "db": {"ok": db_ok, "tables": db_tables},
+        "ml": {"available": ml_ok},
+        "georisk": {"available": georisk_ok},
+    }
 
 @app.get("/manifest.json")
 async def serve_manifest():

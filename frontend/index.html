@@ -11,8 +11,20 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/shared/analytics.js" defer></script>
 </head>
 <body>
+
+  <!-- Pilot Warning Banner -->
+  <div id="pilot-banner" class="pilot-banner" role="alert">
+    <span class="pilot-banner__icon">⚠</span>
+    <span class="pilot-banner__text">
+      <strong>Entorno piloto / demostración.</strong>
+      La información puede presentar limitaciones de cobertura y latencia.
+      No debe utilizarse como única fuente para decisiones de emergencia reales.
+    </span>
+    <button class="pilot-banner__close" onclick="document.getElementById('pilot-banner').style.display='none'" aria-label="Cerrar aviso">✕</button>
+  </div>
 
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
 
@@ -411,6 +423,25 @@
 
         <div style="margin-top:var(--space-md);text-align:right;">
           <button type="button" class="btn btn--ghost btn--sm" onclick="window.dashboardExportCSV()" aria-label="Exportar CSV">⬇ Exportar CSV</button>
+        </div>
+
+        <!-- Pilot Feedback Widget -->
+        <div id="pilot-feedback" class="pilot-feedback" style="margin-top:var(--space-lg);">
+          <div class="pilot-feedback__header">
+            <h3 class="glass-card__title">¿Te ha resultado útil esta plataforma?</h3>
+          </div>
+          <div class="pilot-feedback__buttons" id="feedback-buttons">
+            <button class="btn btn--ghost btn--sm" data-value="muy_util" onclick="window._submitFeedback('muy_util')">Muy útil</button>
+            <button class="btn btn--ghost btn--sm" data-value="util" onclick="window._submitFeedback('util')">Útil</button>
+            <button class="btn btn--ghost btn--sm" data-value="poco_util" onclick="window._submitFeedback('poco_util')">Poco útil</button>
+            <button class="btn btn--ghost btn--sm" data-value="nada_util" onclick="window._submitFeedback('nada_util')">Nada útil</button>
+          </div>
+          <div id="feedback-thanks" style="display:none;color:var(--success);font-size:var(--text-xs);margin-top:var(--space-xs);">Gracias por tu feedback.</div>
+          <div style="margin-top:var(--space-sm);">
+            <label for="feedback-text" class="sr-only">¿Qué mejorarías?</label>
+            <textarea id="feedback-text" class="input" rows="2" placeholder="¿Qué mejorarías? (opcional)" style="width:100%;max-width:400px;font-size:var(--text-xs);resize:vertical;"></textarea>
+            <button class="btn btn--ghost btn--sm" style="margin-top:var(--space-xs);" onclick="window._submitFeedbackText()">Enviar comentario</button>
+          </div>
         </div>
       </div>
     </section>

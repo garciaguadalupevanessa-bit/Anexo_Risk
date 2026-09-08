@@ -180,3 +180,24 @@ window.dashboardExportCSV = function() {
   a.download = `anexo_risk_export_${new Date().toISOString().split("T")[0]}.csv`;
   a.click();
 };
+
+// --- PILOT FEEDBACK ---
+window._submitFeedback = function(value) {
+  try { localStorage.setItem("anexo_feedback_rating", value); } catch(e) {}
+  const btns = document.getElementById("feedback-buttons");
+  const thanks = document.getElementById("feedback-thanks");
+  if (btns) btns.style.display = "none";
+  if (thanks) thanks.style.display = "block";
+  window._trackEvent?.("feedback_submitted", { rating: value });
+};
+
+window._submitFeedbackText = function() {
+  const textarea = document.getElementById("feedback-text");
+  const text = textarea?.value?.trim();
+  if (!text) return;
+  try { localStorage.setItem("anexo_feedback_text", text); } catch(e) {}
+  if (textarea) textarea.value = "";
+  window._trackEvent?.("feedback_comment_submitted", { length: text.length });
+  const thanks = document.getElementById("feedback-thanks");
+  if (thanks) { thanks.style.display = "block"; thanks.textContent = "Gracias por tu comentario."; }
+};

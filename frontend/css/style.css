@@ -7,6 +7,39 @@
 /* === RESET & BASE === */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* === PILOT BANNER === */
+.pilot-banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px;
+  background: #FFF3E0; color: #E65100;
+  border-bottom: 1px solid #FFE0B2;
+  font-size: var(--text-xs); line-height: 1.4;
+  z-index: 3000; position: relative;
+}
+.pilot-banner__icon { font-size: 16px; flex-shrink: 0; }
+.pilot-banner__text { flex: 1; }
+.pilot-banner__close {
+  background: none; border: none; cursor: pointer;
+  color: #E65100; font-size: 14px; padding: 4px;
+  border-radius: var(--radius-sm);
+}
+.pilot-banner__close:hover { background: rgba(230, 81, 0, 0.1); }
+@media (prefers-reduced-motion: reduce) {
+  .pilot-banner { animation: none; }
+}
+
+/* === PILOT FEEDBACK === */
+.pilot-feedback {
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+.pilot-feedback__header { margin-bottom: var(--space-sm); }
+.pilot-feedback__buttons { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
+.pilot-feedback__buttons .btn { border: 1px solid var(--border); }
+.pilot-feedback__buttons .btn:hover { background: var(--blue-subtle); border-color: var(--blue-border); }
+
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
