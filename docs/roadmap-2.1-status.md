@@ -1,7 +1,7 @@
 # Roadmap 2.1 Status
 
 **Last updated:** 2026-09-08
-**Current phase:** FASE 2 Complete
+**Current phase:** FASE 7 Complete — Phase 4-7 Gate Review
 
 ---
 
@@ -32,24 +32,51 @@
 - `tests/backend/test_source_registry.py`
 
 ## FASE 3 — Normalized Adapter Contract
-**Status:** NOT STARTED
-**Scope:** Common SourceAdapter interface (fetch, normalize, health, freshness, capabilities)
+**Status:** COMPLETE
+**Tests:** 13 new tests
+**Files:**
+- `backend/db/migrations/023_normalized_events.sql`
+- `backend/geodata/adapters/base.py`
+- `backend/modules/normalized_events/models.py`
+- `backend/modules/normalized_events/schemas.py`
+- `backend/modules/normalized_events/routes.py`
+- `tests/backend/test_normalized_events.py`
 
 ## FASE 4 — Spain Regional Sources
-**Status:** NOT STARTED
-**Scope:** AEMET deeper integration, Protección Civil real data, autonomic sources
+**Status:** COMPLETE
+**Tests:** 14 new tests
+**Files:**
+- `backend/services/region_source_resolution.py`
+- `backend/services/normalized_adapters.py`
+- `backend/modules/regiones/source_routes.py`
+- `tests/backend/test_fase4.py`
 
 ## FASE 5 — Near-Real-Time Engine
-**Status:** NOT STARTED
-**Scope:** Polling, cache, retry, backoff, circuit breaker, freshness tracking
+**Status:** COMPLETE
+**Tests:** 13 new tests
+**Files:**
+- `backend/services/source_health.py`
+- `backend/services/live_ingestion.py`
+- `backend/modules/live_ingestion/routes.py`
+- `tests/backend/test_fase5.py`
 
 ## FASE 6 — Event Correlation
-**Status:** NOT STARTED
-**Scope:** Multiple signals → single incident, distance/time/type correlation
+**Status:** COMPLETE
+**Tests:** 12 new tests
+**Files:**
+- `backend/services/correlation.py`
+- `backend/modules/correlation/routes.py`
+- `tests/backend/test_fase6.py`
 
 ## FASE 7 — H3 Operational Mesh
-**Status:** NOT STARTED
-**Scope:** Per-cell data aggregation, operational coverage metric
+**Status:** COMPLETE
+**Tests:** 16 new tests
+**Files:**
+- `backend/db/migrations/024_h3_mesh.sql`
+- `backend/services/h3_mesh.py`
+- `backend/modules/h3_mesh/__init__.py`
+- `backend/modules/h3_mesh/routes.py`
+- `tests/backend/test_fase7.py`
 
 ## FASE 8 — Operational Nodes
 **Status:** NOT STARTED
@@ -89,4 +116,4 @@
 
 ---
 
-## Total Test Count: 489 passing
+## Total Test Count: 557 passing (502 baseline + 55 new)

@@ -49,7 +49,7 @@ class NormalizedEventResponse(BaseModel):
     entity_type: str
     source: str
     title: str
-    description: str = ""
+    description: Optional[str] = ""
     timestamp: Optional[str] = None
     updated_at: Optional[str] = None
     severity: Optional[str] = None
